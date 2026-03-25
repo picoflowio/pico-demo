@@ -36,7 +36,7 @@ import { TravelFlow } from 'src/myflow/travel-flow/travel-flow';
 export class ChatController {
   constructor(private flowEngine: FlowEngine) {
     //register flows
-    flowEngine.registerFlows({ BasicFlow, HotelFlow , TravelFlow , MedicalFlow});
+    flowEngine.registerFlows({ BasicFlow, HotelFlow, TravelFlow, MedicalFlow });
 
     //register models
 
