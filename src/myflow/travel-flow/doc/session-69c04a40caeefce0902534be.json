@@ -1,0 +1,806 @@
+{
+  "_id": "69c04a40caeefce0902534be",
+  "id": "69c04a40caeefce0902534be",
+  "version": 1,
+  "runStatus": "completed",
+  "createdOn": "2026-03-22T20:00:00.927Z",
+  "saveOn": "2026-03-22T20:01:27.958Z",
+  "expireAfter": 50000,
+  "tokens": {
+    "inputTokens": 10041,
+    "outputTokens": 4916,
+    "totalTokens": 14957
+  },
+  "flows": [
+    {
+      "name": "TravelFlow",
+      "memory": [
+        {
+          "nameSpace": "travelPlan",
+          "history": [
+            {
+              "type": "system",
+              "content": "\n    \n    You are an expert travel consultant. Create up to 3 compelling travel packages\n    for a client based on their plan and available options.\n\n    YOUR TASK:\n    1. Check if basic trip is possible within budget\n    2. Create packages:\n       - If cheapest combo is OVER budget: Create ONE \"Budget\" package only\n       - If budget is reasonable: Create THREE packages (Budget, Balanced, Premium)\n    3. Each package may contain the following depending on User Intent listed above:\n       - If \"flights_only\": 2 flights only, list both departure and return flights.\n       - If \"hotels_only\": 1 hotel only.\n       - If \"activities_only\": 1 to 3 activities only.\n       - If \"full_plan\": 2 flights (departure and return), 1 hotel, and 1 to 3 activities.\n    4. Calculate total_cost = flight + (hotel * duration_days) + activities\n    5. Calculate budget_comment based on difference from total budget\n    6. Create creative name for each package\n    7. Call 'generate_packages' tool to generate travel packages based on the above information. \n    8. Ask user to choose a package and call 'choose_package' tool with the selected package.\n    \n\n    **CLIENT'S PLAN:**\n    {\"user_intent\":\"full_plan\",\"origin\":\"PDX\",\"destination\":\"Madrid\",\"departure_date\":\"2026-04-21T00:00:00\",\"return_date\":\"2026-05-05T00:00:00\",\"duration_days\":14,\"adults\":2,\"travel_class\":\"BUSINESS\",\"budget\":7000}\n\n    **AVAILABLE OPTIONS:**\n    - Departure Flights: [{\"id\":\"R1\",\"airline\":\"Air Demo\",\"price\":550,\"departure_time\":\"11:00\",\"arrival_time\":\"15:00\"},{\"id\":\"R2\",\"airline\":\"Pico Airways\",\"price\":400,\"departure_time\":\"07:00\",\"arrival_time\":\"16:00\"},{\"id\":\"R3\",\"airline\":\"Luxury Jets\",\"price\":800,\"departure_time\":\"10:00\",\"arrival_time\":\"17:00\"}]\n    - Return Flights: [{\"id\":\"D1\",\"airline\":\"Air Demo\",\"price\":450,\"departure_time\":\"10:00\",\"arrival_time\":\"14:00\"},{\"id\":\"D2\",\"airline\":\"Pico Airways\",\"price\":300,\"departure_time\":\"06:00\",\"arrival_time\":\"11:00\"},{\"id\":\"D3\",\"airline\":\"Luxury Jets\",\"price\":900,\"departure_time\":\"12:00\",\"arrival_time\":\"16:00\"}]\n    - Hotels: [{\"id\":\"H1\",\"name\":\"Grand Pico Hotel\",\"price_per_night\":150,\"rating\":4.5,\"location\":\"City Center\"},{\"id\":\"H2\",\"name\":\"Budget Inn\",\"price_per_night\":80,\"rating\":3,\"location\":\"Suburbs\"},{\"id\":\"H3\",\"name\":\"Luxury Palace\",\"price_per_night\":400,\"rating\":5,\"location\":\"Beachfront\"}]\n    - Activities: [{\"id\":\"A1\",\"name\":\"City Tour\",\"price\":50,\"duration\":\"4 hours\",\"description\":\"Guided tour of the city.\"},{\"id\":\"A2\",\"name\":\"Museum Visit\",\"price\":25,\"duration\":\"2 hours\",\"description\":\"Visit the national museum.\"},{\"id\":\"A3\",\"name\":\"Adventure Park\",\"price\":100,\"duration\":\"Full Day\",\"description\":\"Theme park access.\"}]\n    ",
+              "id": "SynthesizerStep|2026-03-22T20:01:23.824Z|1174008896"
+            },
+            {
+              "type": "human",
+              "content": "Hello",
+              "id": "PlannerStep|2026-03-22T20:00:00.945Z|6999182752",
+              "additional_kwargs": {
+                "direct": false
+              }
+            },
+            {
+              "type": "ai",
+              "content": "Hi! I can help plan your trip. Could you share a few details?\n\n1) Your intent\n- Full plan (flights + hotels + activities)\n- Flights only\n- Hotels only\n- Activities only\n\n2) Core details\n- Origin city/airport (if any):\n- Destination (required):\n- Departure date and return date (use exact dates or phrases like “next Friday for 5 days”; today is 2025-05-01):\n- Number of adults (default 1):\n\n3) Budget preferences\n- Travel class (ECONOMY, PREMIUM ECONOMY, BUSINESS, FIRST):\n- Total budget in your currency (number):",
+              "id": "PlannerStep|2026-03-22T20:00:05.708Z|2147814273"
+            },
+            {
+              "type": "human",
+              "content": "Full plan please",
+              "id": "PlannerStep|2026-03-22T20:00:05.748Z|9803951101",
+              "additional_kwargs": {
+                "direct": false
+              }
+            },
+            {
+              "type": "ai",
+              "content": "Great—full plan it is! I just need a few details to get started:\n\nCore details\n- Origin city/airport:\n- Destination (required):\n- Departure date and return date (you can use exact dates or phrases like “next Friday for 5 days”; today is 2025-05-01):\n- Number of adults (default 1):\n\nBudget preferences\n- Travel class (ECONOMY, PREMIUM ECONOMY, BUSINESS, FIRST):\n- Total budget (number and currency):",
+              "id": "PlannerStep|2026-03-22T20:00:08.564Z|1919547849"
+            },
+            {
+              "type": "human",
+              "content": "Origin PDX, destination Madrid, depart 2026-04-21, return 2026-05-05, 2 adults, business class, total budget $7000",
+              "id": "PlannerStep|2026-03-22T20:00:08.600Z|9893983737",
+              "additional_kwargs": {
+                "direct": false
+              }
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "FlightStep|2026-03-22T20:00:19.771Z|5346559572",
+              "tool_calls": [
+                {
+                  "name": "search_flights",
+                  "args": {
+                    "origin": "PDX",
+                    "destination": "Madrid",
+                    "date": "2026-04-21",
+                    "isReturn": false
+                  },
+                  "id": "call_GMJgXfSqlJIUonsNqUsbHP64"
+                },
+                {
+                  "name": "search_flights",
+                  "args": {
+                    "origin": "PDX",
+                    "destination": "Madrid",
+                    "date": "2026-05-05",
+                    "isReturn": true
+                  },
+                  "id": "call_HIXCblpc4QnIf6PUCirncsRy"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "FlightStep|2026-03-22T20:00:19.771Z|1169142196",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_GMJgXfSqlJIUonsNqUsbHP64",
+              "status": "success",
+              "name": "search_flights"
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "FlightStep|2026-03-22T20:00:19.771Z|6673540844",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_HIXCblpc4QnIf6PUCirncsRy",
+              "status": "success",
+              "name": "search_flights"
+            },
+            {
+              "type": "ai",
+              "content": "{}",
+              "id": "FlightStep|2026-03-22T20:00:19.771Z|8326806827",
+              "additional_kwargs": {
+                "direct": true
+              }
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "HotelStep|2026-03-22T20:00:20.564Z|7079855283",
+              "tool_calls": [
+                {
+                  "name": "search_hotels",
+                  "args": {
+                    "location": "Madrid"
+                  },
+                  "id": "call_ebXniCGkvXU1Wq4zpLdATZXw"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "HotelStep|2026-03-22T20:00:20.564Z|8369298220",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_ebXniCGkvXU1Wq4zpLdATZXw",
+              "status": "success",
+              "name": "search_hotels"
+            },
+            {
+              "type": "ai",
+              "content": "{}",
+              "id": "HotelStep|2026-03-22T20:00:20.564Z|6883529229",
+              "additional_kwargs": {
+                "direct": true
+              }
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "ActivityStep|2026-03-22T20:00:21.302Z|1318992029",
+              "tool_calls": [
+                {
+                  "name": "search_activities",
+                  "args": {
+                    "location": "Madrid"
+                  },
+                  "id": "call_FQr8BNcg5wfc6H19sYmBR9Mh"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "ActivityStep|2026-03-22T20:00:21.302Z|2608414437",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_FQr8BNcg5wfc6H19sYmBR9Mh",
+              "status": "success",
+              "name": "search_activities"
+            },
+            {
+              "type": "ai",
+              "content": "{}",
+              "id": "ActivityStep|2026-03-22T20:00:21.302Z|3102350772",
+              "additional_kwargs": {
+                "direct": true
+              }
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "PlannerStep|2026-03-22T20:00:21.302Z|7789296077",
+              "tool_calls": [
+                {
+                  "name": "submit_plan",
+                  "args": {
+                    "user_intent": "full_plan",
+                    "origin": "PDX",
+                    "destination": "Madrid",
+                    "departure_date": "2026-04-21T00:00:00",
+                    "return_date": "2026-05-05T00:00:00",
+                    "duration_days": 14,
+                    "adults": 2,
+                    "travel_class": "BUSINESS",
+                    "budget": 7000
+                  },
+                  "id": "call_9GvLnVrffEjwrT6Urs11K9Cf"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "PlannerStep|2026-03-22T20:00:21.302Z|3859351173",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_9GvLnVrffEjwrT6Urs11K9Cf",
+              "status": "success",
+              "name": "submit_plan"
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "SynthesizerStep|2026-03-22T20:01:18.509Z|2377737078",
+              "tool_calls": [
+                {
+                  "name": "generate_packages",
+                  "args": {
+                    "packages": [
+                      {
+                        "name": "Smart Saver Madrid",
+                        "flight": {
+                          "id": "R2 + D2",
+                          "airline": "Pico Airways",
+                          "price": 700,
+                          "departure_time": "Outbound 07:00 • Return 06:00",
+                          "arrival_time": "Outbound 16:00 • Return 11:00"
+                        },
+                        "hotel": {
+                          "id": "H2",
+                          "name": "Budget Inn",
+                          "price_per_night": 80,
+                          "rating": 3,
+                          "location": "Suburbs"
+                        },
+                        "activities": [
+                          {
+                            "id": "A2",
+                            "name": "Museum Visit",
+                            "price": 25,
+                            "duration": "2 hours",
+                            "description": "Visit the national museum."
+                          },
+                          {
+                            "id": "A1",
+                            "name": "City Tour",
+                            "price": 50,
+                            "duration": "4 hours",
+                            "description": "Guided tour of the city."
+                          }
+                        ],
+                        "total_cost": 1895,
+                        "budget_comment": "Great value—about $5,105 under your $7,000 budget."
+                      },
+                      {
+                        "name": "Center City Comfort",
+                        "flight": {
+                          "id": "R1 + D1",
+                          "airline": "Air Demo",
+                          "price": 1000,
+                          "departure_time": "Outbound 11:00 • Return 10:00",
+                          "arrival_time": "Outbound 15:00 • Return 14:00"
+                        },
+                        "hotel": {
+                          "id": "H1",
+                          "name": "Grand Pico Hotel",
+                          "price_per_night": 150,
+                          "rating": 4.5,
+                          "location": "City Center"
+                        },
+                        "activities": [
+                          {
+                            "id": "A1",
+                            "name": "City Tour",
+                            "price": 50,
+                            "duration": "4 hours",
+                            "description": "Guided tour of the city."
+                          },
+                          {
+                            "id": "A3",
+                            "name": "Adventure Park",
+                            "price": 100,
+                            "duration": "Full Day",
+                            "description": "Theme park access."
+                          }
+                        ],
+                        "total_cost": 3250,
+                        "budget_comment": "Comfortable upgrade—around $3,750 under budget."
+                      },
+                      {
+                        "name": "Business Luxe Explorer",
+                        "flight": {
+                          "id": "R3 + D3",
+                          "airline": "Luxury Jets",
+                          "price": 1700,
+                          "departure_time": "Outbound 10:00 • Return 12:00",
+                          "arrival_time": "Outbound 17:00 • Return 16:00"
+                        },
+                        "hotel": {
+                          "id": "H1",
+                          "name": "Grand Pico Hotel",
+                          "price_per_night": 150,
+                          "rating": 4.5,
+                          "location": "City Center"
+                        },
+                        "activities": [
+                          {
+                            "id": "A1",
+                            "name": "City Tour",
+                            "price": 50,
+                            "duration": "4 hours",
+                            "description": "Guided tour of the city."
+                          },
+                          {
+                            "id": "A2",
+                            "name": "Museum Visit",
+                            "price": 25,
+                            "duration": "2 hours",
+                            "description": "Visit the national museum."
+                          },
+                          {
+                            "id": "A3",
+                            "name": "Adventure Park",
+                            "price": 100,
+                            "duration": "Full Day",
+                            "description": "Theme park access."
+                          }
+                        ],
+                        "total_cost": 3975,
+                        "budget_comment": "Premium touches while staying about $3,025 under budget."
+                      }
+                    ]
+                  },
+                  "id": "call_SNQIEv8LEtOhEvgCkHJwwvHQ"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "SynthesizerStep|2026-03-22T20:01:18.509Z|1982303764",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_SNQIEv8LEtOhEvgCkHJwwvHQ",
+              "status": "success",
+              "name": "generate_packages"
+            },
+            {
+              "type": "ai",
+              "content": "I’ve created three Madrid full-plan options within your budget. Please review and let me know which one you’d like to book:\n\n1) Smart Saver Madrid\n- Flights: Pico Airways (R2 + D2) — Outbound 07:00 → 16:00; Return 06:00 → 11:00; Total flight cost: $700\n- Hotel: Budget Inn (H2), Suburbs — $80/night, 3★\n- Activities: Museum Visit (A2) $25; City Tour (A1) $50\n- Total trip cost: $1,895\n- Budget comment: Great value—about $5,105 under your $7,000 budget.\n\n2) Center City Comfort\n- Flights: Air Demo (R1 + D1) — Outbound 11:00 → 15:00; Return 10:00 → 14:00; Total flight cost: $1,000\n- Hotel: Grand Pico Hotel (H1), City Center — $150/night, 4.5★\n- Activities: City Tour (A1) $50; Adventure Park (A3) $100\n- Total trip cost: $3,250\n- Budget comment: Comfortable upgrade—around $3,750 under budget.\n\n3) Business Luxe Explorer\n- Flights: Luxury Jets (R3 + D3) — Outbound 10:00 → 17:00; Return 12:00 → 16:00; Total flight cost: $1,700\n- Hotel: Grand Pico Hotel (H1), City Center — $150/night, 4.5★\n- Activities: City Tour (A1) $50; Museum Visit (A2) $25; Adventure Park (A3) $100\n- Total trip cost: $3,975\n- Budget comment: Premium touches while staying about $3,025 under budget.\n\nWhich package would you like to choose: 1) Smart Saver Madrid, 2) Center City Comfort, or 3) Business Luxe Explorer?",
+              "id": "SynthesizerStep|2026-03-22T20:01:23.769Z|5171178978"
+            },
+            {
+              "type": "human",
+              "content": "I choose Premium.",
+              "id": "SynthesizerStep|2026-03-22T20:01:23.824Z|5442288039",
+              "additional_kwargs": {
+                "direct": false
+              }
+            },
+            {
+              "type": "ai",
+              "content": "",
+              "id": "SynthesizerStep|2026-03-22T20:01:27.283Z|3649936094",
+              "tool_calls": [
+                {
+                  "name": "choose_package",
+                  "args": {
+                    "chosenPackage": {
+                      "name": "Business Luxe Explorer",
+                      "flight": {
+                        "id": "R3 + D3",
+                        "airline": "Luxury Jets",
+                        "price": 1700,
+                        "departure_time": "Outbound 10:00 • Return 12:00",
+                        "arrival_time": "Outbound 17:00 • Return 16:00"
+                      },
+                      "hotel": {
+                        "id": "H1",
+                        "name": "Grand Pico Hotel",
+                        "price_per_night": 150,
+                        "rating": 4.5,
+                        "location": "City Center"
+                      },
+                      "activities": [
+                        {
+                          "id": "A1",
+                          "name": "City Tour",
+                          "price": 50,
+                          "duration": "4 hours",
+                          "description": "Guided tour of the city."
+                        },
+                        {
+                          "id": "A2",
+                          "name": "Museum Visit",
+                          "price": 25,
+                          "duration": "2 hours",
+                          "description": "Visit the national museum."
+                        },
+                        {
+                          "id": "A3",
+                          "name": "Adventure Park",
+                          "price": 100,
+                          "duration": "Full Day",
+                          "description": "Theme park access."
+                        }
+                      ],
+                      "total_cost": 3975,
+                      "budget_comment": "Premium touches while staying about $3,025 under budget."
+                    }
+                  },
+                  "id": "call_GLV7xkBcWoS1CteecVDxHiyr"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "content": "input validated",
+              "id": "SynthesizerStep|2026-03-22T20:01:27.283Z|9103459093",
+              "additional_kwargs": {
+                "stopTool": true
+              },
+              "tool_call_id": "call_GLV7xkBcWoS1CteecVDxHiyr",
+              "status": "success",
+              "name": "choose_package"
+            }
+          ]
+        },
+        {
+          "nameSpace": "EndStep",
+          "history": [
+            {
+              "type": "system",
+              "content": "Thank user for using travel planning service. Tell them it is booked",
+              "id": "EndStep|2026-03-22T20:01:27.309Z|5251522594"
+            },
+            {
+              "type": "human",
+              "content": "I'm done with chat",
+              "id": "EndStep|2026-03-22T20:01:27.309Z|9869578618",
+              "additional_kwargs": {
+                "direct": false
+              }
+            },
+            {
+              "type": "ai",
+              "content": "Thank you for using our travel planning service! Your booking is confirmed. If you have any more questions or need further assistance, feel free to reach out. Have a great trip!",
+              "id": "EndStep|2026-03-22T20:01:27.957Z|1203572648"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "name": "PlannerStep",
+          "isActive": false,
+          "state": {
+            "travelPlan": {
+              "user_intent": "full_plan",
+              "origin": "PDX",
+              "destination": "Madrid",
+              "departure_date": "2026-04-21T00:00:00",
+              "return_date": "2026-05-05T00:00:00",
+              "duration_days": 14,
+              "adults": 2,
+              "travel_class": "BUSINESS",
+              "budget": 7000
+            },
+            "_saveOn": "2026-03-22T20:00:15.737Z"
+          },
+          "modelName": "gpt-5",
+          "modelParamsName": "gpt-5",
+          "modelParams": {}
+        },
+        {
+          "name": "FlightStep",
+          "isActive": false,
+          "state": {
+            "departureFlights": [
+              {
+                "id": "R1",
+                "airline": "Air Demo",
+                "price": 550,
+                "departure_time": "11:00",
+                "arrival_time": "15:00"
+              },
+              {
+                "id": "R2",
+                "airline": "Pico Airways",
+                "price": 400,
+                "departure_time": "07:00",
+                "arrival_time": "16:00"
+              },
+              {
+                "id": "R3",
+                "airline": "Luxury Jets",
+                "price": 800,
+                "departure_time": "10:00",
+                "arrival_time": "17:00"
+              }
+            ],
+            "_saveOn": "2026-03-22T20:00:19.771Z",
+            "returnFlights": [
+              {
+                "id": "D1",
+                "airline": "Air Demo",
+                "price": 450,
+                "departure_time": "10:00",
+                "arrival_time": "14:00"
+              },
+              {
+                "id": "D2",
+                "airline": "Pico Airways",
+                "price": 300,
+                "departure_time": "06:00",
+                "arrival_time": "11:00"
+              },
+              {
+                "id": "D3",
+                "airline": "Luxury Jets",
+                "price": 900,
+                "departure_time": "12:00",
+                "arrival_time": "16:00"
+              }
+            ]
+          },
+          "modelName": "gpt-5",
+          "modelParamsName": "gpt-5",
+          "modelParams": {}
+        },
+        {
+          "name": "HotelStep",
+          "isActive": false,
+          "state": {
+            "hotels": [
+              {
+                "id": "H1",
+                "name": "Grand Pico Hotel",
+                "price_per_night": 150,
+                "rating": 4.5,
+                "location": "City Center"
+              },
+              {
+                "id": "H2",
+                "name": "Budget Inn",
+                "price_per_night": 80,
+                "rating": 3,
+                "location": "Suburbs"
+              },
+              {
+                "id": "H3",
+                "name": "Luxury Palace",
+                "price_per_night": 400,
+                "rating": 5,
+                "location": "Beachfront"
+              }
+            ],
+            "_saveOn": "2026-03-22T20:00:20.564Z"
+          },
+          "modelName": "gpt-4o",
+          "modelParamsName": "gpt-4o",
+          "modelParams": {}
+        },
+        {
+          "name": "ActivityStep",
+          "isActive": false,
+          "state": {
+            "activities": [
+              {
+                "id": "A1",
+                "name": "City Tour",
+                "price": 50,
+                "duration": "4 hours",
+                "description": "Guided tour of the city."
+              },
+              {
+                "id": "A2",
+                "name": "Museum Visit",
+                "price": 25,
+                "duration": "2 hours",
+                "description": "Visit the national museum."
+              },
+              {
+                "id": "A3",
+                "name": "Adventure Park",
+                "price": 100,
+                "duration": "Full Day",
+                "description": "Theme park access."
+              }
+            ],
+            "_saveOn": "2026-03-22T20:00:21.302Z"
+          },
+          "modelName": "gpt-4o",
+          "modelParamsName": "gpt-4o",
+          "modelParams": {}
+        },
+        {
+          "name": "SynthesizerStep",
+          "isActive": false,
+          "state": {
+            "packages": [
+              {
+                "name": "Smart Saver Madrid",
+                "flight": {
+                  "id": "R2 + D2",
+                  "airline": "Pico Airways",
+                  "price": 700,
+                  "departure_time": "Outbound 07:00 • Return 06:00",
+                  "arrival_time": "Outbound 16:00 • Return 11:00"
+                },
+                "hotel": {
+                  "id": "H2",
+                  "name": "Budget Inn",
+                  "price_per_night": 80,
+                  "rating": 3,
+                  "location": "Suburbs"
+                },
+                "activities": [
+                  {
+                    "id": "A2",
+                    "name": "Museum Visit",
+                    "price": 25,
+                    "duration": "2 hours",
+                    "description": "Visit the national museum."
+                  },
+                  {
+                    "id": "A1",
+                    "name": "City Tour",
+                    "price": 50,
+                    "duration": "4 hours",
+                    "description": "Guided tour of the city."
+                  }
+                ],
+                "total_cost": 1895,
+                "budget_comment": "Great value—about $5,105 under your $7,000 budget."
+              },
+              {
+                "name": "Center City Comfort",
+                "flight": {
+                  "id": "R1 + D1",
+                  "airline": "Air Demo",
+                  "price": 1000,
+                  "departure_time": "Outbound 11:00 • Return 10:00",
+                  "arrival_time": "Outbound 15:00 • Return 14:00"
+                },
+                "hotel": {
+                  "id": "H1",
+                  "name": "Grand Pico Hotel",
+                  "price_per_night": 150,
+                  "rating": 4.5,
+                  "location": "City Center"
+                },
+                "activities": [
+                  {
+                    "id": "A1",
+                    "name": "City Tour",
+                    "price": 50,
+                    "duration": "4 hours",
+                    "description": "Guided tour of the city."
+                  },
+                  {
+                    "id": "A3",
+                    "name": "Adventure Park",
+                    "price": 100,
+                    "duration": "Full Day",
+                    "description": "Theme park access."
+                  }
+                ],
+                "total_cost": 3250,
+                "budget_comment": "Comfortable upgrade—around $3,750 under budget."
+              },
+              {
+                "name": "Business Luxe Explorer",
+                "flight": {
+                  "id": "R3 + D3",
+                  "airline": "Luxury Jets",
+                  "price": 1700,
+                  "departure_time": "Outbound 10:00 • Return 12:00",
+                  "arrival_time": "Outbound 17:00 • Return 16:00"
+                },
+                "hotel": {
+                  "id": "H1",
+                  "name": "Grand Pico Hotel",
+                  "price_per_night": 150,
+                  "rating": 4.5,
+                  "location": "City Center"
+                },
+                "activities": [
+                  {
+                    "id": "A1",
+                    "name": "City Tour",
+                    "price": 50,
+                    "duration": "4 hours",
+                    "description": "Guided tour of the city."
+                  },
+                  {
+                    "id": "A2",
+                    "name": "Museum Visit",
+                    "price": 25,
+                    "duration": "2 hours",
+                    "description": "Visit the national museum."
+                  },
+                  {
+                    "id": "A3",
+                    "name": "Adventure Park",
+                    "price": 100,
+                    "duration": "Full Day",
+                    "description": "Theme park access."
+                  }
+                ],
+                "total_cost": 3975,
+                "budget_comment": "Premium touches while staying about $3,025 under budget."
+              }
+            ],
+            "_saveOn": "2026-03-22T20:01:27.283Z",
+            "plan": null,
+            "flights": [],
+            "hotels": [],
+            "activities": [],
+            "chosenPackage": {
+              "name": "Business Luxe Explorer",
+              "flight": {
+                "id": "R3 + D3",
+                "airline": "Luxury Jets",
+                "price": 1700,
+                "departure_time": "Outbound 10:00 • Return 12:00",
+                "arrival_time": "Outbound 17:00 • Return 16:00"
+              },
+              "hotel": {
+                "id": "H1",
+                "name": "Grand Pico Hotel",
+                "price_per_night": 150,
+                "rating": 4.5,
+                "location": "City Center"
+              },
+              "activities": [
+                {
+                  "id": "A1",
+                  "name": "City Tour",
+                  "price": 50,
+                  "duration": "4 hours",
+                  "description": "Guided tour of the city."
+                },
+                {
+                  "id": "A2",
+                  "name": "Museum Visit",
+                  "price": 25,
+                  "duration": "2 hours",
+                  "description": "Visit the national museum."
+                },
+                {
+                  "id": "A3",
+                  "name": "Adventure Park",
+                  "price": 100,
+                  "duration": "Full Day",
+                  "description": "Theme park access."
+                }
+              ],
+              "total_cost": 3975,
+              "budget_comment": "Premium touches while staying about $3,025 under budget."
+            }
+          },
+          "modelName": "gpt-5",
+          "modelParamsName": "gpt-5",
+          "modelParams": {}
+        },
+        {
+          "name": "EndStep",
+          "isActive": true,
+          "state": {
+            "_prompt": "Thank user for using travel planning service. Tell them it is booked",
+            "_saveOn": "2026-03-22T20:01:27.283Z"
+          },
+          "modelName": "gpt-4o",
+          "modelParamsName": "gpt-4o",
+          "modelParams": {}
+        }
+      ],
+      "context": {
+        "config": null
+      },
+      "sequence": [
+        "PlannerStep",
+        "FlightStep",
+        "PlannerStep",
+        "HotelStep",
+        "PlannerStep",
+        "ActivityStep",
+        "PlannerStep",
+        "SynthesizerStep",
+        "EndStep"
+      ]
+    }
+  ],
+  "log": [],
+  "error": [],
+  "warn": [],
+  "debug": [],
+  "verbose": []
+}

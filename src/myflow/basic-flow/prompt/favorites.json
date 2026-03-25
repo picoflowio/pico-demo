@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "favoriteColor": {
+      "type": "string",
+      "enum": ["red", "blue", "white"]
+    },
+    "favoriteMovie": {
+      "type": "string"
+    },
+    "favoriteSeason": {
+      "type": "string",
+      "enum": ["spring", "summer", "autumn", "winter"]
+    }
+  },
+  "required": ["favoriteColor", "favoriteMovie", "favoriteSeason"],
+  "additionalProperties": false
+}

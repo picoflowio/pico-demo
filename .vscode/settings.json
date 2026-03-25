@@ -1,0 +1,22 @@
+{
+    "cSpell.words": [
+        "anatine",
+        "axio",
+        "COSMODB",
+        "DBNAME",
+        "endchat",
+        "genai",
+        "kwargs",
+        "langchain",
+        "myflow",
+        "ollama",
+        "picoflow",
+        "qwen",
+        "sdoc",
+        "streamlit",
+        "uuidv"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": []
+}
