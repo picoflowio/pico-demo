@@ -13,8 +13,12 @@ $ yarn install
 In order to run this project, you need to decide to use a MongoDB or a CosmoDB.
 Both have support locally or in the Cloud.
 
-
-For HotelFlow, you need:
+### For all Flows, you need:
+Create 1 collection in document DB.
+```text
+sessions
+```
+### For HotelFlow, you need:
 Create 2 collections for your document DB:
 ```text
 hotels
@@ -23,12 +27,12 @@ sessions
 
 Upload a hotel database 
 ```text
-hotels-cosmo.json (for Cosmo) 
+hotels-cosmo.json (for Cosmo)
 hotels-mongo.json (for Mongo)
 ```
-
 These two json files are under `src/myflow/hotel-flow/data`
-
+- https://github.com/picoflowio/pico-demo/blob/main/src/myflow/hotel-flow/data/hotels-cosmo.json
+- https://github.com/picoflowio/pico-demo/blob/main/src/myflow/hotel-flow/data/hotels-mongo.json
 
 ## Compile and run the project
 ```bash
