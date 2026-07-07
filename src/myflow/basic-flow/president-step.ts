@@ -1,13 +1,12 @@
 /*
- * Created on Sun Mar 16 2025
  *
- * Copyright (c) 2025 picoflow.io
+ * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
  * or modification of this file, via any medium, is strictly prohibited.
  */
-
-import { Step, Flow, MessageTypes } from "@picoflow/core";
-import { HumanMessageEx } from "@picoflow/core/utils/message-util";
+import { Flow } from '@picoflow/core';
+import { Step } from '@picoflow/core';
+import { HumanMessageEx, MessageTypes } from '@picoflow/core/utils/message-util';
 
 export class PresidentStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

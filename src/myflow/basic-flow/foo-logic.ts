@@ -1,5 +1,7 @@
-import { LogicStep, Flow, LogicResponseType } from "@picoflow/core";
-import { GooLogicStep } from "./goo-logic";
+import { Flow } from '@picoflow/core';
+import { LogicStep } from '@picoflow/core';
+import { GooLogicStep } from './goo-logic';
+import { LogicResponseType } from '@picoflow/core';
 
 export class FooLogicStep extends LogicStep {
   constructor(flow: Flow, isActive = false) {

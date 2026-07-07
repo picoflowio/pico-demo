@@ -1,5 +1,6 @@
-
-import { LogicStep, Flow, LogicResponseType } from '@picoflow/core';
+import { Flow } from '@picoflow/core';
+import { LogicStep } from '@picoflow/core';
+import { LogicResponseType } from '@picoflow/core';
 import { FavoritesStep } from './favorites-step';
 
 export class GooLogicStep extends LogicStep {

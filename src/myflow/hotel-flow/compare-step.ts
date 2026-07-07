@@ -25,7 +25,7 @@ export class CompareStep extends Step {
     super(CompareStep, flow, isActive);
   }
 
-  protected onEnter() {
+  protected async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 

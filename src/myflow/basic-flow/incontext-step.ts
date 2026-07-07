@@ -1,13 +1,16 @@
 /*
- * Created on Sun Mar 16 2025
  *
- * Copyright (c) 2025 picoflow.io
+ * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
  * or modification of this file, via any medium, is strictly prohibited.
  */
-import { Step, Flow, MessageTypes, StepClassType } from '@picoflow/core';
-import { HumanMessageEx } from '@picoflow/core/utils/message-util';
+import { Flow } from '@picoflow/core';
+import { StepClassType } from '@picoflow/core';
+import { Step } from '@picoflow/core';
+import { HumanMessageEx, MessageTypes } from '@picoflow/core/utils/message-util';
 import z from 'zod';
+import { ConcurStep1 } from './concur-step1';
+import { ConcurStep2 } from './concur-step2';
 
 export class InContextStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -18,6 +21,7 @@ export class InContextStep extends Step {
     _langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
+    super.onCrossing(_langMessage, _priorStep);
     return new HumanMessageEx(this, 'Follow system prompt');
   }
 
@@ -27,9 +31,28 @@ export class InContextStep extends Step {
     `;
   }
 
-  public onResponse(llmText: string): string | StepClassType {
-    this.saveState({ who: llmText });
-    return llmText;
+  protected async onEnter() {
+    await super.onEnter();
+    const msg = this.getTransientState<string>('msg');
+    console.log('InContextStep.transient msg=', msg);
+    const [concurStep1, concurStep2] = await this.runSteps([
+      {
+        step: ConcurStep1,
+        userMessage: 'Run the first concurrent follow-up task.',
+      },
+      {
+        step: ConcurStep2,
+        userMessage: 'Run the second concurrent follow-up task.',
+      },
+    ]);
+    this.saveState({ concurStep1, concurStep2 });
+  }
+
+  public async onResponse(
+    llmResult: string | object,
+  ): Promise<string | StepClassType> {
+    this.saveState({ who: llmResult });
+    return JSON.stringify(llmResult);
   }
 
   public structOutputSchema(): object {

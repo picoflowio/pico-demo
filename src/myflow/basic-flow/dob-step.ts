@@ -1,16 +1,19 @@
 /*
- * Created on Sun Mar 16 2025
  *
- * Copyright (c) 2025 picoflow.io
+ * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
  * or modification of this file, via any medium, is strictly prohibited.
  */
 import { ToolCall } from '@langchain/core/messages/tool';
+import { EndStep } from '@picoflow/core';
+import { Flow } from '@picoflow/core';
+import { ToolResponseType, ToolType } from '@picoflow/core';
+import { Step } from '@picoflow/core';
 import { NameStep } from './name-step';
 import { z } from 'zod';
 import { DemoPrompt } from './prompt/demo-prompt';
+import { Prompt } from '@picoflow/core';
 import { AddressStep } from './address-step';
-import { Step, Flow, Prompt, ToolType, ToolResponseType, EndStep } from '@picoflow/core';
 
 export class DOBStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -26,7 +29,7 @@ export class DOBStep extends Step {
     If user prefer to exit, call tool 'end_chat'.
     `;
 
-    const name = this.flow.getStepStateAs<string>(NameStep, 'name');
+    const name = this.flow.getStepState<string>(NameStep, 'name');
     const prompt = Prompt.replace(template, { UserName: name });
     return prompt;
   }

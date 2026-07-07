@@ -1,16 +1,18 @@
 /*
- * Created on Sun Mar 16 2025
  *
- * Copyright (c) 2025 picoflow.io
+ * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
  * or modification of this file, via any medium, is strictly prohibited.
  */
 import { ToolCall } from '@langchain/core/messages/tool';
+import { Flow } from '@picoflow/core';
+import { ToolResponseType, ToolType } from '@picoflow/core';
+import { Step } from '@picoflow/core';
+import { DOBStep } from './dob-step';
+import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
 import { DemoPrompt } from './prompt/demo-prompt';
 import { InContextStep } from './incontext-step';
-import { Step, Flow, ToolType, ToolResponseType, EndStep } from '@picoflow/core';
-import { DOBStep } from './dob-step';
 
 export class NameStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -44,11 +46,6 @@ export class NameStep extends Step {
 
   protected async user_name(tool: ToolCall): Promise<ToolResponseType> {
     this.saveState({ name: tool.args?.name });
-    const runData = this.flow.getContext<object>('myRunData');
-    this.saveState(runData);
-
-    const answer = await this.runStep(InContextStep);
-    this.saveState({ inContext: answer });
 
     if (tool.args?.name === 'John Doe') {
       return {
@@ -56,6 +53,14 @@ export class NameStep extends Step {
         tool: 'Cannot accept John Doe, please choose a different name.',
       };
     } else {
+      const runData = this.flow.getContext<object>('myRunData');
+      this.saveState(runData);
+
+      this.flow.saveTransientStepState(InContextStep, {
+        msg: 'transient variable passed from NameStep',
+      });
+      const answer = await this.runStep(InContextStep);
+      this.saveState({ inContext: answer });
       return DOBStep;
     }
   }

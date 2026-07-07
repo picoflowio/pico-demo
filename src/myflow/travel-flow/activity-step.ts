@@ -1,5 +1,4 @@
 /*
- * Created on Mon Feb 02 2026
  *
  * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
@@ -7,12 +6,15 @@
  */
 
 import { ToolCall } from '@langchain/core/messages/tool';
+import { Flow } from '@picoflow/core';
+import { ToolResponseType, ToolType } from '@picoflow/core';
+import { Step } from '@picoflow/core';
 import { z } from 'zod';
 import { PlannerStep } from './planner-step';
 import { ActivityOption, TravelPlan } from './travel-types';
-import { Step, Flow, Prompt, ToolType, ToolResponseType } from '@picoflow/core';
 import { DirectMessage } from '@picoflow/core/utils/message-util';
 import { TravelPrompts } from './prompts';
+import { Prompt } from '@picoflow/core';
 
 export class ActivityStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -20,10 +22,7 @@ export class ActivityStep extends Step {
   }
 
   public getPrompt(): string {
-    const plan = this.flow.getStepStateAs<TravelPlan>(
-      PlannerStep,
-      'travelPlan',
-    );
+    const plan = this.flow.getStepState<TravelPlan>(PlannerStep, 'travelPlan');
 
     const prompt = Prompt.replace(TravelPrompts.ACTIVITY_SEARCH_PROMPT, {
       PLAN: JSON.stringify(plan),

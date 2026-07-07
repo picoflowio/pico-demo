@@ -24,7 +24,7 @@ export class PresentStep extends Step {
     super(PresentStep, flow, isActive);
   }
 
-  protected onEnter() {
+  protected async onEnter(): Promise<void> {
     //switch from active to inactive, erase memory
     this.eraseMemory();
   }

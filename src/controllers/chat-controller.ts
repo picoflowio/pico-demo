@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
  * or modification of this file, via any medium, is strictly prohibited.
@@ -13,12 +14,11 @@ import {
   Post,
   Res,
 } from '@nestjs/common';
-import { FastifyReply } from 'fastify';
 import { ApiResponse, ApiBody, ApiTags, ApiHeader } from '@nestjs/swagger';
-import { K } from '@picoflow/core/utils/constants';
-import { CoreConfig } from '@picoflow/core';
-import { FlowEngine } from '@picoflow/core';
+import { CoreConfig, FlowEngine, K } from '@picoflow/core';
 import { Model } from '@picoflow/core/models/model-registry';
+import { HotelFlow } from 'src/myflow/hotel-flow/hotel-flow';
+import { MedicalFlow } from 'src/myflow/medical-flow/medical-flow';
 import {
   ApiEndResponseDto,
   ApiRunResponse400Dto,
@@ -26,10 +26,10 @@ import {
   ApiEndResponse400Dto,
   ApiRunBodyDto,
 } from './api-types';
-import { HotelFlow } from 'src/myflow/hotel-flow/hotel-flow';
-import { BasicFlow } from 'src/myflow/basic-flow/basic-flow';
-import { MedicalFlow } from 'src/myflow/medical-flow/medical-flow';
 import { TravelFlow } from 'src/myflow/travel-flow/travel-flow';
+import { BasicFlow } from 'src/myflow/basic-flow/basic-flow';
+
+type FlowEngineReply = Parameters<FlowEngine['run']>[0];
 
 @ApiTags('ai')
 @Controller('ai')
@@ -37,23 +37,12 @@ export class ChatController {
   constructor(private flowEngine: FlowEngine) {
     //register flows
     flowEngine.registerFlows({ BasicFlow, HotelFlow, TravelFlow, MedicalFlow });
-
-    //register models
-
     flowEngine.registerModel(
-      new Model('gpt-5', {
+      new Model('gpt-5.1', {
         apiKey: CoreConfig.OpenAIKey,
         maxRetries: CoreConfig.llmRetry,
         reasoning: { effort: 'low' },
-      }),
-      true,
-    );
-
-    flowEngine.registerModel(
-      new Model('gpt-4o', {
-        temperature: CoreConfig.llmTemperature,
-        apiKey: CoreConfig.OpenAIKey,
-        maxRetries: CoreConfig.llmRetry,
+        useResponsesApi: true,
       }),
       true,
     );
@@ -78,13 +67,24 @@ export class ChatController {
     type: ApiRunResponse400Dto,
   })
   async run(
-    @Res() res: FastifyReply,
+    // @Req() req: Request,
+    @Res() res: FlowEngineReply,
     @Body(K.message) userMessage: string,
     @Body(K.flowName) flowName: string,
     @Body('config') config: object,
     @Headers(K.ChatSessionID) sessionId?: string,
   ) {
     await this.flowEngine.run(res, flowName, userMessage, sessionId, config);
+  }
+  //.................................................................
+  @Get('flows')
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of registered flow names',
+    schema: { type: 'array', items: { type: 'string', example: 'BasicFlow' } },
+  })
+  getFlows() {
+    return this.flowEngine.getFlowNames();
   }
   //.................................................................
   @Post('end')
@@ -104,7 +104,7 @@ export class ChatController {
     type: ApiEndResponse400Dto,
   })
   async endChat(
-    @Res() res: FastifyReply,
+    @Res() res: FlowEngineReply,
     @Headers(K.ChatSessionID) sessionId?: string,
   ) {
     const result = await this.flowEngine.endChat(sessionId);
@@ -114,13 +114,24 @@ export class ChatController {
     res.send(result);
   }
   //.................................................................
-  @Get('flows')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'List of registered flow names',
-    schema: { type: 'array', items: { type: 'string', example: 'BasicFlow' } },
-  })
-  getFlows() {
-    return this.flowEngine.getFlowNames();
-  }
+  // @Post('test')
+  // async test(
+  //   @Body('maxBudget') maxBudget: number,
+  //   @Body('minBudget') minBudget: number,
+  // ) {
+  //   const startDate = new Date('7/01/2025');
+  //   const endDate = new Date('7/06/2025');
+  //   const roomType = ['one bed'];
+  //   const amenities = ['freeWiFi', 'freeParking'];
+  //   const hotelEntries = await PricingEngine.searchHotel(
+  //     startDate,
+  //     endDate,
+  //     amenities,
+  //     roomType,
+  //     maxBudget,
+  //     minBudget,
+  //   );
+  //   console.log(hotelEntries);
+  //   return { success: true };
+  // }
 }

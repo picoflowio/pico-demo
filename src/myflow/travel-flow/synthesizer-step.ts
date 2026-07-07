@@ -1,5 +1,4 @@
 /*
- * Created on Mon Feb 02 2026
  *
  * Copyright (c) 2026 picoflow.io
  * This software is proprietary and confidential. Unauthorized copying, distribution
@@ -15,17 +14,14 @@ import {
   TravelPackageSchema,
 } from './travel-types';
 import { z } from 'zod';
+import { Step } from '@picoflow/core';
+import { Flow } from '@picoflow/core';
+import { ToolResponseType, ToolType } from '@picoflow/core';
+import { EndStep } from '@picoflow/core';
 import { PlannerStep } from './planner-step';
 import { FlightStep } from './flight-step';
 import { HotelStep } from './hotel-step';
 import { ActivityStep } from './activity-step';
-import {
-  Step,
-  Flow,
-  ToolType,
-  ToolResponseType,
-  EndStep,
-} from '@picoflow/core';
 
 export class SynthesizerStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -51,20 +47,17 @@ export class SynthesizerStep extends Step {
   }
 
   public getPrompt(): string {
-    const plan = this.flow.getStepStateAs<TravelPlan>(
-      PlannerStep,
-      'travelPlan',
-    );
-    const departureFlights = this.flow.getStepStateAs<FlightOption>(
+    const plan = this.flow.getStepState<TravelPlan>(PlannerStep, 'travelPlan');
+    const departureFlights = this.flow.getStepState<FlightOption>(
       FlightStep,
       'departureFlights',
     );
-    const returnFlights = this.flow.getStepStateAs<FlightOption>(
+    const returnFlights = this.flow.getStepState<FlightOption>(
       FlightStep,
       'returnFlights',
     );
-    const hotels = this.flow.getStepStateAs<HotelOption>(HotelStep, 'hotels');
-    const activities = this.flow.getStepStateAs<ActivityOption>(
+    const hotels = this.flow.getStepState<HotelOption>(HotelStep, 'hotels');
+    const activities = this.flow.getStepState<ActivityOption>(
       ActivityStep,
       'activities',
     );
