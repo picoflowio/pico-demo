@@ -32,3 +32,5 @@ lerna-debug.log*
 .tmp
 
 yarn.lock
+
+/test/**

@@ -11,7 +11,7 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { z } from 'zod';
 
-import { ValidateAddress } from 'src/myflow/basic-flow/validators/address-validator';
+import { ValidateAddress } from './validators/address-validator';
 import { DemoPrompt } from './prompt/demo-prompt';
 
 export class AddressStep extends Step {

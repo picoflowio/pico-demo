@@ -17,8 +17,8 @@ import {
 import { ApiResponse, ApiBody, ApiTags, ApiHeader } from '@nestjs/swagger';
 import { CoreConfig, FlowEngine, K } from '@picoflow/core';
 import { Model } from '@picoflow/core/models/model-registry';
-import { HotelFlow } from 'src/myflow/hotel-flow/hotel-flow';
-import { MedicalFlow } from 'src/myflow/medical-flow/medical-flow';
+import { HotelFlow } from '../myflow/hotel-flow/hotel-flow';
+import { MedicalFlow } from '../myflow/medical-flow/medical-flow';
 import {
   ApiEndResponseDto,
   ApiRunResponse400Dto,
@@ -26,8 +26,8 @@ import {
   ApiEndResponse400Dto,
   ApiRunBodyDto,
 } from './api-types';
-import { TravelFlow } from 'src/myflow/travel-flow/travel-flow';
-import { BasicFlow } from 'src/myflow/basic-flow/basic-flow';
+import { TravelFlow } from '../myflow/travel-flow/travel-flow';
+import { BasicFlow } from '../myflow/basic-flow/basic-flow';
 
 type FlowEngineReply = Parameters<FlowEngine['run']>[0];
 

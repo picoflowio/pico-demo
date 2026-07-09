@@ -23,7 +23,7 @@ export class DOBStep extends Step {
   public getPrompt(): string {
     const template = `
     ${DemoPrompt.TravelRole}
-    Please ask the DOB for {{UserName}}.
+    Ask the user to provide the date of birth for {{UserName}}.
     Once you capture the DOB, call tool 'dob'.
     If you have doubt interpreting the DOB, ask user to re-enter the DOB.
     If user prefer to exit, call tool 'end_chat'.

@@ -30,6 +30,7 @@ export class BasicFlow extends Flow {
     // this.useModel('claude-opus-4-6');
     // this.useModel('nvidia-deepseek-v4-pro');
     // this.useModel('nvidia-nemotron-3');
+    // this.useModel('gemini-2.5-flash');
   }
 
   protected defineSteps(): Step[] {

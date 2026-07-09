@@ -12,6 +12,7 @@
     "clean": "yarn cache clean && rimraf node_modules yarn.lock && yarn install",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test:basic-flow": "node --require ts-node/register --require tsconfig-paths/register --test test/basic-flow/basic-flow.e2e-spec.ts",
     "start": "yarn build && node dist/main --watch",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
