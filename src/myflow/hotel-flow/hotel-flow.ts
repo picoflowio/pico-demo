@@ -23,7 +23,9 @@ export class HotelFlow extends Flow {
         reasoning: { effort: 'medium' },
       }),
       new PresentStep(this, false).useModel(model),
-      new CompareStep(this, false).useModel(model),
+      new CompareStep(this).useModel('gpt-5.1').useModelParams<'gpt-5.1'>({
+        reasoning: { effort: 'low' },
+      }),
       new EndStep(this).useMemory('end').useModel(model),
     ];
   }
