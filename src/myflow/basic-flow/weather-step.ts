@@ -12,6 +12,7 @@ import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
 import { DemoPrompt } from './prompt/demo-prompt';
 import { FooLogicStep } from './foo-logic';
+import { callCityTemperatureMcpTool } from '../../tools/city-temperature-mcp-client';
 
 export class WeatherStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {
@@ -43,13 +44,23 @@ export class WeatherStep extends Step {
   }
 
   protected async get_weather(tool: ToolCall): Promise<ToolResponseType> {
-    if (tool.args?.cityName === 'NYC' || tool.args?.cityName === 'LA') {
+    const cityName = tool.args?.cityName;
+    if (typeof cityName !== 'string') {
+      return {
+        step: WeatherStep,
+        tool: 'Only LA and NYC cities are allowed',
+      };
+    }
+
+    const [weather] = await callCityTemperatureMcpTool([cityName]);
+    if (weather?.temperature !== null && weather?.temperature !== undefined) {
+      const stateCityName = this.normalizeCityName(cityName);
       this.saveState({
-        [`cityName_${tool.args?.cityName}`]: true,
+        [`city_${stateCityName}`]: weather.temperature,
       });
 
-      const LA = this.getState('cityName_LA');
-      const NYC = this.getState('cityName_NYC');
+      const LA = this.getState('city_LA');
+      const NYC = this.getState('city_NYC');
       if (LA && NYC) {
         // return NameStep;
         return FooLogicStep;
@@ -62,6 +73,17 @@ export class WeatherStep extends Step {
         tool: 'Only LA and NYC cities are allowed',
       };
     }
+  }
+
+  private normalizeCityName(cityName: string): string {
+    const normalized = cityName.trim().toLowerCase();
+    if (normalized === 'nyc') {
+      return 'NYC';
+    }
+    if (normalized === 'la') {
+      return 'LA';
+    }
+    return cityName;
   }
 
   protected async end_chat(_tool: ToolCall): Promise<ToolResponseType> {
