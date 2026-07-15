@@ -13,20 +13,34 @@ import { CompareStep } from './compare-step';
 export class HotelFlow extends Flow {
   public constructor() {
     super(HotelFlow);
+    // this.useModel('claude-opus-4-6');
     this.useModel('gpt-4o');
+    // this.useModel('gpt-5.1');
+    // this.useModel('nvidia-deepseek-v4-flash');
+
+    //configure memory compaction, if no configuration is provided, the default is
+    // to summarize after 16 messages, keeping the most recent 8 messages in memory
+    this.getMemory()
+      .setSummaryModel('gpt-4o')
+      .setSummaryConfig({ minMessages: 16, recentMessages: 8 })
+      .enableSummary('hotel-explore');
   }
 
   protected defineSteps(): Step[] {
-    const model = 'gpt-5';
     return [
-      new ExploreStep(this, true).useModel<'gpt-5'>(model, {
-        reasoning: { effort: 'medium' },
+      new ExploreStep(this, true)
+        .useMemory('hotel-explore')
+        .useModel('gpt-5.1')
+        .useModelParams<'gpt-5.1'>({
+          reasoning: { effort: 'low' },
+        }),
+      new PresentStep(this).useModelParams<'gpt-4o'>({
+        temperature: 0.5,
       }),
-      new PresentStep(this, false).useModel(model),
       new CompareStep(this).useModel('gpt-5.1').useModelParams<'gpt-5.1'>({
         reasoning: { effort: 'low' },
       }),
-      new EndStep(this).useMemory('end').useModel(model),
+      new EndStep(this).useMemory('end'),
     ];
   }
 }
