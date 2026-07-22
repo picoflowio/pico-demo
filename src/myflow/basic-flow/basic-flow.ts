@@ -30,7 +30,9 @@ export class BasicFlow extends Flow {
     // this.useModel('claude-opus-4-6');
     // this.useModel('nvidia-deepseek-v4-pro');
     // this.useModel('nvidia-nemotron-3');
-    // this.useModel('gemini-2.5-flash');
+    // this.useModel('gemma-4-31b-it')
+    // this.useModel('gemini-3.1-flash-lite-preview');
+    // this.useModel('gemini-3-flash-preview');
   }
 
   protected defineSteps(): Step[] {
@@ -45,6 +47,7 @@ export class BasicFlow extends Flow {
       new InContextStep(this).useMemory('separate').useModel('gpt-5.1', {
         reasoning: { effort: 'low' },
       }),
+      new InContextStep(this).useMemory('separate'),
       new ConcurStep1(this),
       new ConcurStep2(this),
       new ConcurStep3(this),
