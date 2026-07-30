@@ -5,11 +5,11 @@
  * or modification of this file, via any medium, is strictly prohibited.
  */
 
-import { PlannerStep } from './planner-step';
-import { FlightStep } from './flight-step';
-import { HotelStep } from './hotel-step';
-import { ActivityStep } from './activity-step';
-import { SynthesizerStep } from './synthesizer-step';
+import { PlannerStep } from './planner-step.js';
+import { FlightStep } from './flight-step.js';
+import { HotelStep } from './hotel-step.js';
+import { ActivityStep } from './activity-step.js';
+import { SynthesizerStep } from './synthesizer-step.js';
 import { Flow } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';

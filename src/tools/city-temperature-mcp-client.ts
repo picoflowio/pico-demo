@@ -1,7 +1,7 @@
 import {
   CityTemperature,
   handleJsonRpcMessage,
-} from './city-temperature-mcp-server';
+} from './city-temperature-mcp-server.js';
 
 export async function callCityTemperatureMcpTool(
   cities: string[],

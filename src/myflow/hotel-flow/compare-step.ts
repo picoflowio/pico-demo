@@ -9,14 +9,17 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
-import { ExploreStep } from './explore-step';
-import { FlowPrompt } from '@picoflow/core/prompt/flow-prompt';
-import { PresentStep } from './present-step';
-import { PricingEngine } from './backend/pricing-engine';
-import { merge } from 'lodash';
-import { GenChart } from './gen-chart';
-import { Prompt } from '@picoflow/core/prompt/prompt-util';
-import { AiMessageEx } from '@picoflow/core/utils/message-util';
+import { ExploreStep } from './explore-step.js';
+import { FlowPrompt } from '@picoflow/core';
+import { PresentStep } from './present-step.js';
+import { PricingEngine } from './backend/pricing-engine.js';
+import lodash from 'lodash';
+
+const { merge } = lodash;
+import { GenChart } from './gen-chart.js';
+import { Prompt } from '@picoflow/core';
+import messageUtil from '@picoflow/core/utils/message-util';
+const { AiMessageEx } = messageUtil;
 //........................................................
 const ComparePrompt = Prompt.file('prompt/compare.md');
 //........................................................

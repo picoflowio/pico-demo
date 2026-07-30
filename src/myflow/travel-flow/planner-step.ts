@@ -6,15 +6,15 @@
  */
 
 import { ToolCall } from '@langchain/core/messages/tool';
-import { TravelPrompts } from './prompts';
-import { TravelPlan, TravelPlanSchema } from './travel-types';
-import { FlightStep } from './flight-step';
+import { TravelPrompts } from './prompts.js';
+import { TravelPlan, TravelPlanSchema } from './travel-types.js';
+import { FlightStep } from './flight-step.js';
 import { Step } from '@picoflow/core';
 import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
-import { HotelStep } from './hotel-step';
-import { ActivityStep } from './activity-step';
-import { SynthesizerStep } from './synthesizer-step';
+import { HotelStep } from './hotel-step.js';
+import { ActivityStep } from './activity-step.js';
+import { SynthesizerStep } from './synthesizer-step.js';
 
 export class PlannerStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

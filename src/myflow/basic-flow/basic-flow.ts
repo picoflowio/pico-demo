@@ -5,23 +5,23 @@
  * or modification of this file, via any medium, is strictly prohibited.
  */
 import { Flow } from '@picoflow/core';
-import { NameStep } from './name-step';
-import { AddressStep } from './address-step';
-import { DOBStep } from './dob-step';
+import { NameStep } from './name-step.js';
+import { AddressStep } from './address-step.js';
+import { DOBStep } from './dob-step.js';
 import { EndStep } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { FooLogicStep } from './foo-logic';
-import { GooLogicStep } from './goo-logic';
-import { WeatherStep } from './weather-step';
-import { InContextStep } from './incontext-step';
-import { PresidentStep } from './president-step';
+import { FooLogicStep } from './foo-logic.js';
+import { GooLogicStep } from './goo-logic.js';
+import { WeatherStep } from './weather-step.js';
+import { InContextStep } from './incontext-step.js';
+import { PresidentStep } from './president-step.js';
 import { SessionLogger } from '@picoflow/core';
-import { FavoritesStep } from './favorites-step';
-import { ConcurStep1 } from './concur-step1';
-import { ConcurStep2 } from './concur-step2';
+import { FavoritesStep } from './favorites-step.js';
+import { ConcurStep1 } from './concur-step1.js';
+import { ConcurStep2 } from './concur-step2.js';
 import { SessionType } from '@picoflow/core';
-import { ConcurStep3 } from './concur-step3';
-import { ConcurStep4 } from './concur-step4';
+import { ConcurStep3 } from './concur-step3.js';
+import { ConcurStep4 } from './concur-step4.js';
 
 export class BasicFlow extends Flow {
   public constructor() {

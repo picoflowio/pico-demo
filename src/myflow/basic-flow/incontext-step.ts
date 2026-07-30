@@ -7,10 +7,12 @@
 import { Flow } from '@picoflow/core';
 import { StepClassType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { HumanMessageEx, MessageTypes } from '@picoflow/core/utils/message-util';
+import messageUtil from '@picoflow/core/utils/message-util';
+import type { MessageTypes } from '@picoflow/core/utils/message-util';
+const { HumanMessageEx } = messageUtil;
 import z from 'zod';
-import { ConcurStep1 } from './concur-step1';
-import { ConcurStep2 } from './concur-step2';
+import { ConcurStep1 } from './concur-step1.js';
+import { ConcurStep2 } from './concur-step2.js';
 
 export class InContextStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

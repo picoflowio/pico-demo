@@ -7,11 +7,13 @@
 
 import { Flow } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { NameStep } from './name-step';
+import { NameStep } from './name-step.js';
 import { Prompt } from '@picoflow/core';
 import { StringUtil } from '@picoflow/core';
 import { StepClassType } from '@picoflow/core';
-import { HumanMessageEx, MessageTypes } from '@picoflow/core/utils/message-util';
+import messageUtil from '@picoflow/core/utils/message-util';
+import type { MessageTypes } from '@picoflow/core/utils/message-util';
+const { HumanMessageEx } = messageUtil;
 
 const PROMPT = Prompt.file('prompt/favorites.md');
 const SCHEMA = Prompt.file('prompt/favorites.json');

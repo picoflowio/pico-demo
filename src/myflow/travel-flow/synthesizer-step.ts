@@ -5,23 +5,23 @@
  * or modification of this file, via any medium, is strictly prohibited.
  */
 import { ToolCall } from '@langchain/core/messages/tool';
-import { TravelPrompts } from './prompts';
+import { TravelPrompts } from './prompts.js';
 import {
   TravelPlan,
   FlightOption,
   HotelOption,
   ActivityOption,
   TravelPackageSchema,
-} from './travel-types';
+} from './travel-types.js';
 import { z } from 'zod';
 import { Step } from '@picoflow/core';
 import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';
-import { PlannerStep } from './planner-step';
-import { FlightStep } from './flight-step';
-import { HotelStep } from './hotel-step';
-import { ActivityStep } from './activity-step';
+import { PlannerStep } from './planner-step.js';
+import { FlightStep } from './flight-step.js';
+import { HotelStep } from './hotel-step.js';
+import { ActivityStep } from './activity-step.js';
 
 export class SynthesizerStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

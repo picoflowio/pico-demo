@@ -9,13 +9,15 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
-import { HotelPrompt } from './prompt/hotel-prompt';
+import { HotelPrompt } from './prompt/hotel-prompt.js';
 import moment from 'moment';
-import { set } from 'lodash';
-import { PresentStep } from './present-step';
-import { PricingEngine } from './backend/pricing-engine';
-import { FlowPrompt } from '@picoflow/core/prompt/flow-prompt';
-import { Prompt } from '@picoflow/core/prompt/prompt-util';
+import lodash from 'lodash';
+
+const { set } = lodash;
+import { PresentStep } from './present-step.js';
+import { PricingEngine } from './backend/pricing-engine.js';
+import { FlowPrompt } from '@picoflow/core';
+import { Prompt } from '@picoflow/core';
 //........................................................
 const ExplorePartial = Prompt.file('prompt/explore.md');
 const ExplorePrompt = `
@@ -33,7 +35,9 @@ export class ExploreStep extends Step {
 
   public getPrompt(): string {
     const hotelJson = JSON.parse(HotelJSON);
-    set(hotelJson, 'currentDate', moment().utc().format());
+    const currentDate =
+      process.env.HOTEL_FLOW_CURRENT_DATE ?? moment().utc().format();
+    set(hotelJson, 'currentDate', currentDate);
 
     const hotelFound = this.getState('hotelFound');
     if (hotelFound) {

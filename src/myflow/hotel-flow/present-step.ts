@@ -9,13 +9,14 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
-import { SearchHotelEntry } from './backend/pricing-engine';
-import { ExploreStep } from './explore-step';
-import { MessageTypes } from '@picoflow/core/utils/message-util';
-import { FlowPrompt } from '@picoflow/core/prompt/flow-prompt';
-import { CompareStep } from './compare-step';
+import { SearchHotelEntry } from './backend/pricing-engine.js';
+import { ExploreStep } from './explore-step.js';
+import messageUtil from '@picoflow/core/utils/message-util';
+import type { MessageTypes } from '@picoflow/core/utils/message-util';
+import { FlowPrompt } from '@picoflow/core';
+import { CompareStep } from './compare-step.js';
 import { Prompt } from '@picoflow/core';
-import { HumanMessageEx } from '@picoflow/core/utils/message-util';
+const { HumanMessageEx } = messageUtil;
 
 const PresentPrompt = Prompt.file('prompt/present.md');
 //........................................................

@@ -4,9 +4,11 @@
  * or modification of this file, via any medium, is strictly prohibited.
  */
 import { CoreConfig } from '@picoflow/core';
-import { MongoDB } from './mongo';
-import { get } from 'lodash';
-import { CosmoDB } from './cosmo';
+import { MongoDB } from './mongo.js';
+import lodash from 'lodash';
+
+const { get } = lodash;
+import { CosmoDB } from './cosmo.js';
 
 type HotelPriceEntry = {
   basePrice: number;

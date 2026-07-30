@@ -10,9 +10,9 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
-import { DemoPrompt } from './prompt/demo-prompt';
-import { FooLogicStep } from './foo-logic';
-import { callCityTemperatureMcpTool } from '../../tools/city-temperature-mcp-client';
+import { DemoPrompt } from './prompt/demo-prompt.js';
+import { FooLogicStep } from './foo-logic.js';
+import { callCityTemperatureMcpTool } from '../../tools/city-temperature-mcp-client.js';
 
 export class WeatherStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

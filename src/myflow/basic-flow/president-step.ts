@@ -6,7 +6,9 @@
  */
 import { Flow } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { HumanMessageEx, MessageTypes } from '@picoflow/core/utils/message-util';
+import messageUtil from '@picoflow/core/utils/message-util';
+import type { MessageTypes } from '@picoflow/core/utils/message-util';
+const { HumanMessageEx } = messageUtil;
 
 export class PresidentStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

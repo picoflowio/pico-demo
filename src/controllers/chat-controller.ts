@@ -17,17 +17,17 @@ import {
 import { ApiResponse, ApiBody, ApiTags, ApiHeader } from '@nestjs/swagger';
 import { CoreConfig, FlowEngine, K } from '@picoflow/core';
 import { Model } from '@picoflow/core/models/model-registry';
-import { HotelFlow } from '../myflow/hotel-flow/hotel-flow';
-import { MedicalFlow } from '../myflow/medical-flow/medical-flow';
+import { HotelFlow } from '../myflow/hotel-flow/hotel-flow.js';
+import { MedicalFlow } from '../myflow/medical-flow/medical-flow.js';
 import {
   ApiEndResponseDto,
   ApiRunResponse400Dto,
   ApiRunResponseDto,
   ApiEndResponse400Dto,
   ApiRunBodyDto,
-} from './api-types';
-import { TravelFlow } from '../myflow/travel-flow/travel-flow';
-import { BasicFlow } from '../myflow/basic-flow/basic-flow';
+} from './api-types.js';
+import { TravelFlow } from '../myflow/travel-flow/travel-flow.js';
+import { BasicFlow } from '../myflow/basic-flow/basic-flow.js';
 
 type FlowEngineReply = Parameters<FlowEngine['run']>[0];
 

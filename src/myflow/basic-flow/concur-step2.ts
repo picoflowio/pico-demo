@@ -6,7 +6,7 @@
  */
 import { Flow } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { ConcurStep4 } from './concur-step4';
+import { ConcurStep4 } from './concur-step4.js';
 
 export class ConcurStep2 extends Step {
   constructor(flow: Flow, isActive?: boolean) {

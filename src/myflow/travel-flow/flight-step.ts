@@ -9,11 +9,12 @@ import { ToolCall } from '@langchain/core/messages/tool';
 import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { DirectMessage } from '@picoflow/core/utils/message-util';
+import messageUtil from '@picoflow/core/utils/message-util';
+const { DirectMessage } = messageUtil;
 import { z } from 'zod';
-import { PlannerStep } from './planner-step';
-import { FlightOption, TravelPlan } from './travel-types';
-import { TravelPrompts } from './prompts';
+import { PlannerStep } from './planner-step.js';
+import { FlightOption, TravelPlan } from './travel-types.js';
+import { TravelPrompts } from './prompts.js';
 import { Prompt } from '@picoflow/core';
 
 export class FlightStep extends Step {

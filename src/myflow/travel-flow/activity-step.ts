@@ -10,10 +10,11 @@ import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { z } from 'zod';
-import { PlannerStep } from './planner-step';
-import { ActivityOption, TravelPlan } from './travel-types';
-import { DirectMessage } from '@picoflow/core/utils/message-util';
-import { TravelPrompts } from './prompts';
+import { PlannerStep } from './planner-step.js';
+import { ActivityOption, TravelPlan } from './travel-types.js';
+import messageUtil from '@picoflow/core/utils/message-util';
+const { DirectMessage } = messageUtil;
+import { TravelPrompts } from './prompts.js';
 import { Prompt } from '@picoflow/core';
 
 export class ActivityStep extends Step {

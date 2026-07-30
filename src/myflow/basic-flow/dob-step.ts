@@ -9,11 +9,11 @@ import { EndStep } from '@picoflow/core';
 import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { NameStep } from './name-step';
+import { NameStep } from './name-step.js';
 import { z } from 'zod';
-import { DemoPrompt } from './prompt/demo-prompt';
+import { DemoPrompt } from './prompt/demo-prompt.js';
 import { Prompt } from '@picoflow/core';
-import { AddressStep } from './address-step';
+import { AddressStep } from './address-step.js';
 
 export class DOBStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

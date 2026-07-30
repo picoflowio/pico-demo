@@ -7,7 +7,7 @@ import {
   ToolType,
 } from '@picoflow/core';
 import { z } from 'zod';
-import { BookingStep } from './booking-step';
+import { BookingStep } from './booking-step.js';
 
 export class SymptomsStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

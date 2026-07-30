@@ -1,6 +1,6 @@
 import { EndStep, Flow, Step } from '@picoflow/core';
-import { SymptomsStep } from './symptoms-step';
-import { BookingStep } from './booking-step';
+import { SymptomsStep } from './symptoms-step.js';
+import { BookingStep } from './booking-step.js';
 
 export class MedicalFlow extends Flow {
   public constructor() {

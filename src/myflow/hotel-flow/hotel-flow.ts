@@ -6,9 +6,9 @@
 import { EndStep } from '@picoflow/core';
 import { Flow } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { ExploreStep } from './explore-step';
-import { PresentStep } from './present-step';
-import { CompareStep } from './compare-step';
+import { ExploreStep } from './explore-step.js';
+import { PresentStep } from './present-step.js';
+import { CompareStep } from './compare-step.js';
 
 export class HotelFlow extends Flow {
   public constructor() {

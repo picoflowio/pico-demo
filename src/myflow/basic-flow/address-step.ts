@@ -11,8 +11,8 @@ import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
 import { z } from 'zod';
 
-import { ValidateAddress } from './validators/address-validator';
-import { DemoPrompt } from './prompt/demo-prompt';
+import { ValidateAddress } from './validators/address-validator.js';
+import { DemoPrompt } from './prompt/demo-prompt.js';
 
 export class AddressStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

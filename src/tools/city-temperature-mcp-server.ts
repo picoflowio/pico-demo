@@ -1,4 +1,5 @@
 import * as readline from 'node:readline';
+import { pathToFileURL } from 'node:url';
 
 type JsonRpcId = string | number | null;
 
@@ -227,6 +228,6 @@ function jsonRpcError(
   };
 }
 
-if (require.main === module) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   startCityTemperatureMcpServer();
 }

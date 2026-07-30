@@ -8,11 +8,11 @@ import { ToolCall } from '@langchain/core/messages/tool';
 import { Flow } from '@picoflow/core';
 import { ToolResponseType, ToolType } from '@picoflow/core';
 import { Step } from '@picoflow/core';
-import { DOBStep } from './dob-step';
+import { DOBStep } from './dob-step.js';
 import { EndStep } from '@picoflow/core';
 import { z } from 'zod';
-import { DemoPrompt } from './prompt/demo-prompt';
-import { InContextStep } from './incontext-step';
+import { DemoPrompt } from './prompt/demo-prompt.js';
+import { InContextStep } from './incontext-step.js';
 
 export class NameStep extends Step {
   constructor(flow: Flow, isActive?: boolean) {

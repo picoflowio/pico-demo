@@ -1,0 +1,67 @@
+{
+  "flowName": "BasicFlow",
+  "judgeModel": "gpt-4o",
+  "judgeMinScore": 0.75,
+  "turns": [
+    {
+      "label": "initial weather prompt",
+      "input": "Hi",
+      "expectedResponse": "The assistant should greet or acknowledge the user and ask for two city names so it can compare current weather or temperature. It may also mention that the user can exit.",
+      "completed": false
+    },
+    {
+      "label": "unsupported city recovery",
+      "input": "Portland, Vancouver",
+      "expectedResponse": "The assistant should explain that it could not handle or retrieve weather for Portland and Vancouver, then recover by asking the user to try different cities, asking about supported city options, or offering supported city options. It does not need to name LA or NYC explicitly. It may mention that the user can exit, but that is not required.",
+      "completed": false
+    },
+    {
+      "label": "favorite color prompt",
+      "input": "LA & NYC",
+      "expectedResponse": "The assistant should move on from the weather collection and ask for the user's favorite color, ideally constrained to red, blue, or white. It is also acceptable to ask for favorite color, favorite movie, and favorite season together in one response.",
+      "completed": false
+    },
+    {
+      "label": "favorite movie prompt",
+      "input": "blue",
+      "expectedResponse": "The assistant should proceed after the favorite color answer and ask for the user's favorite movie or any remaining favorite information. It does not need to explicitly acknowledge blue.",
+      "completed": false
+    },
+    {
+      "label": "favorite season prompt",
+      "input": "Star Wars",
+      "expectedResponse": "The assistant should proceed after the favorite movie answer and ask for the user's favorite season or any remaining favorite information, ideally constrained to spring, summer, autumn, or winter. It does not need to explicitly acknowledge Star Wars.",
+      "completed": false
+    },
+    {
+      "label": "name prompt after favorites",
+      "input": "summer",
+      "expectedResponse": "The assistant should proceed after the favorite season answer and ask the user for their name. It does not need to explicitly acknowledge summer. It is acceptable if the response includes extra wording that summer is not a name, as long as it clearly asks for the user's name.",
+      "completed": false
+    },
+    {
+      "label": "invalid placeholder name recovery",
+      "input": "John Doe",
+      "expectedResponse": "The assistant should reject John Doe as an unacceptable or invalid placeholder name and ask the user to provide a different name.",
+      "completed": false
+    },
+    {
+      "label": "DOB prompt after accepted name",
+      "input": "Joe Cline",
+      "expectedResponse": "The assistant should proceed after receiving Joe Cline as the user's name and ask for Joe Cline's date of birth.",
+      "completed": false
+    },
+    {
+      "label": "address prompt after DOB",
+      "input": "1/1/2000",
+      "expectedResponse": "The assistant should proceed after receiving January 1, 2000 as the user's date of birth and ask the user to provide an address.",
+      "completed": false
+    },
+    {
+      "label": "final end response",
+      "input": "123 K street , Portland, OR 97006",
+      "expectedResponse": "The assistant should politely end or close the conversation after receiving the address. It does not need to explicitly repeat or acknowledge the address.",
+      "completed": true
+    }
+  ]
+}
