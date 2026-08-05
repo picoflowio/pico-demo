@@ -1,29 +1,26 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 
-import { ToolCall } from '@langchain/core/messages/tool';
-import { Flow } from '@picoflow/core';
-import { ToolResponseType, ToolType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import messageUtil from '@picoflow/core/utils/message-util';
-const { DirectMessage } = messageUtil;
-import { z } from 'zod';
-import { PlannerStep } from './planner-step.js';
-import { FlightOption, TravelPlan } from './travel-types.js';
-import { TravelPrompts } from './prompts.js';
-import { Prompt } from '@picoflow/core';
+import { Flow, Tool, go } from "@picoflow/core";
+import { ToolResponseType, ToolType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { DirectMessage } from "@picoflow/core";
+import { z } from "zod";
+import { PlannerStep } from "./planner-step.js";
+import { FlightOption, TravelPlan } from "./travel-types.js";
+import { TravelPrompts } from "./prompts.js";
+import { Prompt } from "@picoflow/core";
 
 export class FlightStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(FlightStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
   public getPrompt(): string {
-    const plan = this.flow.getStepState<TravelPlan>(PlannerStep, 'travelPlan');
+    const plan = this.flow.getStepState<TravelPlan>(PlannerStep, "travelPlan");
     const prompt = Prompt.replace(TravelPrompts.FLIGHT_SEARCH_PROMPT, {
       PLAN: JSON.stringify(plan),
     });
@@ -33,83 +30,80 @@ export class FlightStep extends Step {
   public defineTool(): ToolType[] {
     return [
       {
-        name: 'search_flights',
-        description: 'Search for flight options',
+        name: "search_flights",
+        description: "Search for flight options",
         schema: z.object({
           origin: z.string(),
           destination: z.string(),
           date: z.string(),
           isReturn: z
             .boolean()
-            .describe('Whether the flight is a return flight'),
+            .describe("Whether the flight is a return flight"),
         }),
       },
     ];
   }
 
-  public getTool(): string[] {
-    return ['search_flights'];
-  }
-
-  protected async search_flights(tool: ToolCall): Promise<ToolResponseType> {
-    const flights = tool.args;
+  @Tool
+  protected async search_flights(
+    args: Record<string, any>,
+  ): Promise<ToolResponseType> {
+    const flights = args;
     // Mock Data
     let mockFlights: FlightOption[];
     if (flights.isReturn) {
       mockFlights = [
         {
-          id: 'D1',
-          airline: 'Air Demo',
+          id: "D1",
+          airline: "Air Demo",
           price: 450,
-          departure_time: '10:00',
-          arrival_time: '14:00',
+          departure_time: "10:00",
+          arrival_time: "14:00",
         },
         {
-          id: 'D2',
-          airline: 'Pico Airways',
+          id: "D2",
+          airline: "EZ Airways",
           price: 300,
-          departure_time: '06:00',
-          arrival_time: '11:00',
+          departure_time: "06:00",
+          arrival_time: "11:00",
         },
         {
-          id: 'D3',
-          airline: 'Luxury Jets',
+          id: "D3",
+          airline: "Luxury Jets",
           price: 900,
-          departure_time: '12:00',
-          arrival_time: '16:00',
+          departure_time: "12:00",
+          arrival_time: "16:00",
         },
       ];
       this.saveState({ returnFlights: mockFlights });
     } else {
       mockFlights = [
         {
-          id: 'R1',
-          airline: 'Air Demo',
+          id: "R1",
+          airline: "Air Demo",
           price: 550,
-          departure_time: '11:00',
-          arrival_time: '15:00',
+          departure_time: "11:00",
+          arrival_time: "15:00",
         },
         {
-          id: 'R2',
-          airline: 'Pico Airways',
+          id: "R2",
+          airline: "EZ Airways",
           price: 400,
-          departure_time: '07:00',
-          arrival_time: '16:00',
+          departure_time: "07:00",
+          arrival_time: "16:00",
         },
         {
-          id: 'R3',
-          airline: 'Luxury Jets',
+          id: "R3",
+          airline: "Luxury Jets",
           price: 800,
-          departure_time: '10:00',
-          arrival_time: '17:00',
+          departure_time: "10:00",
+          arrival_time: "17:00",
         },
       ];
       this.saveState({ departureFlights: mockFlights });
     }
 
-    return {
-      step: FlightStep,
-      message: new DirectMessage(this, {}),
-    };
+    // go(...) re-enters FlightStep; DirectMessage stops here instead of calling the model again.
+    return go(FlightStep).withMessage(new DirectMessage(this, {}));
   }
 }

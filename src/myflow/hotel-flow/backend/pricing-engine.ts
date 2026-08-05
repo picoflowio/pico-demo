@@ -1,14 +1,9 @@
 /*
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { CoreConfig } from '@picoflow/core';
-import { MongoDB } from './mongo.js';
-import lodash from 'lodash';
-
-const { get } = lodash;
-import { CosmoDB } from './cosmo.js';
+import { HotelCatalog } from './hotel-catalog.js';
 
 type HotelPriceEntry = {
   basePrice: number;
@@ -224,19 +219,15 @@ export class PricingEngine {
     airport?: number,
     cityCenter?: number,
   ): Promise<SearchHotelEntry[]> {
-    let docs;
-    if (CoreConfig.documentDB === 'MONGO') {
-      const mongo = new MongoDB();
-      docs = await mongo.searchHotels(amenities, roomType, airport, cityCenter);
-    } else if (CoreConfig.documentDB === 'COSMO') {
-      const cosmo = new CosmoDB();
-      docs = await cosmo.searchHotels(amenities, roomType, airport, cityCenter);
-    }
-
-    const hotels = docs.map((doc) => {
+    const hotels = HotelCatalog.search(
+      amenities,
+      roomType,
+      airport,
+      cityCenter,
+    ).map((hotel) => {
       return {
-        hotelName: doc['name'],
-        basePrice: doc['level'],
+        hotelName: hotel.name,
+        basePrice: hotel.level,
       };
     });
     const hotelEntries = PricingEngine.findHotelByBudget(
@@ -251,22 +242,13 @@ export class PricingEngine {
   }
 
   public static async fetchHotels(hotelNames: string[]): Promise<object[]> {
-    let docs;
-    if (CoreConfig.documentDB === 'MONGO') {
-      const mongo = new MongoDB();
-      docs = await mongo.fetchHotels(hotelNames);
-    } else if (CoreConfig.documentDB === 'COSMO') {
-      const cosmo = new CosmoDB();
-      docs = await cosmo.fetchHotels(hotelNames);
-    }
-
-    const hotels = docs.map((doc) => {
+    const hotels = HotelCatalog.fetch(hotelNames).map((hotel) => {
       return {
-        hotelName: doc['name'],
-        amenities: doc['amenities'],
-        roomType: doc['roomType'],
-        airport: get(doc, 'nearby.airport'),
-        cityCenter: get(doc, 'nearby.cityCenter'),
+        hotelName: hotel.name,
+        amenities: hotel.amenities,
+        roomType: hotel.roomType,
+        airport: hotel.nearby.airport,
+        cityCenter: hotel.nearby.cityCenter,
       };
     });
 

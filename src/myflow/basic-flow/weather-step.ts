@@ -1,92 +1,104 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { ToolCall } from '@langchain/core/messages/tool';
-import { Flow } from '@picoflow/core';
-import { ToolResponseType, ToolType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { EndStep } from '@picoflow/core';
-import { z } from 'zod';
-import { DemoPrompt } from './prompt/demo-prompt.js';
-import { FooLogicStep } from './foo-logic.js';
-import { callCityTemperatureMcpTool } from '../../tools/city-temperature-mcp-client.js';
+import { Flow, Tool, go, stay } from "@picoflow/core";
+import { ToolResponseType, ToolType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { TerminateSessionStep } from "@picoflow/core";
+import { z } from "zod";
+import { DemoPrompt } from "./prompt/demo-prompt.js";
+import { FooLogicStep } from "./foo-logic.js";
+import { callCityTemperatureMcpTool } from "../../tools/city-temperature-mcp-client.js";
 
 export class WeatherStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(WeatherStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
   public getPrompt(): string {
     return `
-    ${DemoPrompt.TravelRole}
-    Ask user to enter 2 city names to compare their current day temperature.
-    Capture the names of the two cities and call tool 'get_weather' for each city
-    If user prefer to exit, call tool 'end_chat'.
+    ${DemoPrompt.DemoPrompt}
+    This demo supports exactly two city aliases: LA and NYC.
+    On the initial response, explicitly say that LA and NYC are the only supported cities and ask the user to provide the supported cities they want to compare.
+    When the user supplies an unsupported city, explicitly say it is unsupported, remind them that only LA and NYC are supported, and ask them to enter LA or NYC. Do not call 'get_weather' for unsupported input and do not ask only a yes-or-no question.
+    When a message contains LA and NYC, you MUST call 'get_weather' exactly once for LA and exactly once for NYC in the same response. Do not ask for confirmation and do not describe the weather yourself.
+    If only one supported city is supplied, call 'get_weather' for it and then ask for the remaining supported city.
+    If the user explicitly asks to exit, call 'terminate_session'.
     `;
   }
 
   public defineTool(): ToolType[] {
     return [
       {
-        name: 'get_weather',
-        description: 'capture the weather of one city',
+        name: "get_weather",
+        description:
+          "Look up one supported city. Call once with LA and once with NYC when both are supplied.",
         schema: z.object({
-          cityName: z.string().describe('Name of city'),
+          cityName: z
+            .string()
+            .describe("Supported city alias: exactly LA or NYC"),
         }),
       },
     ];
   }
-  public getTool(): string[] {
-    return ['get_weather', 'end_chat'];
-  }
-
-  protected async get_weather(tool: ToolCall): Promise<ToolResponseType> {
-    const cityName = tool.args?.cityName;
-    if (typeof cityName !== 'string') {
-      return {
-        step: WeatherStep,
-        tool: 'Only LA and NYC cities are allowed',
-      };
+  @Tool
+  protected async get_weather(
+    args: Record<string, any>,
+  ): Promise<ToolResponseType> {
+    const cityName = args?.cityName;
+    if (typeof cityName !== "string") {
+      // stay(...) keeps WeatherStep active and returns corrective feedback to the model.
+      return stay("Only LA and NYC cities are allowed");
     }
 
-    const [weather] = await callCityTemperatureMcpTool([cityName]);
+    const stateCityName = this.normalizeCityName(cityName);
+    if (stateCityName !== "LA" && stateCityName !== "NYC") {
+      // stay(...) keeps WeatherStep active until the model receives a supported city.
+      return stay(
+        `${cityName} is unsupported. Only LA and NYC are supported. Ask the user to enter LA or NYC.`,
+      );
+    }
+
+    const [weather] = await callCityTemperatureMcpTool([stateCityName]);
     if (weather?.temperature !== null && weather?.temperature !== undefined) {
-      const stateCityName = this.normalizeCityName(cityName);
       this.saveState({
         [`city_${stateCityName}`]: weather.temperature,
       });
 
-      const LA = this.getState('city_LA');
-      const NYC = this.getState('city_NYC');
-      if (LA && NYC) {
-        // return NameStep;
-        return FooLogicStep;
+      const LA = this.getState("city_LA");
+      const NYC = this.getState("city_NYC");
+      if (LA !== undefined && NYC !== undefined) {
+        // go(...) advances once weather for both required cities is available.
+        return go(FooLogicStep);
       } else {
-        return WeatherStep;
+        const remainingCity = stateCityName === "LA" ? "NYC" : "LA";
+        // stay(...) keeps this step active while requesting the remaining city.
+        return stay(
+          `${stateCityName} was accepted. Ask the user for ${remainingCity}.`,
+        );
       }
     } else {
-      return {
-        step: WeatherStep,
-        tool: 'Only LA and NYC cities are allowed',
-      };
+      // stay(...) keeps WeatherStep active and returns corrective feedback to the model.
+      return stay("Only LA and NYC cities are allowed");
     }
   }
 
   private normalizeCityName(cityName: string): string {
     const normalized = cityName.trim().toLowerCase();
-    if (normalized === 'nyc') {
-      return 'NYC';
+    if (normalized === "nyc" || normalized === "new york city") {
+      return "NYC";
     }
-    if (normalized === 'la') {
-      return 'LA';
+    if (normalized === "la" || normalized === "los angeles") {
+      return "LA";
     }
     return cityName;
   }
 
-  protected async end_chat(_tool: ToolCall): Promise<ToolResponseType> {
-    return { step: EndStep, prompt: DemoPrompt.AbruptEnd };
+  @Tool
+  protected async terminate_session(): Promise<ToolResponseType> {
+    // go(...) activates the terminal step with the abrupt-end prompt.
+    return go(TerminateSessionStep).withPrompt(DemoPrompt.AbruptEnd);
   }
 }

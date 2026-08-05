@@ -1,39 +1,36 @@
 /*
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { ToolCall } from '@langchain/core/messages/tool';
-import { Flow } from '@picoflow/core';
-import { ToolResponseType, ToolType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { EndStep } from '@picoflow/core';
-import { z } from 'zod';
-import { ExploreStep } from './explore-step.js';
-import { FlowPrompt } from '@picoflow/core';
-import { PresentStep } from './present-step.js';
-import { PricingEngine } from './backend/pricing-engine.js';
-import lodash from 'lodash';
+import { direct, Flow, Tool, go } from "@picoflow/core";
+import { ToolResponseType, ToolType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { TerminateSessionStep } from "@picoflow/core";
+import { z } from "zod";
+import { ExploreStep } from "./explore-step.js";
+import { FlowPrompt } from "@picoflow/core";
+import { PresentStep } from "./present-step.js";
+import { PricingEngine } from "./backend/pricing-engine.js";
+import lodash from "lodash";
+import { GenChart } from "./gen-chart.js";
+import { Prompt } from "@picoflow/core";
 
 const { merge } = lodash;
-import { GenChart } from './gen-chart.js';
-import { Prompt } from '@picoflow/core';
-import messageUtil from '@picoflow/core/utils/message-util';
-const { AiMessageEx } = messageUtil;
 //........................................................
-const ComparePrompt = Prompt.file('prompt/compare.md');
+const ComparePrompt = Prompt.file("prompt/compare.md");
 //........................................................
 export class CompareStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(CompareStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
-  protected async onEnter(): Promise<void> {
+  protected async onEnter() {
     this.eraseMemory();
   }
 
   public getPrompt(): string {
-    const chosen_hotels = (this.getState('chosen_hotels') as []) ?? [];
+    const chosen_hotels = (this.getState("chosen_hotels") as []) ?? [];
     const available_hotel = this.getState(`available_hotel`) ?? [];
 
     let prompt = `
@@ -42,7 +39,7 @@ export class CompareStep extends Step {
     `;
 
     const hotels = chosen_hotels.map((entry) => {
-      return { hotelName: entry['hotelName'] };
+      return { hotelName: entry["hotelName"] };
     });
 
     prompt = Prompt.replace(prompt, {
@@ -56,40 +53,37 @@ export class CompareStep extends Step {
   public defineTool(): ToolType[] {
     return [
       {
-        name: 'generate_comparison',
-        description: 'Call to generate comparison',
+        name: "generate_comparison",
+        description: "Call to generate comparison",
         schema: z.object({
-          hotels: z.array(z.string()).describe('Hotels name chosen'),
-          feature: z.string().describe('chosen feature'),
+          hotels: z.array(z.string()).describe("Hotels name chosen"),
+          feature: z.string().describe("chosen feature"),
         }),
       },
       {
-        name: 'resume_booking',
-        description: 'Resume to booking',
+        name: "resume_booking",
+        description: "Resume to booking",
         schema: z.object({
-          isResumed: z.boolean().describe('is resume booking'),
+          isResumed: z.boolean().describe("is resume booking"),
         }),
       },
     ];
   }
-  public getTool(): string[] {
-    return ['generate_comparison', 'resume_booking', 'end_chat'];
-  }
-
+  @Tool
   protected async generate_comparison(
-    tool: ToolCall,
+    args: Record<string, any>,
   ): Promise<ToolResponseType> {
     //perform a hotel search
     let chosenHotels;
     try {
-      chosenHotels = JSON.parse(tool.args?.hotels);
+      chosenHotels = JSON.parse(args?.hotels);
     } catch (_e) {
-      chosenHotels = tool.args?.hotels;
+      chosenHotels = args?.hotels;
     }
 
     this.saveState({ compare_hotel: chosenHotels });
 
-    const feature = tool.args?.feature;
+    const feature = args?.feature;
     // console.log(`feature: ${feature}`);
 
     //find the full hotel doc from DB
@@ -100,29 +94,32 @@ export class CompareStep extends Step {
     //merge the price into the chosenHotels JSON
     const hotelAvailable = this.flow.getStepState(
       PresentStep,
-      'hotelFound',
+      "hotelFound",
     ) as object[];
 
     let finalHotels = fetchHotels.map((doc) => {
       for (const aHotel of hotelAvailable) {
-        if (aHotel['hotelName'] === doc['hotelName']) {
+        if (aHotel["hotelName"] === doc["hotelName"]) {
           const myFeatures = {};
-          merge(myFeatures, { hotelName: doc['hotelName'] });
-          if (feature === 'amenities') {
-            merge(myFeatures, GenChart.flattenObject(doc['amenities']));
-          } else if (feature === 'roomType') {
-            merge(myFeatures, GenChart.transRoomType(doc['roomType']));
-          } else if (feature === 'distance') {
-            merge(myFeatures, { cityCenter: `${doc['cityCenter']} mi` });
-            merge(myFeatures, { airport: `${doc['airport']} mi` });
-          } else if (feature === 'price') {
-            const tree = this.flow.getStepState(ExploreStep, 'json');
-            const dates = tree['cDateArray'];
-            const prices = aHotel['prices'];
+          merge(myFeatures, { hotelName: doc["hotelName"] });
+          if (feature === "amenities") {
+            merge(myFeatures, GenChart.flattenObject(doc["amenities"]));
+          } else if (feature === "roomType") {
+            merge(myFeatures, GenChart.transRoomType(doc["roomType"]));
+          } else if (feature === "distance") {
+            merge(myFeatures, { cityCenter: `${doc["cityCenter"]} mi` });
+            merge(myFeatures, { airport: `${doc["airport"]} mi` });
+          } else if (feature === "price") {
+            const tree = this.flow.getStepState<{ cDateArray: string[] }>(
+              ExploreStep,
+              "json",
+            );
+            const dates = tree["cDateArray"];
+            const prices = aHotel["prices"];
             const jObject = GenChart.createJsonObject(dates, prices);
             merge(myFeatures, jObject);
             merge(myFeatures, {
-              total: GenChart.formatCurrency(aHotel['total']),
+              total: GenChart.formatCurrency(aHotel["total"]),
             });
           }
 
@@ -133,7 +130,7 @@ export class CompareStep extends Step {
       }
     });
 
-    if (feature === 'amenities' || feature === 'roomType') {
+    if (feature === "amenities" || feature === "roomType") {
       finalHotels = GenChart.transAmenities(finalHotels);
     }
 
@@ -142,19 +139,19 @@ export class CompareStep extends Step {
     //produce a comparison chart
     const table = GenChart.getChart(finalHotels);
 
-    const msg = new AiMessageEx(
-      this,
-      `${table}\nAnother comparison or ready to book?`,
-      { direct: true },
-    );
-    return { step: CompareStep, message: msg };
+    // direct(...) returns this table without another model call and keeps CompareStep active.
+    return direct(`${table}\nAnother comparison or ready to book?`);
   }
 
-  protected async resume_booking(_tool: ToolCall): Promise<ToolResponseType> {
-    return PresentStep;
+  @Tool
+  protected async resume_booking(): Promise<ToolResponseType> {
+    // go(...) returns to the booking-results step.
+    return go(PresentStep);
   }
 
-  protected async end_chat(_tool: ToolCall): Promise<ToolResponseType> {
-    return EndStep;
+  @Tool
+  protected async terminate_session(): Promise<ToolResponseType> {
+    // go(...) activates the terminal step and completes the session.
+    return go(TerminateSessionStep);
   }
 }

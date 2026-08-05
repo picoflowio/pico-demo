@@ -1,66 +1,79 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow } from '@picoflow/core';
-import { NameStep } from './name-step.js';
-import { AddressStep } from './address-step.js';
-import { DOBStep } from './dob-step.js';
-import { EndStep } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { FooLogicStep } from './foo-logic.js';
-import { GooLogicStep } from './goo-logic.js';
-import { WeatherStep } from './weather-step.js';
-import { InContextStep } from './incontext-step.js';
-import { PresidentStep } from './president-step.js';
-import { SessionLogger } from '@picoflow/core';
-import { FavoritesStep } from './favorites-step.js';
-import { ConcurStep1 } from './concur-step1.js';
-import { ConcurStep2 } from './concur-step2.js';
-import { SessionType } from '@picoflow/core';
-import { ConcurStep3 } from './concur-step3.js';
-import { ConcurStep4 } from './concur-step4.js';
+import { Flow } from "@picoflow/core";
+import { NameStep } from "./name-step.js";
+import { AddressStep } from "./address-step.js";
+import { DOBStep } from "./dob-step.js";
+import { TerminateSessionStep } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { FooLogicStep } from "./foo-logic.js";
+import { GooLogicStep } from "./goo-logic.js";
+import { WeatherStep } from "./weather-step.js";
+import { InContextStep } from "./incontext-step.js";
+import { PresidentStep } from "./president-step.js";
+import { SessionLogger } from "@picoflow/core";
+import { FavoritesStep } from "./favorites-step.js";
+import { ConcurStep1 } from "./concur-step1.js";
+import { ConcurStep2 } from "./concur-step2.js";
+import { SessionType } from "@picoflow/core";
+import { ConcurStep3 } from "./concur-step3.js";
+import { ConcurStep4 } from "./concur-step4.js";
 
 export class BasicFlow extends Flow {
-  public constructor() {
-    super(BasicFlow);
-    this.useModel('gpt-4o');
-    // this.useModel('claude-opus-4-6');
-    // this.useModel('nvidia-deepseek-v4-pro');
-    // this.useModel('nvidia-nemotron-3');
-    // this.useModel('gemma-4-31b-it')
-    // this.useModel('gemini-3.1-flash-lite-preview');
-    // this.useModel('gemini-3-flash-preview');
+  protected configModel() {
+    return {
+      provider: "openai",
+      name: "gpt-4o-mini",
+      params: { temperature: 0.2 },
+    } as const;
+  }
+
+  protected initialStep() {
+    return this.getContext<boolean>("config.isPresident")
+      ? PresidentStep
+      : WeatherStep;
   }
 
   protected defineSteps(): Step[] {
-    const isPresident = this.getContext<boolean>('config.isPresident');
+    const isPresident = this.getContext<boolean>("config.isPresident");
     return [
-      new WeatherStep(this, !isPresident),
-      new NameStep(this).useMemory('default'),
-      new AddressStep(this).useMemory('default'),
-      new DOBStep(this).useMemory('default'),
-      new FooLogicStep(this).useMemory('default'),
-      new GooLogicStep(this).useMemory('default'),
-      new InContextStep(this).useMemory('separate').useModel('gpt-5.1', {
-        reasoning: { effort: 'low' },
+      new WeatherStep(this).useModel({
+        provider: "openai",
+        name: "gpt-4o",
+        params: { temperature: 0.2 },
       }),
-      new InContextStep(this).useMemory('separate'),
+      new NameStep(this).useMemory("default"),
+      new AddressStep(this).useMemory("default"),
+      new DOBStep(this).useMemory("default"),
+      new FooLogicStep(this).useMemory("default"),
+      new GooLogicStep(this).useMemory("default"),
+      new InContextStep(this).useMemory("separate"),
       new ConcurStep1(this),
       new ConcurStep2(this),
       new ConcurStep3(this),
       new ConcurStep4(this),
-      new PresidentStep(this, isPresident).useMemory('president'),
-      new FavoritesStep(this).useMemory('favorite'),
-      new EndStep(this).useMemory('temp'),
+      new PresidentStep(this).useMemory("president"),
+      new FavoritesStep(this).useMemory("favorite"),
+      new TerminateSessionStep(this).useMemory("temp"),
     ];
   }
 
+  //migratiion and session doc validation hook.
+  protected async onRestoreSessionDoc(
+    doc: SessionType,
+  ): Promise<SessionType | null> {
+    //you can call:
+    //this.isSessionCurrent(doc)
+    //this.isSessionExpired(doc)
+    return super.onRestoreSessionDoc(doc);
+  }
+
   protected async spawnSteps(): Promise<string> {
-    const step = await this.activate(PresidentStep);
-    const nths = ['10th', '11th', '12th', '13th', '14th', '15th', '16th'];
+    const step = await this.goto(PresidentStep);
+    const nths = ["10th", "11th", "12th", "13th", "14th", "15th", "16th"];
     await this.concurrentSteps<string>({
       items: nths,
       batchSize: 3,
@@ -71,12 +84,12 @@ export class BasicFlow extends Flow {
         };
       },
       onBotResponse(item, response) {
-        step.saveState({ [item]: response['message'] });
+        step.saveState({ [item]: response["message"] });
         // console.log(response['message']);
       },
     });
 
-    const msg = `Finished concurrent flow: ${this.name}`;
+    const msg = `Finished concurrent flow: ${this.id}`;
     new SessionLogger(this.getSessionDoc()).log(msg);
     step.sessionCompleted();
     return msg;

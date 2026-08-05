@@ -1,31 +1,29 @@
 /*
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { ToolCall } from '@langchain/core/messages/tool';
-import { Flow } from '@picoflow/core';
-import { ToolResponseType, ToolType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { EndStep } from '@picoflow/core';
-import { z } from 'zod';
-import { SearchHotelEntry } from './backend/pricing-engine.js';
-import { ExploreStep } from './explore-step.js';
-import messageUtil from '@picoflow/core/utils/message-util';
-import type { MessageTypes } from '@picoflow/core/utils/message-util';
-import { FlowPrompt } from '@picoflow/core';
-import { CompareStep } from './compare-step.js';
-import { Prompt } from '@picoflow/core';
-const { HumanMessageEx } = messageUtil;
+import { Flow, Tool, go } from "@picoflow/core";
+import { ToolResponseType, ToolType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { TerminateSessionStep } from "@picoflow/core";
+import { z } from "zod";
+import { SearchHotelEntry } from "./backend/pricing-engine.js";
+import { ExploreStep } from "./explore-step.js";
+import { MessageTypes } from "@picoflow/core";
+import { FlowPrompt } from "@picoflow/core";
+import { CompareStep } from "./compare-step.js";
+import { Prompt } from "@picoflow/core";
+import { HumanMessageEx } from "@picoflow/core";
 
-const PresentPrompt = Prompt.file('prompt/present.md');
+const PresentPrompt = Prompt.file("prompt/present.md");
 //........................................................
 export class PresentStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(PresentStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
-  protected async onEnter(): Promise<void> {
+  protected async onEnter() {
     //switch from active to inactive, erase memory
     this.eraseMemory();
   }
@@ -34,11 +32,11 @@ export class PresentStep extends Step {
     _userMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
-    return new HumanMessageEx(this, 'What hotels choice I have');
+    return new HumanMessageEx(this, "What hotels choice I have");
   }
 
   public getPrompt(): string {
-    const hotelFoundInfo = this.getState('hotelFound') as SearchHotelEntry;
+    const hotelFoundInfo = this.getState("hotelFound") as SearchHotelEntry;
     let prompt = `
     ${PresentPrompt}
     ${FlowPrompt.EndChat}
@@ -54,70 +52,75 @@ export class PresentStep extends Step {
   public defineTool(): ToolType[] {
     return [
       {
-        name: 'chosen_hotel',
-        description: 'Capture user choice of hotel',
+        name: "chosen_hotel",
+        description: "Capture user choice of hotel",
         schema: z.object({
-          hotelName: z.string().describe('Hotel name chosen'),
+          hotelName: z.string().describe("Hotel name chosen"),
         }),
       },
       {
-        name: 'search_again',
-        description: 'User request to re-run the search hotel again',
+        name: "search_again",
+        description: "User request to re-run the search hotel again",
         schema: z.object({
-          isSearch: z.boolean().describe('run the search'),
+          isSearch: z.boolean().describe("run the search"),
         }),
       },
       {
-        name: 'go_compare',
-        description: 'User request compare hotel',
+        name: "go_compare",
+        description: "User request compare hotel",
         schema: z.object({
           hotelsToCompare: z
             .array(z.string())
-            .describe('Hotel names chosen to be compared'),
+            .describe("Hotel names chosen to be compared"),
         }),
       },
     ];
   }
-  public getTool(): string[] {
-    return ['chosen_hotel', 'search_again', 'go_compare', 'end_chat'];
-  }
-
-  protected async chosen_hotel(tool: ToolCall): Promise<ToolResponseType> {
-    this.saveState({ hotel: tool.args?.hotelName });
+  @Tool
+  protected async chosen_hotel(
+    args: Record<string, any>,
+  ): Promise<ToolResponseType> {
+    this.saveState({ hotel: args?.hotelName });
     const msg = `Tell user hotel is booked with confirmation #:${this.generateConfirmationNumber()}. Thank the user for choosing Hilton, you MUST NOT talk other things!`;
-    return { step: EndStep, prompt: msg };
+    // go(...) activates the terminal step, which asks the model to confirm the booking.
+    return go(TerminateSessionStep).withPrompt(msg);
   }
 
-  protected async search_again(_tool: ToolCall): Promise<ToolResponseType> {
-    //forward last message to ExploreStep
-    return { step: ExploreStep, message: this.getLastMessage() };
+  @Tool
+  protected async search_again(): Promise<ToolResponseType> {
+    // go(...) changes steps; forward the request so ExploreStep can refine the search.
+    return go(ExploreStep).withMessage(this.getLastMessage());
   }
 
-  protected async go_compare(tool: ToolCall): Promise<ToolResponseType> {
+  @Tool
+  protected async go_compare(
+    args: Record<string, any>,
+  ): Promise<ToolResponseType> {
     this.flow.saveStepState(CompareStep, {
-      compare_hotel: tool.args?.hotelsToCompare,
+      compare_hotel: args?.hotelsToCompare,
     });
 
     const availableHotel = this.flow.getStepState(
       PresentStep,
-      'hotelFound',
+      "hotelFound",
     ) as [];
 
     const strAvailableHotel = availableHotel.map((entry) => {
-      return entry['hotelName'];
+      return entry["hotelName"];
     }) as string[];
 
-    return {
-      step: CompareStep,
-      state: {
+    // go(...) enters comparison mode with the selected hotel data as destination state.
+    return go(CompareStep)
+      .withState({
         available_hotel: strAvailableHotel,
-      },
-      message: this.getLastMessage(),
-    };
+      })
+      .withMessage(this.getLastMessage());
   }
 
-  protected async end_chat(_tool: ToolCall): Promise<ToolResponseType> {
-    return EndStep;
+  @Tool
+  protected async terminate_session(): Promise<ToolResponseType> {
+    // go(...) activates the terminal step and completes the session.
+    return go(TerminateSessionStep);
   }
 
   private generateConfirmationNumber(): number {

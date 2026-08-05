@@ -1,8 +1,7 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 
 import { z } from 'zod';
@@ -16,8 +15,8 @@ export const TravelPlanSchema = z.object({
   ]),
   origin: z.string().describe('Starting location'),
   destination: z.string().describe('Final destination'),
-  departure_date: z.date().describe('US date format preferred'),
-  return_date: z.date().describe('US date format preferred'),
+  departure_date: z.string().describe('US date format preferred'),
+  return_date: z.string().describe('US date format preferred'),
   duration_days: z.number().describe('Number of days'),
   adults: z.number().default(1),
   travel_class: z.string().default('ECONOMY'),

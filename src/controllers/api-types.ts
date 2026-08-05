@@ -1,8 +1,7 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -100,32 +99,32 @@ export class ApiRunResponse400Dto {
   message: string;
 }
 
-export class ApiEndResponseDto {
+export class ApiDeleteSessionResponseDto {
   @ApiProperty({
-    description: 'If AI call is good',
+    description: 'Whether the session document was deleted successfully',
     example: true,
     required: true,
   })
   success: boolean;
 
   @ApiProperty({
-    description: 'Session ID created for traceability',
+    description: 'Deleted session identifier',
     example: '6870297e35bb57550b61d672',
     required: true,
   })
   session: string;
 }
 
-export class ApiEndResponse400Dto {
+export class ApiDeleteSessionResponse400Dto {
   @ApiProperty({
-    description: 'If AI call is good',
+    description: 'Whether the session document was deleted successfully',
     example: false,
     required: true,
   })
   success: boolean;
 
   @ApiProperty({
-    description: 'resulting AI response',
+    description: 'Session deletion error',
     example: 'Delete session 6870297e35bb57550b61d672 failed',
     required: true,
   })

@@ -1,22 +1,20 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow } from '@picoflow/core';
-import { StepClassType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import messageUtil from '@picoflow/core/utils/message-util';
-import type { MessageTypes } from '@picoflow/core/utils/message-util';
-const { HumanMessageEx } = messageUtil;
-import z from 'zod';
-import { ConcurStep1 } from './concur-step1.js';
-import { ConcurStep2 } from './concur-step2.js';
+import { Flow } from "@picoflow/core";
+import { StepClassType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { HumanMessageEx, MessageTypes } from "@picoflow/core";
+import z from "zod";
+import { ConcurStep1 } from "./concur-step1.js";
+import { ConcurStep2 } from "./concur-step2.js";
+import type { JsonValue } from "@picoflow/core";
 
 export class InContextStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(InContextStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
   public onCrossing(
@@ -24,7 +22,7 @@ export class InContextStep extends Step {
     _priorStep?: string,
   ): MessageTypes {
     super.onCrossing(_langMessage, _priorStep);
-    return new HumanMessageEx(this, 'Follow system prompt');
+    return new HumanMessageEx(this, "Follow system prompt");
   }
 
   public getPrompt(): string {
@@ -35,35 +33,38 @@ export class InContextStep extends Step {
 
   protected async onEnter() {
     await super.onEnter();
-    const msg = this.getTransientState<string>('msg');
-    console.log('InContextStep.transient msg=', msg);
+    const msg = this.getTransientState<string>("msg");
+    console.log("InContextStep.transient msg=", msg);
     const [concurStep1, concurStep2] = await this.runSteps([
       {
         step: ConcurStep1,
-        userMessage: 'Run the first concurrent follow-up task.',
+        userMessage: "Run the 1st concurrent follow-up task.",
       },
       {
         step: ConcurStep2,
-        userMessage: 'Run the second concurrent follow-up task.',
+        userMessage: "Run the 2nd concurrent follow-up task.",
       },
     ]);
-    this.saveState({ concurStep1, concurStep2 });
+    this.saveState({
+      concurStep1: JSON.parse(JSON.stringify(concurStep1)) as JsonValue,
+      concurStep2: JSON.parse(JSON.stringify(concurStep2)) as JsonValue,
+    });
   }
 
   public async onResponse(
     llmResult: string | object,
   ): Promise<string | StepClassType> {
-    this.saveState({ who: llmResult });
+    this.saveState({ who: llmResult as JsonValue });
     return JSON.stringify(llmResult);
   }
 
   public structOutputSchema(): object {
     return z.object({
-      title: z.string().describe('Movie title'),
-      genre: z.string().describe('Main genre'),
-      releaseYear: z.number().describe('Release year'),
-      rating: z.number().min(0).max(10).describe('Rating from 0 to 10'),
-      summary: z.string().describe('Short plot summary'),
+      title: z.string().describe("Movie title"),
+      genre: z.string().describe("Main genre"),
+      releaseYear: z.number().describe("Release year"),
+      rating: z.number().min(0).max(10).describe("Rating from 0 to 10"),
+      summary: z.string().describe("Short plot summary"),
     });
   }
 }

@@ -1,8 +1,7 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 const usStates = [
   'AL',
@@ -74,10 +73,13 @@ export function ValidateAddress(addressStr: string): AddressType | null {
     return null; // Invalid input
   }
 
-  // Regular expression to parse the address into components
+  // Prefer a fully comma-delimited address, but also accept a common format
+  // such as "123 K St. Portland, OR 97006" where the street/city comma is
+  // omitted after a recognizable street suffix.
   const addressRegex = /^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/;
+  const relaxedAddressRegex = /^(.*?\b(?:st(?:reet)?|rd|road|ave(?:nue)?|blvd|boulevard|dr(?:ive)?|ln|lane|ct|court|way|pl|place)\.?)\s+(.+?),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i;
 
-  const match = addressStr.match(addressRegex);
+  const match = addressStr.match(addressRegex) ?? addressStr.match(relaxedAddressRegex);
 
   if (!match) return null;
 

@@ -1,22 +1,21 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { ConcurStep4 } from './concur-step4.js';
+import { Flow, JsonValue, StepClassType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { ConcurStep4 } from "./concur-step4.js";
 
 export class ConcurStep2 extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(ConcurStep2, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
   public getPrompt(): string {
     return `
     You are ConcurStep2.
-    Reply with one short sentence confirming the second concurrent follow-up task is complete.
+    Reply with one short sentence confirming ConcurStep2 follow-up task is complete.
     `;
   }
 
@@ -25,8 +24,15 @@ export class ConcurStep2 extends Step {
     const [_concurStep3] = await this.runSteps([
       {
         step: ConcurStep4,
-        userMessage: 'Run the ConcurStep3.',
+        userMessage: "Run the ConcurStep3.",
       },
     ]);
+  }
+
+  public async onResponse(
+    llmResult: string | object,
+  ): Promise<string | StepClassType> {
+    this.saveState({ concurStep2: llmResult as JsonValue });
+    return llmResult as string;
   }
 }

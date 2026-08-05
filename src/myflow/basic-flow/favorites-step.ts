@@ -1,8 +1,7 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 
 import { Flow } from '@picoflow/core';
@@ -11,16 +10,15 @@ import { NameStep } from './name-step.js';
 import { Prompt } from '@picoflow/core';
 import { StringUtil } from '@picoflow/core';
 import { StepClassType } from '@picoflow/core';
-import messageUtil from '@picoflow/core/utils/message-util';
-import type { MessageTypes } from '@picoflow/core/utils/message-util';
-const { HumanMessageEx } = messageUtil;
+import { HumanMessageEx, MessageTypes } from '@picoflow/core';
+import type { JsonValue } from '@picoflow/core';
 
 const PROMPT = Prompt.file('prompt/favorites.md');
 const SCHEMA = Prompt.file('prompt/favorites.json');
 
 export class FavoritesStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(FavoritesStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
   public onCrossing(
     _langMessage: MessageTypes,
@@ -40,16 +38,18 @@ export class FavoritesStep extends Step {
   public async onResponse(
     llmResult: string | object,
   ): Promise<string | StepClassType> {
-    if (typeof llmResult === 'string') {
-      const json = StringUtil.parseJson(llmResult);
-      if (json) {
-        this.saveState({ favorites: json });
-        return NameStep;
-      } else {
-        return llmResult as string;
-      }
-    } else {
-      JSON.stringify(llmResult);
+    const json =
+      typeof llmResult === 'string'
+        ? StringUtil.parseJson<JsonValue>(llmResult)
+        : (llmResult as JsonValue);
+
+    if (json && typeof json === 'object' && !Array.isArray(json)) {
+      this.saveState({ favorites: json });
+      return NameStep;
     }
+
+    return typeof llmResult === 'string'
+      ? llmResult
+      : JSON.stringify(llmResult);
   }
 }

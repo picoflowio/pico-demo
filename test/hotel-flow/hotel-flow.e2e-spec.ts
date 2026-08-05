@@ -1,3 +1,8 @@
+/*
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
+ */
 import 'dotenv/config';
 
 import assert from 'node:assert/strict';
@@ -11,7 +16,6 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from '../../src/app.module.js';
 import { FlowEngine } from '@picoflow/core';
-import { PricingEngine } from '../../src/myflow/hotel-flow/backend/pricing-engine.js';
 
 type RunResponse = {
   success?: boolean;
@@ -67,28 +71,37 @@ const failureArtifactPath = join(
   'hotel-flow-semantic-failure.json',
 );
 
-process.env.DOCUMENT_DB = process.env.HOTEL_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
+const useEnvDocumentDb = process.env.HOTEL_FLOW_TEST_USE_ENV === '1';
+if (!useEnvDocumentDb) {
+  process.env.DOCUMENT_DB = process.env.HOTEL_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
+  process.env.SESSION_STORE =
+    process.env.HOTEL_FLOW_TEST_SESSION_STORE ?? 'SQLITE';
+  process.env.SQLITE_PATH =
+    process.env.HOTEL_FLOW_TEST_SQLITE_PATH ?? sqlitePath;
+  process.env.GEMINI_API_KEY =
+    process.env.GEMINI_API_KEY ?? 'unused-in-hotel-flow-test';
+  process.env.ANTHROPIC_API_KEY =
+    process.env.ANTHROPIC_API_KEY ?? 'unused-in-hotel-flow-test';
+  process.env.MONGODB_NAME =
+    process.env.MONGODB_NAME ?? 'unused-in-hotel-flow-test';
+  process.env.MONGODB_COLLECTION =
+    process.env.MONGODB_COLLECTION ?? 'unused-in-hotel-flow-test';
+  process.env.MONGODB_URL =
+    process.env.MONGODB_URL ?? 'mongodb://unused-in-hotel-flow-test';
+}
+
 process.env.HOTEL_FLOW_CURRENT_DATE =
   process.env.HOTEL_FLOW_CURRENT_DATE ?? '2027-07-15T00:00:00.000Z';
-process.env.SQLITE_PATH = process.env.HOTEL_FLOW_TEST_SQLITE_PATH ?? sqlitePath;
-process.env.GEMINI_KEY = process.env.GEMINI_KEY ?? 'unused-in-hotel-flow-test';
-process.env.ANTHROPIC_KEY =
-  process.env.ANTHROPIC_KEY ?? 'unused-in-hotel-flow-test';
-process.env.MONGODB_NAME =
-  process.env.MONGODB_NAME ?? 'unused-in-hotel-flow-test';
-process.env.MONGODB_COLLECTION =
-  process.env.MONGODB_COLLECTION ?? 'unused-in-hotel-flow-test';
-process.env.MONGODB_URL =
-  process.env.MONGODB_URL ?? 'mongodb://unused-in-hotel-flow-test';
 
-mkdirSync(dirname(process.env.SQLITE_PATH), { recursive: true });
-installLocalHotelPricing();
-
+if ((process.env.DOCUMENT_DB ?? 'SQLITE').toUpperCase() === 'SQLITE') {
+  process.env.SQLITE_PATH ??= sqlitePath;
+  mkdirSync(dirname(process.env.SQLITE_PATH), { recursive: true });
+}
 const scenario = loadScenario();
 const judgeModel =
   process.env.HOTEL_FLOW_JUDGE_MODEL ?? scenario.judgeModel ?? 'gpt-4o';
 const testTimeoutMs = Number(process.env.HOTEL_FLOW_TEST_TIMEOUT_MS ?? 900_000);
-const missingLiveConfig = ['OPENAI_KEY', 'PICOFLOW_KEY'].filter(
+const missingLiveConfig = ['OPENAI_API_KEY', 'PICOFLOW_KEY'].filter(
   (key) => !process.env[key]?.trim(),
 );
 const shouldRunLiveTest =
@@ -184,7 +197,11 @@ test(
       await expectSessionState(app, sessionId);
       logProgress('final session state ok');
     } finally {
-      await app.close();
+      try {
+        await app.get(FlowEngine).close();
+      } finally {
+        await app.close();
+      }
     }
   },
 );
@@ -249,77 +266,6 @@ function loadScenario(): HotelFlowScenario {
   return parsed;
 }
 
-function installLocalHotelPricing(): void {
-  type HotelDoc = {
-    name: string;
-    amenities: Record<string, boolean>;
-    level: number;
-    roomType: string[];
-    nearby: {
-      airport?: number;
-      cityCenter?: number;
-    };
-  };
-
-  const hotels = JSON.parse(
-    readFileSync(
-      join(process.cwd(), 'src', 'myflow', 'hotel-flow', 'data', 'hotels.json'),
-      'utf-8',
-    ),
-  ) as HotelDoc[];
-
-  PricingEngine.searchHotel = async (
-    startDate: Date,
-    endDate: Date,
-    amenities: string[],
-    roomType: string[],
-    maxBudget?: number,
-    minBudget?: number,
-    airport?: number,
-    cityCenter?: number,
-  ) => {
-    const docs = hotels.filter((hotel) => {
-      const hasAmenities = amenities.every(
-        (amenity) => hotel.amenities[amenity] === true,
-      );
-      const hasRoomType =
-        roomType.length === 0 ||
-        roomType.some((candidate) => hotel.roomType.includes(candidate));
-      const airportMatches =
-        airport == null || (hotel.nearby.airport ?? Infinity) < airport;
-      const cityCenterMatches =
-        cityCenter == null ||
-        (hotel.nearby.cityCenter ?? Infinity) < cityCenter;
-
-      return hasAmenities && hasRoomType && airportMatches && cityCenterMatches;
-    });
-
-    return PricingEngine.findHotelByBudget(
-      new Date(startDate),
-      new Date(endDate),
-      roomType[0],
-      docs.map((hotel) => ({
-        hotelName: hotel.name,
-        basePrice: hotel.level,
-      })),
-      maxBudget,
-      minBudget,
-    );
-  };
-
-  PricingEngine.fetchHotels = async (hotelNames: string[]) => {
-    return hotels
-      .filter((hotel) => hotelNames.includes(hotel.name))
-      .map((hotel) => ({
-        hotelName: hotel.name,
-        amenities: hotel.amenities,
-        roomType: hotel.roomType,
-        airport: hotel.nearby.airport,
-        cityCenter: hotel.nearby.cityCenter,
-      }));
-  };
-}
-
 async function judgeResponse(
   turn: ScenarioTurn,
   response: RunResponse,
@@ -332,7 +278,7 @@ async function judgeResponse(
     {
       method: 'POST',
       headers: {
-        authorization: `Bearer ${process.env.OPENAI_KEY}`,
+        authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
@@ -438,7 +384,8 @@ async function expectSessionState(
     .get(FlowEngine)
     .getFlowSession()
     .fetchAll(sessionId);
-  const hotelFlow = sessionDoc.flows?.find((flow) => flow.name === 'HotelFlow');
+  assert.equal(sessionDoc.flow?.name, 'HotelFlow');
+  const hotelFlow = sessionDoc.flow;
 
   assert.ok(hotelFlow, 'Expected HotelFlow session document');
 

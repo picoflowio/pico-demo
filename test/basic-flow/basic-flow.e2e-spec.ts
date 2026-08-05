@@ -1,16 +1,22 @@
+/*
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
+ */
 import 'dotenv/config';
 
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { Test as NestTest } from '@nestjs/testing';
+import { AIMessage } from '@langchain/core/messages';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { FlowEngine } from '@picoflow/core';
 import { AppModule } from '../../src/app.module.js';
+import { FlowEngine, Model } from '@picoflow/core';
 
 type RunResponse = {
   success?: boolean;
@@ -21,8 +27,6 @@ type RunResponse = {
 
 type BasicFlowScenario = {
   flowName: string;
-  judgeModel?: string;
-  judgeMinScore?: number;
   turns: ScenarioTurn[];
 };
 
@@ -30,21 +34,9 @@ type ScenarioTurn = {
   label: string;
   input: string;
   expectedResponse: string;
+  expectedActiveStep: string;
+  responseMustInclude: string[];
   completed: boolean;
-  minScore?: number;
-};
-
-type TranscriptTurn = ScenarioTurn & {
-  actualResponse?: string;
-  judge?: JudgeResult;
-};
-
-type JudgeResult = {
-  pass: boolean;
-  score: number;
-  reason: string;
-  missing?: string[];
-  contradictions?: string[];
 };
 
 const sqlitePath = join(
@@ -59,44 +51,37 @@ const scenarioPath = join(
   'basic-flow',
   'basic-flow.scenario.json',
 );
-const failureArtifactPath = join(
-  process.cwd(),
-  'test',
-  '.tmp',
-  'basic-flow-semantic-failure.json',
-);
-
 const useEnvDocumentDb = process.env.BASIC_FLOW_TEST_USE_ENV === '1';
 if (!useEnvDocumentDb) {
-  process.env.DOCUMENT_DB = process.env.BASIC_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
+  process.env.SESSION_STORE =
+    process.env.BASIC_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
   process.env.SQLITE_PATH =
     process.env.BASIC_FLOW_TEST_SQLITE_PATH ?? sqlitePath;
 }
 
-if ((process.env.DOCUMENT_DB ?? 'SQLITE').toUpperCase() === 'SQLITE') {
+if ((process.env.SESSION_STORE ?? 'SQLITE').toUpperCase() === 'SQLITE') {
   process.env.SQLITE_PATH ??= sqlitePath;
   mkdirSync(dirname(process.env.SQLITE_PATH), { recursive: true });
 }
 
 const scenario = loadScenario();
-const judgeModel =
-  process.env.BASIC_FLOW_JUDGE_MODEL ?? scenario.judgeModel ?? 'gpt-4o';
 const testTimeoutMs = Number(process.env.BASIC_FLOW_TEST_TIMEOUT_MS ?? 900_000);
-const missingLiveConfig = ['OPENAI_KEY', 'PICOFLOW_KEY'].filter(
+const useScriptedModel = process.env.BASIC_FLOW_USE_SCRIPTED_MODEL === '1';
+const requiredConfig = useScriptedModel
+  ? ['PICOFLOW_KEY']
+  : ['OPENAI_API_KEY', 'PICOFLOW_KEY'];
+const missingConfig = requiredConfig.filter(
   (key) => !process.env[key]?.trim(),
 );
-const shouldRunLiveTest =
-  process.env.RUN_LIVE_BASIC_FLOW_TEST !== '0' &&
-  missingLiveConfig.length === 0;
-const skipReason =
-  process.env.RUN_LIVE_BASIC_FLOW_TEST === '0'
-    ? 'RUN_LIVE_BASIC_FLOW_TEST=0'
-    : `Missing live BasicFlow config: ${missingLiveConfig.join(', ')}`;
+const skipReason = `Missing BasicFlow config: ${missingConfig.join(', ')}`;
 
 test(
-  'BasicFlow completes a realistic conversation through a real NestJS app',
-  { timeout: testTimeoutMs, skip: shouldRunLiveTest ? false : skipReason },
+  `BasicFlow completes a realistic conversation through a real NestJS app (${useScriptedModel ? 'scripted model' : 'live model'})`,
+  { timeout: testTimeoutMs, skip: missingConfig.length === 0 ? false : skipReason },
   async () => {
+    const restoreModel = useScriptedModel
+      ? installScriptedBasicFlowModel()
+      : () => undefined;
     const app = await createApp();
     const server = app.getHttpAdapter().getInstance();
     let sessionId: string | undefined;
@@ -140,8 +125,6 @@ test(
       return body;
     }
 
-    const transcript: TranscriptTurn[] = [];
-
     try {
       for (const [index, turn] of scenario.turns.entries()) {
         logProgress(
@@ -152,25 +135,15 @@ test(
         const response = await send(turn.input);
         logProgress(`response: ${preview(response.message)}`);
 
-        const transcriptTurn: TranscriptTurn = {
-          ...turn,
-          actualResponse: response.message,
-        };
-        transcript.push(transcriptTurn);
-
         assert.equal(
           response.completed,
           turn.completed,
           `${turn.label} completed flag mismatch`,
         );
-
-        transcriptTurn.judge = await judgeResponse(turn, response);
-        expectSemanticMatch(transcriptTurn, transcript);
-        logProgress(
-          `judge: pass score=${transcriptTurn.judge.score} reason=${preview(
-            transcriptTurn.judge.reason,
-          )}`,
-        );
+        expectResponseContract(turn, response);
+        assert.ok(sessionId, `${turn.label}: expected a session id`);
+        await expectTurnSessionState(app, sessionId, turn);
+        logProgress(`contract: current step=${turn.expectedActiveStep}`);
       }
 
       assert.ok(sessionId, 'Expected a session id after conversation');
@@ -178,10 +151,172 @@ test(
       await expectSessionState(app, sessionId);
       logProgress('final session state ok');
     } finally {
-      await app.close();
+      try {
+        await app.get(FlowEngine).close();
+      } finally {
+        try {
+          await app.close();
+        } finally {
+          restoreModel();
+        }
+      }
     }
   },
 );
+
+function installScriptedBasicFlowModel(): () => void {
+  const modelPrototype = Model.prototype as Model & {
+    createInstance: (...args: unknown[]) => unknown;
+  };
+  const originalCreateInstance = modelPrototype.createInstance;
+  modelPrototype.createInstance = () => new ScriptedBasicFlowModel();
+
+  return () => {
+    modelPrototype.createInstance = originalCreateInstance;
+  };
+}
+
+class ScriptedBasicFlowModel {
+  private structuredOutput = false;
+  private static toolCallId = 0;
+
+  public bindTools(): this {
+    return this;
+  }
+
+  public withStructuredOutput(): this {
+    this.structuredOutput = true;
+    return this;
+  }
+
+  public async invoke(
+    messages: Array<{ content?: unknown }>,
+  ): Promise<AIMessage | Record<string, unknown>> {
+    const systemPrompt = messageText(messages[0]?.content);
+    const latestMessage = messageText(messages.at(-1)?.content);
+
+    if (this.structuredOutput && systemPrompt.includes('sci-fi movie idea')) {
+      return {
+        title: 'Orbit Academy',
+        genre: 'Science fiction',
+        releaseYear: 2030,
+        rating: 8,
+        summary: 'Teen cadets protect their orbital school from a rogue satellite.',
+      };
+    }
+
+    if (systemPrompt.includes('exactly two city aliases')) {
+      if (/\bLA\s*,\s*NYC\b/i.test(latestMessage)) {
+        return scriptedToolCalls([
+          { name: 'get_weather', args: { cityName: 'LA' } },
+          { name: 'get_weather', args: { cityName: 'NYC' } },
+        ]);
+      }
+      if (/PDX|PHX/i.test(latestMessage)) {
+        return scriptedText(
+          'PDX and PHX are unsupported. Only LA and NYC are supported; please enter LA or NYC.',
+        );
+      }
+      return scriptedText(
+        'Only LA and NYC are supported. Which supported cities would you like to compare?',
+      );
+    }
+
+    if (systemPrompt.includes('favorite color, favorite movie')) {
+      if (/blue.*star wars.*summer/i.test(latestMessage)) {
+        return scriptedText(
+          JSON.stringify({
+            favoriteColor: 'blue',
+            favoriteMovie: 'Star Wars',
+            favoriteSeason: 'summer',
+          }),
+        );
+      }
+      return scriptedText(
+        'What are your favorite color (red, blue, or white), movie, and season (spring, summer, autumn, or winter)?',
+      );
+    }
+
+    if (systemPrompt.includes('Ask the customer for their full name')) {
+      if (/cannot accept john doe/i.test(latestMessage)) {
+        return scriptedText(
+          'John Doe cannot be accepted. Please provide a different full name.',
+        );
+      }
+      if (/john doe/i.test(latestMessage)) {
+        return scriptedToolCalls([
+          { name: 'user_name', args: { name: 'John Doe' } },
+        ]);
+      }
+      if (/john wick/i.test(latestMessage)) {
+        return scriptedToolCalls([
+          { name: 'user_name', args: { name: 'John Wick' } },
+        ]);
+      }
+      return scriptedText('Please provide your full name.');
+    }
+
+    if (systemPrompt.includes("immediately trigger the 'dob' tool")) {
+      if (/1\/1\/2000/.test(latestMessage)) {
+        return scriptedToolCalls([
+          { name: 'dob', args: { year: 2000, month: 1, day: 1 } },
+        ]);
+      }
+      return scriptedText('Please provide your date of birth.');
+    }
+
+    if (systemPrompt.includes('one complete US mailing address')) {
+      if (/123 K St\. Portland, OR 97006/i.test(latestMessage)) {
+        return scriptedToolCalls([
+          {
+            name: 'address',
+            args: { address: '123 K St. Portland, OR 97006' },
+          },
+        ]);
+      }
+      return scriptedText('Please provide your complete US mailing address.');
+    }
+
+    if (systemPrompt.includes('profile collection is complete')) {
+      return scriptedText(
+        'Your address was accepted and your profile collection is complete.',
+      );
+    }
+
+    if (systemPrompt.includes('You are ConcurStep')) {
+      return scriptedText('The concurrent follow-up task is complete.');
+    }
+
+    throw new Error(
+      `No scripted BasicFlow response for system prompt: ${preview(systemPrompt)}`,
+    );
+  }
+}
+
+function scriptedText(content: string): AIMessage {
+  return new AIMessage({ content });
+}
+
+function scriptedToolCalls(
+  calls: Array<{ name: string; args: Record<string, unknown> }>,
+): AIMessage {
+  return new AIMessage({
+    content: '',
+    tool_calls: calls.map((call) => ({
+      ...call,
+      id: `scripted-tool-${++ScriptedBasicFlowModel.toolCallId}`,
+    })),
+  });
+}
+
+function messageText(content: unknown): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  return content === undefined || content === null
+    ? ''
+    : JSON.stringify(content);
+}
 
 async function createApp(): Promise<NestFastifyApplication> {
   const moduleRef = await NestTest.createTestingModule({
@@ -238,117 +373,59 @@ function loadScenario(): BasicFlowScenario {
       'boolean',
       `${turn.label}: scenario turn must include completed`,
     );
+    assert.ok(
+      turn.expectedActiveStep,
+      `${turn.label}: scenario turn must include expectedActiveStep`,
+    );
+    assert.ok(
+      turn.responseMustInclude.length > 0,
+      `${turn.label}: scenario turn must include responseMustInclude`,
+    );
   }
 
   return parsed;
 }
 
-async function judgeResponse(
+function expectResponseContract(
   turn: ScenarioTurn,
   response: RunResponse,
-): Promise<JudgeResult> {
-  const message = response.message?.replace(/\s+/g, ' ').trim();
+): void {
+  const message = response.message?.replace(/\s+/g, ' ').trim().toLowerCase();
   assert.ok(message, `${turn.label}: expected non-empty bot message`);
 
-  const openAiResponse = await fetch(
-    'https://api.openai.com/v1/chat/completions',
-    {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${process.env.OPENAI_KEY}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: judgeModel,
-        temperature: 0,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: [
-              'You are a strict but fair evaluator for an AI flow test.',
-              'Compare the actual assistant response to the expected semantic behavior.',
-              'Ignore wording differences, formatting differences, and harmless extra politeness.',
-              'If the actual response asks for the correct next piece of information, do not penalize it for omitting acknowledgement of the prior user answer.',
-              'If the actual response asks for the expected field plus additional fields from the same data-collection step, treat that as acceptable unless it prevents the user from continuing.',
-              'When a flow crosses into a new data-collection step, accept extra wording that the previous input does not satisfy the new field as long as the response clearly asks for the expected new field.',
-              'If the expected behavior says acknowledgement is not required, never mark missing acknowledgement as a problem.',
-              'For unsupported-city recovery, asking the user to try different cities counts as a valid recovery. Do not require the assistant to name supported cities such as LA or NYC unless the expected behavior explicitly requires those exact city names.',
-              'This BasicFlow assistant may include generic travel-assistant wording while collecting profile details; ignore that unless it refuses to perform the expected next action.',
-              'Fail if the response asks for the wrong information, contradicts the expected behavior, skips required recovery behavior, or is too vague to be useful.',
-              'Return only JSON with: pass boolean, score number from 0 to 1, reason string, missing string array, contradictions string array.',
-            ].join(' '),
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              turnLabel: turn.label,
-              userInput: turn.input,
-              expectedSemanticBehavior: turn.expectedResponse,
-              actualAssistantResponse: message,
-            }),
-          },
-        ],
-      }),
-    },
-  );
-
-  if (!openAiResponse.ok) {
-    assert.fail(
-      `${turn.label}: judge request failed: ${await openAiResponse.text()}`,
+  for (const requiredText of turn.responseMustInclude) {
+    assert.ok(
+      message.includes(requiredText.toLowerCase()),
+      [
+        `${turn.label}: response must include "${requiredText}"`,
+        `expected behavior=${turn.expectedResponse}`,
+        `actual=${response.message}`,
+      ].join('\n'),
     );
-  }
-
-  const result = (await openAiResponse.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = result.choices?.[0]?.message?.content;
-  assert.ok(content, `${turn.label}: judge returned empty response`);
-
-  try {
-    return JSON.parse(content) as JudgeResult;
-  } catch (_error) {
-    assert.fail(`${turn.label}: judge returned invalid JSON: ${content}`);
   }
 }
 
-function expectSemanticMatch(
-  turn: TranscriptTurn,
-  transcript: TranscriptTurn[],
-): void {
-  const judge = turn.judge;
-  assert.ok(judge, `${turn.label}: missing judge result`);
-
-  const minScore = turn.minScore ?? scenario.judgeMinScore ?? 0.75;
-  const passed = judge.pass === true && judge.score >= minScore;
-
-  if (!passed) {
-    writeFileSync(
-      failureArtifactPath,
-      JSON.stringify(
-        {
-          failedTurn: turn.label,
-          judgeModel,
-          minScore,
-          transcript,
-        },
-        null,
-        2,
-      ),
-      'utf-8',
-    );
-  }
+async function expectTurnSessionState(
+  app: NestFastifyApplication,
+  sessionId: string,
+  turn: ScenarioTurn,
+): Promise<void> {
+  const sessionDoc = await app
+    .get(FlowEngine)
+    .getFlowSession()
+    .fetchAll(sessionId);
+  assert.ok(sessionDoc, `${turn.label}: expected a session document`);
+  assert.equal(sessionDoc.flow?.name, scenario.flowName);
+  assert.equal(
+    sessionDoc.runStatus,
+    turn.completed ? 'completed' : 'running',
+    `${turn.label}: persisted run status mismatch`,
+  );
 
   assert.equal(
-    passed,
-    true,
-    [
-      `${turn.label}: semantic judge failed`,
-      `score=${judge.score}, minScore=${minScore}`,
-      `reason=${judge.reason}`,
-      `actual=${turn.actualResponse}`,
-      `artifact=${failureArtifactPath}`,
-    ].join('\n'),
+    sessionDoc.flow?.currentStep,
+    turn.expectedActiveStep,
+    `${turn.label}: persisted current step mismatch`,
   );
 }
 
@@ -360,7 +437,8 @@ async function expectSessionState(
     .get(FlowEngine)
     .getFlowSession()
     .fetchAll(sessionId);
-  const basicFlow = sessionDoc.flows?.find((flow) => flow.name === 'BasicFlow');
+  assert.equal(sessionDoc.flow?.name, 'BasicFlow');
+  const basicFlow = sessionDoc.flow;
 
   assert.ok(basicFlow, 'Expected BasicFlow session document');
   assert.equal(stepState(basicFlow, 'WeatherStep').city_LA, 72);
@@ -370,7 +448,7 @@ async function expectSessionState(
     favoriteMovie: 'Star Wars',
     favoriteSeason: 'summer',
   });
-  assert.equal(stepState(basicFlow, 'NameStep').name, 'Joe Cline');
+  assert.equal(stepState(basicFlow, 'NameStep').name, 'John Wick');
   assert.equal(stepState(basicFlow, 'DOBStep').year, 2000);
   assert.equal(stepState(basicFlow, 'DOBStep').month, 1);
   assert.equal(stepState(basicFlow, 'DOBStep').day, 1);

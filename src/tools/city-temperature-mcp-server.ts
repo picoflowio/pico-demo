@@ -1,5 +1,10 @@
+/*
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
+ */
 import * as readline from 'node:readline';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 type JsonRpcId = string | number | null;
 
@@ -228,6 +233,6 @@ function jsonRpcError(
   };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   startCityTemperatureMcpServer();
 }

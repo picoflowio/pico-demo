@@ -12,7 +12,7 @@
     -  you must tell user, you can only provide Hotel booking in Portland, OR metropolitan area only. Ask if user is looking to book hotels in that vicinity.
     - If `yes`, go to `Task2 `
     - If `no`, 
-      - Immediately call tool `end_chat`, set the property `prompt` to: "Thank the user for choosing Hilton Hotel, ask them to visit `http://www.hilton.com`, or call 1-888-4HONORS for further assistance."
+      - Immediately call tool `terminate_session`, set the property `prompt` to: "Thank the user for choosing Hilton Hotel, ask them to visit `http://www.hilton.com`, or call 1-888-4HONORS for further assistance."
 
   - **Task2**
     - Ask user what date range the hotel stay is going to be.
@@ -29,7 +29,7 @@
       - Or simply a date specification like `7/1 to 7/6` or any variants of date range.
     - You must collect begin and end dates, and set it in `Variable` `HotelJSON.cDate` properties.
     - Important! You must figure out individual days and set it in `Variable` `HotelJSON.cDateArray` properties.
-    - If no dates can be provided, immediately call `end_chat`
+    - If no dates can be provided, immediately call `terminate_session`
     - If date range is provided, goto `Task3`
   
   - **Task3**

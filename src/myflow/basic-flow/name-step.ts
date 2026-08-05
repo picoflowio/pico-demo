@@ -1,71 +1,74 @@
 /*
- *
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
-import { ToolCall } from '@langchain/core/messages/tool';
-import { Flow } from '@picoflow/core';
-import { ToolResponseType, ToolType } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { DOBStep } from './dob-step.js';
-import { EndStep } from '@picoflow/core';
-import { z } from 'zod';
-import { DemoPrompt } from './prompt/demo-prompt.js';
-import { InContextStep } from './incontext-step.js';
+import { Flow, Tool, go, stay } from "@picoflow/core";
+import { ToolResponseType, ToolType } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { DOBStep } from "./dob-step.js";
+import { TerminateSessionStep } from "@picoflow/core";
+import { z } from "zod";
+import { DemoPrompt } from "./prompt/demo-prompt.js";
+import { InContextStep } from "./incontext-step.js";
+import type { JsonObject, JsonValue } from "@picoflow/core";
 
 export class NameStep extends Step {
-  constructor(flow: Flow, isActive?: boolean) {
-    super(NameStep, flow, isActive);
+  constructor(flow: Flow) {
+    super(flow);
   }
 
   public getPrompt(): string {
     return `
-    ${DemoPrompt.TravelRole}
-    Please collect name from customer.
-    Once you capture the name, immediately call tool 'user_name'.
-    Pay attention to the tool respond if the name is validated or not, if not keep asking to enter correct user name.
-    If user prefer to exit, call tool 'end_chat'.
+    ${DemoPrompt.DemoPrompt}
+    Ask the customer for their full name.
+    Treat any plausible first-and-last-name response as collected input and immediately call 'user_name' with the complete name. Do not validate or reject a name in prose before calling the tool; the tool owns validation.
+    If 'user_name' rejects the name, clearly repeat the tool's reason and ask for a different full name. Remain in this step.
+    If the user explicitly asks to exit, call 'terminate_session'.
     `;
   }
 
   public defineTool(): ToolType[] {
     return [
       {
-        name: 'user_name',
-        description: 'Capture name of user',
+        name: "user_name",
+        description: "Capture name of user",
         schema: z.object({
-          name: z.string().describe('Name of user'),
+          name: z.string().min(3).describe("Complete first and last name"),
         }),
       },
     ];
   }
-  public getTool(): string[] {
-    return ['user_name', 'end_chat'];
-  }
 
-  protected async user_name(tool: ToolCall): Promise<ToolResponseType> {
-    this.saveState({ name: tool.args?.name });
+  @Tool
+  protected async user_name(
+    args: Record<string, any>,
+  ): Promise<ToolResponseType> {
+    const name = typeof args?.name === "string" ? args.name.trim() : "";
 
-    if (tool.args?.name === 'John Doe') {
-      return {
-        step: NameStep,
-        tool: 'Cannot accept John Doe, please choose a different name.',
-      };
+    if (name.toLowerCase() === "john doe") {
+      // stay(...) keeps NameStep active and returns corrective feedback to the model.
+      return stay("Cannot accept John Doe, please choose a different name.");
     } else {
-      const runData = this.flow.getContext<object>('myRunData');
+      this.saveState({ name });
+      const runData = this.flow.getContext<JsonObject>("myRunData");
       this.saveState(runData);
 
       this.flow.saveTransientStepState(InContextStep, {
-        msg: 'transient variable passed from NameStep',
+        msg: "transient variable passed from NameStep",
       });
       const answer = await this.runStep(InContextStep);
-      this.saveState({ inContext: answer });
-      return DOBStep;
+      this.saveState({
+        inContext: JSON.parse(JSON.stringify(answer)) as JsonValue,
+      });
+      // go(...) advances to the date-of-birth step after saving the valid name.
+      return go(DOBStep);
     }
   }
 
-  protected async end_chat(_tool: ToolCall): Promise<ToolResponseType> {
-    return { step: EndStep, prompt: DemoPrompt.AbruptEnd };
+  @Tool
+  protected async terminate_session(): Promise<ToolResponseType> {
+    // go(...) activates the terminal step with the abrupt-end prompt.
+    return go(TerminateSessionStep).withPrompt(DemoPrompt.AbruptEnd);
   }
 }

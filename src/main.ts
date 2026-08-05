@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2026 picoflow.io
- * This software is proprietary and confidential. Unauthorized copying, distribution
- * or modification of this file, via any medium, is strictly prohibited.
+- Copyright (c) 2026 picoflow.io
+- This software is proprietary and confidential. Unauthorized copying, distribution
+- or modification of this file, via any medium, is strictly prohibited.
  */
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -10,17 +10,17 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
-  
+
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -33,7 +33,7 @@ async function bootstrap() {
     prefix: '/public/',
   });
 
-  // Create Swagger document
+  // Create Swagger documents
   const config = new DocumentBuilder()
     .setTitle('Chat Flow API')
     .setDescription('API documentation for Chat Flow')

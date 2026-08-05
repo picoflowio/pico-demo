@@ -1,7 +1,4 @@
 [{
-  "_id": {
-    "$oid": "67cf62b0533f869c96372261"
-  },
   "name": "The Porter Portland, Curio Collection by Hilton",
   "address": "1355 SW 2nd Ave. Portland, Oregon 97201 USA",
   "amenities": {
@@ -28,9 +25,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372262"
-  },
   "name": "Hilton Portland Downtown",
   "address": "1921 SW Sixth Avenue Portland, Oregon 97204 USA",
   "amenities": {
@@ -55,9 +49,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372263"
-  },
   "name": "The Duniway Portland, a Hilton Hotel",
   "address": "545 SW Taylor Portland, Oregon 97204 USA",
   "amenities": {
@@ -81,9 +72,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372264"
-  },
   "name": "Embassy Suites by Hilton Portland Downtown",
   "address": "319 SW Pine Street Portland, Oregon 97204-2726 USA",
   "amenities": {
@@ -113,9 +101,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372265"
-  },
   "name": "The Benson Portland, Curio Collection by Hilton",
   "address": "309 SW Broadway Portland, Oregon 97205 USA",
   "amenities": {
@@ -143,9 +128,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372266"
-  },
   "name": "Canopy by Hilton Portland Pearl District",
   "address": "425 NW 9th Ave, Portland, OR 97209",
   "amenities": {
@@ -170,9 +152,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372267"
-  },
   "name": "Hampton Inn & Suites Portland-Pearl District",
   "address": "354 NW 9th Ave, Portland, OR 97209",
   "amenities": {
@@ -200,9 +179,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372268"
-  },
   "name": "River's Edge Hotel Portland, Tapestry Collection by Hilton",
   "address": "455 S Hamilton Ct, Portland, OR 97239",
   "amenities": {
@@ -229,9 +205,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372269"
-  },
   "name": "DoubleTree by Hilton Hotel Portland",
   "address": "1000 NE Multnomah St, Portland, OR 97232",
   "amenities": {
@@ -258,9 +231,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226a"
-  },
   "name": "Home2 Suites by Hilton Portland Airport OR",
   "address": "7001 NE 82nd Ave, Portland, OR 97220",
   "amenities": {
@@ -290,9 +260,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226b"
-  },
   "name": "Tru by Hilton Portland Airport",
   "address": "7077 NE 82nd Ave, Portland, OR 97220",
   "amenities": {
@@ -319,9 +286,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226c"
-  },
   "name": "Hampton Inn & Suites Portland Tigard",
   "address": "11799 SW 69th Ave, Tigard, OR 97223",
   "amenities": {
@@ -350,9 +314,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226d"
-  },
   "name": "Embassy Suites by Hilton Portland Tigard",
   "address": "9000 SW Washington Square Rd, Tigard, OR 97223",
   "amenities": {
@@ -381,9 +342,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226e"
-  },
   "name": "DoubleTree by Hilton Hotel Portland - Tigard",
   "address": "9575 SW Locust St, Tigard, OR 97223",
   "amenities": {
@@ -409,9 +367,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637226f"
-  },
   "name": "Embassy Suites by Hilton Portland Airport",
   "address": "7900 NE 82nd Ave, Portland, OR 97220",
   "amenities": {
@@ -442,9 +397,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372270"
-  },
   "name": "Hampton Inn Portland-Airport",
   "address": "8633 NE Airport Way, Portland, OR 97220",
   "amenities": {
@@ -471,9 +423,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372271"
-  },
   "name": "Hilton Garden Inn Portland/Lake Oswego",
   "address": "14850 Kruse Oaks Dr, Lake Oswego, OR 97035",
   "amenities": {
@@ -499,9 +448,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372272"
-  },
   "name": "Homewood Suites by Hilton Vancouver-Portland",
   "address": "701 SE Columbia Shores Blvd, Vancouver, WA 98661",
   "amenities": {
@@ -529,9 +475,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372273"
-  },
   "name": "Homewood Suites by Hilton Portland Airport",
   "address": "11936 NE Glenn Widing Dr, Portland, OR 97220",
   "amenities": {
@@ -559,9 +502,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372274"
-  },
   "name": "Hilton Garden Inn Portland Airport",
   "address": "12048 NE Airport Way, Portland, OR 97220",
   "amenities": {
@@ -589,9 +529,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372275"
-  },
   "name": "Hilton Garden Inn Beaverton",
   "address": "15520 NW Gateway Ct, Beaverton, OR 97006",
   "amenities": {
@@ -619,9 +556,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372276"
-  },
   "name": "Homewood Suites by Hilton Hillsboro/Beaverton",
   "address": "15525 NW Gateway Ct, Beaverton, OR 97006",
   "amenities": {
@@ -646,9 +580,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372277"
-  },
   "name": "Hilton Vancouver Washington",
   "address": "301 W 6th St, Vancouver, WA 98660",
   "amenities": {
@@ -678,9 +609,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372278"
-  },
   "name": "Hampton Inn Portland/Clackamas",
   "address": "9040 SE Adams St, Clackamas, OR 97015",
   "amenities": {
@@ -709,9 +637,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372279"
-  },
   "name": "Tru by Hilton Aloha Beaverton",
   "address": "17363 SW Tualatin Valley Hwy, Beaverton, OR 97006",
   "amenities": {
@@ -738,9 +663,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227a"
-  },
   "name": "Hampton Inn Portland East",
   "address": "3039 NE 181st Ave, Portland, OR 97230",
   "amenities": {
@@ -769,9 +691,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227b"
-  },
   "name": "Home2 Suites by Hilton Portland Hillsboro",
   "address": "9790 NE Tanasbourne Drive Hillsboro, Oregon 97124 USA",
   "amenities": {
@@ -799,9 +718,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227c"
-  },
   "name": "Hampton Inn & Suites Portland/Hillsboro-Evergreen Park",
   "address": "9399 NE Tanasbourne Drive Hillsboro, Oregon 97124 USA",
   "amenities": {
@@ -827,9 +743,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227d"
-  },
   "name": "Embassy Suites by Hilton Portland Hillsboro, Oregon",
   "address": "9355 NE Tanasbourne Drive Hillsboro, Oregon 97124 USA",
   "amenities": {
@@ -859,9 +772,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227e"
-  },
   "name": "Hampton Inn & Suites Portland/Vancouver",
   "address": "315 SE Olympia Drive Vancouver, Washington 98684 USA",
   "amenities": {
@@ -892,9 +802,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c9637227f"
-  },
   "name": "Hampton Inn Sherwood Portland",
   "address": "22000 SW Meinecke Parkway Sherwood, Oregon 97140 USA",
   "amenities": {
@@ -923,9 +830,6 @@
   }
 },
 {
-  "_id": {
-    "$oid": "67cf62b0533f869c96372280"
-  },
   "name": "Hilton Garden Inn Wilsonville Portland",
   "address": "30800 SW Parkway Avenue Wilsonville, Oregon 97070 USA",
   "amenities": {
