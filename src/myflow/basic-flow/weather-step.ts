@@ -3,10 +3,11 @@
 - This software is proprietary and confidential. Unauthorized copying, distribution
 - or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow, Tool, go, stay } from "@picoflow/core";
+import { Flow, Tool, Tools, go, stay } from "@picoflow/core";
 import { ToolResponseType, ToolType } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { TerminateSessionStep } from "@picoflow/core";
+import type { ToolCall } from "@langchain/core/messages/tool";
 import { z } from "zod";
 import { DemoPrompt } from "./prompt/demo-prompt.js";
 import { FooLogicStep } from "./foo-logic.js";
@@ -83,6 +84,52 @@ export class WeatherStep extends Step {
       // stay(...) keeps WeatherStep active and returns corrective feedback to the model.
       return stay("Only LA and NYC cities are allowed");
     }
+  }
+
+  @Tools(["get_weather"])
+  protected async get_weather_batch(
+    calls: readonly ToolCall[],
+  ): Promise<ToolResponseType> {
+    const cityNames = calls.map((call) => {
+      const cityName = call.args?.cityName;
+      return typeof cityName === "string"
+        ? this.normalizeCityName(cityName)
+        : undefined;
+    });
+
+    if (
+      cityNames.some((cityName) => cityName !== "LA" && cityName !== "NYC") ||
+      new Set(cityNames).size !== cityNames.length
+    ) {
+      return stay(
+        "Provide LA and NYC exactly once so their weather can be compared.",
+      );
+    }
+
+    const weather = await callCityTemperatureMcpTool(cityNames);
+    if (
+      weather.length !== cityNames.length ||
+      weather.some(
+        (entry) =>
+          entry?.temperature === null || entry?.temperature === undefined,
+      )
+    ) {
+      return stay("Only LA and NYC cities are allowed");
+    }
+
+    if (weather.length !== 2) {
+      return stay(
+        "Provide LA and NYC exactly once so their weather can be compared.",
+      );
+    }
+
+    for (const entry of weather) {
+      this.saveState({
+        [`city_${entry.city}`]: entry.temperature,
+      });
+    }
+
+    return go(FooLogicStep);
   }
 
   private normalizeCityName(cityName: string): string {

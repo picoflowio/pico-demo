@@ -10,6 +10,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "npm run build:app",
+    "clean": "rm -rf ./dist/ ./node_modules/",
     "build:picoflow": "npm --prefix ../picoflow run build:locallib",
     "build:app": "nest build",
     "postbuild": "copyfiles -u 1 'src/**/*.{json,md,png,pdf}' dist/",
@@ -20,14 +21,18 @@
     "test": "npm run test:flows",
     "test:flows": "npm run test:basic-flow && npm run test:hotel-flow && npm run test:invoice-flow",
     "test:basic-flow": "node --import tsx --test test/basic-flow/basic-flow.e2e-spec.ts",
-    "test2:basic-flow": "BASIC_FLOW_TEST_USE_ENV=1 node --import tsx --test test/basic-flow/basic-flow.e2e-spec.ts",
     "test:hotel-flow": "node --import tsx --test test/hotel-flow/hotel-flow.e2e-spec.ts",
+    "test:hotel-langgraph": "SESSION_STORE=memory node --import tsx --test test/hotel-langgraph/hotel-langgraph.live.eval.ts",
+    "test:hotel-langgraph:unit": "node --import tsx --test test/hotel-langgraph/hotel-langgraph.spec.ts test/hotel-langgraph/hotel-langgraph.e2e.spec.ts",
     "test:invoice-flow": "node --import tsx --test test/invoice-flow/invoice-flow.e2e-spec.ts",
+    "test:support-flow": "node --import tsx --test test/support-flow/support-flow.spec.ts",
     "mcp:city-temperature": "node --import tsx src/tools/city-temperature-mcp-server.ts"
   },
   "dependencies": {
     "@fastify/static": "9.3.0",
     "@langchain/core": "1.2.3",
+    "@langchain/langgraph": "1.4.8",
+    "@langchain/openai": "1.5.3",
     "@nestjs/common": "11.1.28",
     "@nestjs/config": "4.0.4",
     "@nestjs/core": "11.1.28",
@@ -37,7 +42,8 @@
     "fastify": "5.10.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "@picoflow/core": "^1.1.1",
+    "mongodb": "6.21.0",
+    "@picoflow/core": "^1.1.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "zod": "4.4.3"

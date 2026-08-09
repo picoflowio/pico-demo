@@ -4,17 +4,17 @@
 - or modification of this file, via any medium, is strictly prohibited.
  */
 
-import { Flow } from '@picoflow/core';
-import { Step } from '@picoflow/core';
-import { NameStep } from './name-step.js';
-import { Prompt } from '@picoflow/core';
-import { StringUtil } from '@picoflow/core';
-import { StepClassType } from '@picoflow/core';
-import { HumanMessageEx, MessageTypes } from '@picoflow/core';
-import type { JsonValue } from '@picoflow/core';
+import { Flow } from "@picoflow/core";
+import { Step } from "@picoflow/core";
+import { NameStep } from "./name-step.js";
+import { Prompt } from "@picoflow/core";
+import { StringUtil } from "@picoflow/core";
+import { HumanMessageEx, MessageTypes } from "@picoflow/core";
+import { go } from "@picoflow/core";
+import type { JsonValue, LastResponseType } from "@picoflow/core";
 
-const PROMPT = Prompt.file('prompt/favorites.md');
-const SCHEMA = Prompt.file('prompt/favorites.json');
+const PROMPT = Prompt.file("prompt/favorites.md");
+const SCHEMA = Prompt.file("prompt/favorites.json");
 
 export class FavoritesStep extends Step {
   constructor(flow: Flow) {
@@ -24,7 +24,7 @@ export class FavoritesStep extends Step {
     _langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
-    return new HumanMessageEx(this, 'Hi');
+    return new HumanMessageEx(this, "Hi");
   }
 
   public getPrompt(): string {
@@ -37,18 +37,18 @@ export class FavoritesStep extends Step {
 
   public async onResponse(
     llmResult: string | object,
-  ): Promise<string | StepClassType> {
+  ): Promise<LastResponseType> {
     const json =
-      typeof llmResult === 'string'
+      typeof llmResult === "string"
         ? StringUtil.parseJson<JsonValue>(llmResult)
         : (llmResult as JsonValue);
 
-    if (json && typeof json === 'object' && !Array.isArray(json)) {
+    if (json && typeof json === "object" && !Array.isArray(json)) {
       this.saveState({ favorites: json });
-      return NameStep;
+      return go(NameStep);
     }
 
-    return typeof llmResult === 'string'
+    return typeof llmResult === "string"
       ? llmResult
       : JSON.stringify(llmResult);
   }

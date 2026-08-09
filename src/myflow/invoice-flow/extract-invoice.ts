@@ -103,6 +103,7 @@ export class ExtractInvoiceStep extends Step {
     // this.sessionCompleted();
 
     // direct(...) returns JSON immediately, without another model call, and keeps this step active.
+    this.flow.markCompleted();
     return direct(args?.json).withContentType(HttpContentType.Json);
   }
 }

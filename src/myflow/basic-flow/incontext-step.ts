@@ -10,7 +10,7 @@ import { HumanMessageEx, MessageTypes } from "@picoflow/core";
 import z from "zod";
 import { ConcurStep1 } from "./concur-step1.js";
 import { ConcurStep2 } from "./concur-step2.js";
-import type { JsonValue } from "@picoflow/core";
+import type { JsonValue, LastResponseType } from "@picoflow/core";
 
 export class InContextStep extends Step {
   constructor(flow: Flow) {
@@ -53,7 +53,7 @@ export class InContextStep extends Step {
 
   public async onResponse(
     llmResult: string | object,
-  ): Promise<string | StepClassType> {
+  ): Promise<LastResponseType> {
     this.saveState({ who: llmResult as JsonValue });
     return JSON.stringify(llmResult);
   }

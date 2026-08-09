@@ -3,7 +3,12 @@
 - This software is proprietary and confidential. Unauthorized copying, distribution
 - or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow, JsonValue, StepClassType } from "@picoflow/core";
+import {
+  Flow,
+  JsonValue,
+  LastResponseType,
+  StepClassType,
+} from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { HumanMessageEx, MessageTypes } from "@picoflow/core";
 
@@ -32,7 +37,7 @@ export class PresidentStep extends Step {
 
   public async onResponse(
     llmResult: string | object,
-  ): Promise<string | StepClassType> {
+  ): Promise<LastResponseType> {
     this.saveState({ who: llmResult as JsonValue });
     return llmResult as string;
   }

@@ -3,51 +3,68 @@
 - This software is proprietary and confidential. Unauthorized copying, distribution
 - or modification of this file, via any medium, is strictly prohibited.
  */
-import { Module } from "@nestjs/common";
+import { Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import {
-  createBuiltinProviderAdapters,
-  createCustomProviderAdapter,
-  FlowEngine,
-} from "@picoflow/core";
+import { ModelProvider, FlowEngine } from "@picoflow/core";
 import { HealthController } from "./controllers/health-controller.js";
 import { TutorialController } from "./controllers/tutorial-controller.js";
 import { AiController } from "./controllers/ai-controller.js";
 import { BasicFlow } from "./myflow/basic-flow/basic-flow.js";
 import { HotelFlow } from "./myflow/hotel-flow/hotel-flow.js";
 import { InvoiceFlow } from "./myflow/invoice-flow/invoice-flow.js";
-import { TravelFlow } from "./myflow/travel-flow/travel-flow.js";
-import { TutorialFlow } from "./myflow/tutorial-flow/tutorial-flow.js";
+import { SupportFlow } from "./myflow/support-flow/support-flow.js";
+import { HotelLanggraph } from "./myflow/hotel-langgraph/hotel-langgraph.js";
+import { AiLanggraphController } from "./controllers/ai-langgraph-controller.js";
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [TutorialController, AiController, HealthController],
+  controllers: [TutorialController, AiController, AiLanggraphController, HealthController],
   providers: [
     {
       provide: FlowEngine,
       useFactory: (config: ConfigService) =>
         FlowEngine.create({
-          flows: [BasicFlow, HotelFlow, InvoiceFlow, TravelFlow, TutorialFlow],
-          //register pre-build providers.
+          flows: [BasicFlow, HotelFlow, InvoiceFlow, SupportFlow],
+          //register pre-build providers, only specify what you use.
           providers: [
-            ...createBuiltinProviderAdapters({
+            ...ModelProvider.createBuiltinAdapters({
               openai: { apiKey: config.get<string>("OPENAI_API_KEY") },
               google: { apiKey: config.get<string>("GEMINI_API_KEY") },
               anthropic: { apiKey: config.get<string>("ANTHROPIC_API_KEY") },
-              kimi: { apiKey: config.get<string>("KIMI_API_KEY") },
-              ollama: { baseUrl: config.get<string>("OLLAMA_BASE_URL") },
+              // moonshot: { apiKey: config.get<string>("MOONSHOT_API_KEY") },
+              // zai: { apiKey: config.get<string>("ZAI_API_KEY") },
+              // deepseek: { apiKey: config.get<string>("DEEPSEEK_API_KEY") },
+              // openrouter: { apiKey: config.get<string>("OPENROUTER_API_KEY") },
+              // ollama: { baseUrl: config.get<string>("OLLAMA_BASE_URL") },
             }),
-            // Application-owned provider registration: DeepSeek has no
-            // dedicated PicoFlow helper, so the demo chooses its runtime here.
-            createCustomProviderAdapter({
-              provider: "deepseek",
-              runtimeProvider: "deepseek",
-              config: { apiKey: config.get<string>("DEEPSEEK_API_KEY") },
+            // NVIDIA uses an OpenAI-compatible endpoint, but remains an
+            // application-owned integration rather than a PicoFlow built-in.
+            ModelProvider.createCustomAdapter({
+              provider: "nvidia",
+              runtimeProvider: "openai",
+              config: {
+                apiKey: config.get<string>("NVIDIA_API_KEY"),
+                configuration: {
+                  baseURL: "https://integrate.api.nvidia.com/v1",
+                },
+              },
             }),
           ],
         }),
       inject: [ConfigService],
     },
+    {
+      provide: HotelLanggraph,
+      useFactory: () => HotelLanggraph.createFromEnvironment(),
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements OnApplicationShutdown {
+  constructor(
+    @Inject(HotelLanggraph) private readonly hotelLanggraph: HotelLanggraph,
+  ) {}
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.hotelLanggraph.close();
+  }
+}

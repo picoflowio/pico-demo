@@ -42,12 +42,16 @@ export class BasicFlow extends Flow {
     return [
       new WeatherStep(this).useModel({
         provider: "openai",
-        name: "gpt-4o",
-        params: { temperature: 0.2 },
+        name: "gpt-5",
+        params: { reasoning: { effort: "low" } },
       }),
       new NameStep(this).useMemory("default"),
       new AddressStep(this).useMemory("default"),
-      new DOBStep(this).useMemory("default"),
+      new DOBStep(this).useMemory("default").useModel({
+        provider: "openai",
+        name: "gpt-5.1",
+        params: { reasoning: { effort: "low" } },
+      }),
       new FooLogicStep(this).useMemory("default"),
       new GooLogicStep(this).useMemory("default"),
       new InContextStep(this).useMemory("separate"),
@@ -56,6 +60,13 @@ export class BasicFlow extends Flow {
       new ConcurStep3(this),
       new ConcurStep4(this),
       new PresidentStep(this).useMemory("president"),
+      // new FavoritesStep(this)
+      //   .useMemory("favorite")
+      //   .useModel({
+      //     provider: "nvidia",
+      //     name: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+      //     params: { temperature: 0.2 },
+      //   }),
       new FavoritesStep(this).useMemory("favorite"),
       new TerminateSessionStep(this).useMemory("temp"),
     ];

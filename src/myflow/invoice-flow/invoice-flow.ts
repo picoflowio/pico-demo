@@ -4,25 +4,27 @@
 - or modification of this file, via any medium, is strictly prohibited.
  */
 import { Flow } from "@picoflow/core";
-import { TerminateSessionStep } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { SessionLogger } from "@picoflow/core";
 import { ExtractInvoiceStep } from "./extract-invoice.js";
+import { NoToolStep } from "./no-tool-step.js";
 
 export class InvoiceFlow extends Flow {
   protected configModel() {
-    return { provider: "google", name: "gemini-2.0-flash" } as const;
+    return { provider: "google", name: "gemini-2.5-flash" } as const;
   }
+
   protected defineSteps(): Step[] {
     return [
+      new NoToolStep(this),
       new ExtractInvoiceStep(this).useMemory("invoice3").useModel({
         provider: "google",
         name: "gemini-3.1-pro-preview",
-        params: { temperature: 1.0 },
+        params: { temperature: 0 },
       }),
-      new TerminateSessionStep(this)
-        .useModel({ provider: "google", name: "gemini-2.5-pro" })
-        .useMemory("temp"),
+      // new TerminateSessionStep(this)
+      //   .useModel({ provider: "google", name: "gemini-2.5-pro" })
+      //   .useMemory("temp"),
     ];
   }
 

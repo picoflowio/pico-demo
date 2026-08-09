@@ -16,13 +16,19 @@ export class ApiConfigDto {
 }
 
 export class ApiRunBodyDto {
+  @ApiProperty({ example: 'Hi', required: false })
+  message?: string;
+
+  @ApiProperty({ example: 'HotelLanggraph', required: false })
+  graphName?: string;
+
   @ApiProperty({
     minLength: 1,
     description: 'First user message to AI',
     example: 'Hi',
     required: false,
   })
-  userMessage: string;
+  userMessage?: string;
 
   @ApiProperty({
     minLength: 1,
@@ -30,7 +36,7 @@ export class ApiRunBodyDto {
     example: 'HotelFlow',
     required: true,
   })
-  flowName: string;
+  flowName?: string;
 
   @ApiProperty({
     minLength: 1,
@@ -40,7 +46,18 @@ export class ApiRunBodyDto {
     },
     required: false,
   })
-  config: ApiConfigDto;
+  config?: ApiConfigDto | Record<string, unknown>;
+}
+
+export class ApiEndResponseDto {
+  @ApiProperty({ example: true })
+  success!: boolean;
+
+  @ApiProperty({ example: 'af88a392-52d2-4cb4-8653-3a2da66bd28e' })
+  session!: string;
+
+  @ApiProperty({ required: false })
+  message?: string;
 }
 
 export class ApiRunResponseDto {

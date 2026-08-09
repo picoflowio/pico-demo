@@ -140,7 +140,7 @@ test(
         .get(FlowEngine)
         .getFlowSession()
         .fetchAll(sessionId);
-      assert.equal(sessionDoc.runStatus, "running");
+      assert.equal(sessionDoc.runStatus, "completed");
 
       assert.equal(sessionDoc.flow?.name, "InvoiceFlow");
       const invoiceFlow = sessionDoc.flow;

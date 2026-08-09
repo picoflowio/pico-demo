@@ -7,7 +7,7 @@ import { Flow } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { StepClassType } from "@picoflow/core";
 import { ConcurStep3 } from "./concur-step3.js";
-import type { JsonValue } from "@picoflow/core";
+import type { JsonValue, LastResponseType } from "@picoflow/core";
 
 export class ConcurStep1 extends Step {
   constructor(flow: Flow) {
@@ -23,7 +23,7 @@ export class ConcurStep1 extends Step {
 
   public async onResponse(
     llmResult: string | object,
-  ): Promise<string | StepClassType> {
+  ): Promise<LastResponseType> {
     this.saveState({ concurStep1: llmResult as JsonValue });
     const [_concurStep3] = await this.runSteps([
       {
