@@ -1,42 +1,84 @@
 # picoflow-demo
 
-This NestJS and Fastify application contains the examples, controllers, MCP
-tools, and end-to-end flow scenarios that were separated from the `picoflow`
-library. It consumes the local debug package at
-`../picoflow-ws/picoflow/npmlib/staging/lib` during development.
+This NestJS/Fastify application demonstrates durable PicoFlow workflows and a
+direct LangGraph comparison implementation. It includes conversational,
+hotel-search, invoice-extraction, customer-support, and hotel LangGraph
+examples, together with their tests and developer guides.
 
-Before running the demo, build the local library package:
+## Prerequisites
+
+- Node.js 22.5 or newer
+- npm
+- API credentials for the live scenarios you want to run
+
+The application uses the published `@picoflow/core` dependency declared in
+[`package.json`](./package.json). If you are developing the sibling `picoflow`
+library as well, build its local library from `../picoflow` with
+`npm run build:picoflow` before rebuilding this application.
+
+## Install and run
 
 ```sh
-cd ../picoflow-ws/picoflow
-npm run build:locallib
-
-cd ../../picoflow-demo
 npm install
 npm run start:dev
 ```
 
-Set the flow provider and session environment variables in a local `.env`.
+The server listens on port `8000` and exposes:
 
-## Model registration
+- Swagger UI: <http://localhost:8000/api>
+- Health check: <http://localhost:8000/healthcheck>
+- PicoFlow flow names: `GET /ai/flows`
+- Direct LangGraph graph names: `GET /ai-langgraph/graphs`
 
-PicoFlow does not provide a default model catalog. This application registers
-PicoFlow's OpenAI, Google, Anthropic, Kimi, and Ollama helpers plus its own
-DeepSeek adapter in [`src/app.module.ts`](./src/app.module.ts). That module is
-the application-bootstrap contract when adding a provider. Flow and Step source
-select dynamic `{ provider, name, params }` values; it does not register
-credentials or supply hidden temperature/retry defaults.
+Create a local `.env` with the credentials for the providers used by your
+flows. `AppModule` currently registers the OpenAI, Google, and Anthropic
+PicoFlow adapters, plus the application-owned NVIDIA OpenAI-compatible adapter.
+The relevant variables are `OPENAI_API_KEY`, `GEMINI_API_KEY`,
+`ANTHROPIC_API_KEY`, `NVIDIA_API_KEY`, and `PICOFLOW_KEY`.
 
-## Flow tests
+SQLite is the default session store for the flow tests. The direct hotel
+LangGraph implementation supports memory, SQLite, and MongoDB session stores;
+MongoDB requires `MONGODB_URL`, `MONGODB_NAME`, and `MONGODB_COLLECTION`.
+
+## API examples
+
+Run a PicoFlow flow and retain the `CHAT_SESSION_ID` response header for later
+turns:
 
 ```sh
+curl -i http://localhost:8000/ai/run \
+  -H 'content-type: application/json' \
+  -d '{"flowName":"BasicFlow","message":"Hello","config":{}}'
+```
+
+The same flow API provides `POST /ai/end` to delete a session. The direct
+LangGraph comparison uses `POST /ai-langgraph/run` and the `SESSION_ID` header.
+
+## Tests
+
+```sh
+# Run the standard flow suite
+npm test
+
+# Run individual scenarios
 npm run test:basic-flow
 npm run test:hotel-flow
 npm run test:invoice-flow
+npm run test:support-flow
+
+# Run the direct LangGraph live evaluation (requires OPENAI_API_KEY)
+npm run test:hotel-langgraph
 ```
 
-`test:basic-flow` runs the full turn-by-turn conversation against the configured
-OpenAI models. Use `npm run test:basic-flow:contract` for the fast deterministic
-version that exercises the same transitions and SQLite assertions with a
-scripted model. Tests requiring provider access run when their API keys and
-`PICOFLOW_KEY` are available; otherwise the live scenario is reported as skipped.
+The BasicFlow, HotelFlow, InvoiceFlow, and SupportFlow tests use deterministic
+fixtures or fall back to a skipped live scenario when the required credentials
+are missing. The live BasicFlow, HotelFlow, and SupportFlow scenarios require
+`OPENAI_API_KEY` and `PICOFLOW_KEY`; InvoiceFlow requires `GEMINI_API_KEY` and
+`PICOFLOW_KEY`. The LangGraph live evaluation requires `OPENAI_API_KEY` and does
+not silently skip.
+
+For implementation details, start with the workflow overview in
+[`docs/picoflow-workflow-developer-guide.md`](./docs/picoflow-workflow-developer-guide.md),
+then see the [BasicFlow](./docs/basic-flow-developer-guide.md),
+[HotelFlow](./docs/hotel-flow-developer-guide.md), and
+[InvoiceFlow](./docs/invoice-flow-developer-guide.md) guides.
