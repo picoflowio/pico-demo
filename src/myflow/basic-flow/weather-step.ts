@@ -11,7 +11,7 @@ import type { ToolCall } from "@langchain/core/messages/tool";
 import { z } from "zod";
 import { DemoPrompt } from "./prompt/demo-prompt.js";
 import { FooLogicStep } from "./foo-logic.js";
-import { callCityTemperatureMcpTool } from "../../tools/city-temperature-mcp-client.js";
+import { getCityTemperatures } from "./city-temperature-service.js";
 
 export class WeatherStep extends Step {
   constructor(flow: Flow) {
@@ -62,7 +62,7 @@ export class WeatherStep extends Step {
       );
     }
 
-    const [weather] = await callCityTemperatureMcpTool([stateCityName]);
+    const [weather] = getCityTemperatures([stateCityName]);
     if (weather?.temperature !== null && weather?.temperature !== undefined) {
       this.saveState({
         [`city_${stateCityName}`]: weather.temperature,
@@ -106,7 +106,7 @@ export class WeatherStep extends Step {
       );
     }
 
-    const weather = await callCityTemperatureMcpTool(cityNames);
+    const weather = getCityTemperatures(cityNames);
     if (
       weather.length !== cityNames.length ||
       weather.some(

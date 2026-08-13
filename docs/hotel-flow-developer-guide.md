@@ -122,7 +122,7 @@ interpret the same user request without asking the user to repeat it.
 | Results stage | [`present-step.ts`](../src/myflow/hotel-flow/present-step.ts) | Result presentation, booking, re-search, and comparison entry |
 | Comparison stage | [`compare-step.ts`](../src/myflow/hotel-flow/compare-step.ts) | Feature selection, backend enrichment, table generation, repeated comparison, and booking return |
 | Catalog | [`hotel-catalog.ts`](../src/myflow/hotel-flow/backend/hotel-catalog.ts) | Read-only bundled hotel filtering and lookup |
-| Pricing | [`pricing-engine.ts`](../src/myflow/hotel-flow/backend/pricing-engine.ts) | Date enumeration, price multipliers, range filtering, totals, and catalog access |
+| Pricing MCP server | [`hotel-pricing-mcp-server.ts`](../src/tools/hotel-pricing-mcp-server.ts) | Typed `search_hotels` interface to the catalog and pricing engine |
 | Charting | [`gen-chart.ts`](../src/myflow/hotel-flow/gen-chart.ts) | Flattening and Markdown comparison-table generation |
 | Prompt assets | [`prompt/`](../src/myflow/hotel-flow/prompt/) | Role, explore schema/instructions, presentation, and comparison rules |
 | Fixture | [`hotels.json`](../src/myflow/hotel-flow/data/hotels.json) | Local Portland-area hotel data |
@@ -134,12 +134,12 @@ instructions, and a mutable JSON template. It injects the current UTC time, or
 `HOTEL_FLOW_CURRENT_DATE` when deterministic replay is required. Previously
 found hotels can also be reflected in the prompt.
 
-The `capture_choices` tool accepts a JSON string containing dates, room type,
-amenities, price range, and distance constraints. Its handler:
+The `capture_choices` tool accepts a typed criteria object containing dates, room
+type, amenities, price range, and distance constraints. Its handler:
 
 1. parses and saves the criteria under `ExploreStep.state.json`;
-2. extracts backend arguments;
-3. calls `PricingEngine.searchHotel(...)`;
+2. validates and maps the criteria to an MCP request;
+3. calls the local `search_hotels` MCP tool;
 4. projects each match to `hotelName`, daily `prices`, and `total`; and
 5. returns `go(PresentStep).withState({ hotelFound })`, or `stay(...)` if no
    hotel matches.
@@ -148,9 +148,14 @@ The destination-state builder is important: `PresentStep.getPrompt()` reads
 `hotelFound` from its own state. Cross-step data ownership should be explicit
 rather than inferred from shared history.
 
-The current handler catches JSON parsing errors but then dereferences the
-parsed value. Production code should reject malformed JSON with `stay(...)`
-and validate the parsed object's full shape before accessing nested fields.
+The language model calls PicoFlow's `capture_choices` tool, not the MCP server
+directly. `ExploreStep` owns durable criteria state and the `go(...)`/`stay(...)`
+decision; the MCP service owns the read-only catalog and price calculation. This
+keeps workflow routing deterministic while demonstrating a real service boundary.
+
+Invalid criteria now return `stay(...)`, an empty MCP result is a normal
+no-match response, and an MCP transport/service error remains distinct from
+both so it is not presented as “no hotel found.”
 
 ## 2. Present results and interpret the next intent
 

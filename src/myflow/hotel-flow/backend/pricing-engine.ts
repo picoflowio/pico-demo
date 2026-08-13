@@ -175,7 +175,7 @@ export class PricingEngine {
         roomType,
       );
 
-      if (!basePrices && basePrices.length > 0) {
+      if (!basePrices || basePrices.length === 0) {
         return null;
       }
 

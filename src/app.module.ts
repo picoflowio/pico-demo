@@ -15,6 +15,7 @@ import { InvoiceFlow } from "./myflow/invoice-flow/invoice-flow.js";
 import { SupportFlow } from "./myflow/support-flow/support-flow.js";
 import { HotelLanggraph } from "./myflow/hotel-langgraph/hotel-langgraph.js";
 import { AiLanggraphController } from "./controllers/ai-langgraph-controller.js";
+import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js";
 
 @Module({
   imports: [ConfigModule.forRoot()],
@@ -65,6 +66,9 @@ export class AppModule implements OnApplicationShutdown {
   ) {}
 
   async onApplicationShutdown(): Promise<void> {
-    await this.hotelLanggraph.close();
+    await Promise.all([
+      this.hotelLanggraph.close(),
+      closeHotelPricingMcpClient(),
+    ]);
   }
 }

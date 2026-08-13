@@ -86,7 +86,7 @@
 
   - **Task7**
     - Ask user if they want to make any changes, or perform search
-      - if perform search, first acknowledge the current criteria, then call tool `capture_choices`, by setting the property `json` with the JSON structure you accumulated from the users.
+      - if perform search, first acknowledge the current criteria, then call tool `capture_choices` exactly once, by setting the property `criteria` with the complete JSON structure you accumulated from the users. Do not serialize that JSON as a string or invent missing values.
       - if more changes, confirm using `Variable` `HotelJSON` so far the information you already collected: `cDate`,`cPriceRange`,`cRoomType`,`cAmenities`,`cDistance`
       - Examples:
       1. Search Hotels

@@ -1,7 +1,7 @@
 # BasicFlow developer guide
 
 `BasicFlow` is the broadest PicoFlow tutorial in this repository. It combines a
-durable multi-turn conversation with an MCP-backed tool, deterministic logic
+durable multi-turn conversation with batched tool handling, deterministic logic
 steps, prompt-file loading, separate memory namespaces, cross-step state,
 transient state, structured output, nested execution, parallel child steps,
 step-level model overrides, session restore policy, and a concurrent batch
@@ -149,7 +149,7 @@ terminal step. Two alternate modes are controlled through request config:
 
 | Step | Kind | Memory | Responsibility and transition |
 | --- | --- | --- | --- |
-| `WeatherStep` | `Step` + tool | class default | Calls the local city-temperature MCP client, accumulates LA and NYC temperatures, stays until both exist, then goes to `FooLogicStep` |
+| `WeatherStep` | `Step` + tool | class default | Uses a deterministic local temperature fixture, accumulates LA and NYC temperatures, stays until both exist, then goes to `FooLogicStep` |
 | `FooLogicStep` | `LogicStep` | `default` | Proceeds without an LLM call and attaches `fooData` to destination `GooLogicStep` |
 | `GooLogicStep` | `LogicStep` | `default` | Attaches `gooData` to destination `FavoritesStep` and proceeds there |
 | `FavoritesStep` | response-driven `Step` | `favorite` | Loads prompt/schema files, parses JSON from the model response, saves favorites, and returns `NameStep` |
@@ -165,17 +165,17 @@ terminal step. Two alternate modes are controlled through request config:
 
 ## Key patterns in detail
 
-### MCP-backed tool with incremental state
+### Batched tool handling with incremental state
 
 [`WeatherStep`](../src/myflow/basic-flow/weather-step.ts) calls
-`callCityTemperatureMcpTool(...)`, normalizes `la` and `nyc`, and stores each
+`getCityTemperatures(...)`, normalizes `la` and `nyc`, and stores each
 result under `city_LA` or `city_NYC`. Its `@Tools(["get_weather"])` handler
-receives one or more matching calls, performs one MCP lookup for the batch, and
+receives one or more matching calls, performs one local lookup for the batch, and
 routes to `FooLogicStep` when both values are present. It returns a routed
 `stay(...)` response for invalid or incomplete batches. The existing individual
 `@Tool` handler remains available only when no matching group handler is
-selected. The MCP server and client live in
-[`src/tools`](../src/tools/).
+selected. The deterministic fixture lives beside the step in
+[`city-temperature-service.ts`](../src/myflow/basic-flow/city-temperature-service.ts).
 
 The current readiness check uses truthiness (`if (LA && NYC)`). If the backend
 can return `0`, change this to explicit null/undefined checks so a valid
@@ -247,10 +247,9 @@ unrelated instructions and tool history from leaking into another role.
 
 ## HTTP usage
 
-Start the MCP server and application in separate terminals:
+Start the application:
 
 ```sh
-npm run mcp:city-temperature
 npm run start:dev
 ```
 

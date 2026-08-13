@@ -12,9 +12,13 @@ import { HotelPrompt } from "./prompt/hotel-prompt.js";
 import moment from "moment";
 import lodash from "lodash";
 import { PresentStep } from "./present-step.js";
-import { PricingEngine } from "./backend/pricing-engine.js";
 import { FlowPrompt } from "@picoflow/core";
 import { Prompt } from "@picoflow/core";
+import {
+  HotelSearchCriteriaSchema,
+  toHotelPricingSearchRequest,
+} from "../../tools/hotel-pricing-contract.js";
+import { searchHotelsViaMcp } from "../../tools/hotel-pricing-mcp-client.js";
 
 const { set } = lodash;
 //........................................................
@@ -70,9 +74,12 @@ export class ExploreStep extends Step {
       // },
       {
         name: "capture_choices",
-        description: "Capture user choice for hotel search criteria",
+        description:
+          "Submit the complete accumulated hotel search criteria after the user asks to search.",
         schema: z.object({
-          json: z.string().describe("JSON object"),
+          criteria: HotelSearchCriteriaSchema.describe(
+            "The complete hotel search criteria accumulated from the conversation.",
+          ),
         }),
       },
     ];
@@ -81,34 +88,41 @@ export class ExploreStep extends Step {
   protected async capture_choices(
     args: Record<string, any>,
   ): Promise<ToolResponseType> {
-    //do a hotel search here.
-    let choices;
-    try {
-      choices = JSON.parse(args?.json);
-    } catch (_ex) {}
+    const parsedChoices = HotelSearchCriteriaSchema.safeParse(args?.criteria);
+    if (!parsedChoices.success) {
+      return stay(
+        "The hotel search criteria are incomplete or invalid. Collect valid dates, preferences, and distances before searching.",
+      );
+    }
+    const choices = parsedChoices.data;
+    const startDate = new Date(choices.cDate.start);
+    const endDate = new Date(choices.cDate.end);
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      endDate <= startDate
+    ) {
+      return stay(
+        "The checkout date must be after a valid check-in date. Ask the user to correct their stay dates.",
+      );
+    }
+
     this.saveState({
-      json: choices,
+      // Tool arguments arrive as JSON. Round-trip through JSON before saving so
+      // PicoFlow receives only its durable JsonValue state representation.
+      json: JSON.parse(JSON.stringify(choices)),
     });
 
-    const startDate = choices["cDate"]["start"];
-    const endDate = choices["cDate"]["end"];
-    const roomType = choices["cRoomType"];
-    const amenities = choices["cAmenities"];
-    const maxBudget = choices["cPriceRange"]["max"] ?? null;
-    const minBudget = choices["cPriceRange"]["min"] ?? null;
-    const cityCenter = choices["cDistance"]["cityCenter"];
-    const airport = choices["cDistance"]["airport"];
-
-    const hotelEntries = await PricingEngine.searchHotel(
-      startDate,
-      endDate,
-      amenities,
-      roomType,
-      maxBudget,
-      minBudget,
-      airport,
-      cityCenter,
-    );
+    let hotelEntries;
+    try {
+      hotelEntries = await searchHotelsViaMcp(
+        toHotelPricingSearchRequest(choices),
+      );
+    } catch (error) {
+      return stay(
+        "Hotel pricing is temporarily unavailable. Ask the user to try the search again.",
+      );
+    }
     if (hotelEntries && hotelEntries.length > 0) {
       const hotelFoundInfo = hotelEntries.map((entry) => {
         return {

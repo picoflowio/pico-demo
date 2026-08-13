@@ -39,7 +39,7 @@ individual `get_weather` handler and adds a group handler. The group handler:
 
 1. Normalizes every requested city.
 2. Requires LA and NYC exactly once for a comparison batch.
-3. Calls the city-temperature MCP client once with all cities.
+3. Calls the deterministic city-temperature fixture once with all cities.
 4. Saves each temperature under `city_LA` or `city_NYC`.
 5. Returns `go(FooLogicStep)` when both values are available, otherwise a
    routed `stay(...)` response.
