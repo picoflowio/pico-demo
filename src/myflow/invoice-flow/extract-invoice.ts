@@ -20,8 +20,18 @@ import { HttpContentType } from "@picoflow/core";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class ExtractInvoiceStep extends Step {
+  private uploadedFileCleanup?: () => Promise<void>;
+
   constructor(flow: Flow) {
     super(flow);
+  }
+
+  private async cleanupUploadedFile(): Promise<void> {
+    const cleanup = this.uploadedFileCleanup;
+    this.uploadedFileCleanup = undefined;
+    if (cleanup) {
+      await cleanup();
+    }
   }
 
   public getPrompt(): string {
@@ -70,8 +80,10 @@ export class ExtractInvoiceStep extends Step {
     const localPath = path.join(__dirname, fileName);
     this.saveState({ fileName: localPath });
     try {
+      await this.cleanupUploadedFile();
       const fileMgr = new LLMFileManager(this.getLLMType());
       const result = await fileMgr.uploadFile(localPath);
+      this.uploadedFileCleanup = result.cleanup;
       const id = fileMgr.getFileId(result);
       const userMsg = new HumanMessage({
         content: [
@@ -91,6 +103,7 @@ export class ExtractInvoiceStep extends Step {
       return go(ExtractInvoiceStep).withMessage(userMsg);
       // return null;
     } catch (_error) {
+      await this.cleanupUploadedFile();
       throw new Error(`read file ${fileName} failed`);
     }
   }
@@ -99,11 +112,15 @@ export class ExtractInvoiceStep extends Step {
   protected async capture_json(
     args: Record<string, any>,
   ): Promise<ToolResponseType> {
-    this.saveState({ json: args?.json });
-    // this.sessionCompleted();
+    try {
+      this.saveState({ json: args?.json });
+      // this.sessionCompleted();
 
-    // direct(...) returns JSON immediately, without another model call, and keeps this step active.
-    this.flow.markCompleted();
-    return direct(args?.json).withContentType(HttpContentType.Json);
+      // direct(...) returns JSON immediately, without another model call, and keeps this step active.
+      this.flow.markCompleted();
+      return direct(args?.json).withContentType(HttpContentType.Json);
+    } finally {
+      await this.cleanupUploadedFile();
+    }
   }
 }
