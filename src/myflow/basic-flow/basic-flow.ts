@@ -106,14 +106,4 @@ export class BasicFlow extends Flow {
     return msg;
   }
 
-  protected async onSessionDoc(
-    sessionDoc: SessionType,
-    isNew: boolean,
-  ): Promise<boolean> {
-    if (sessionDoc.version < 1.14) {
-      return false;
-    } else {
-      return isNew;
-    }
-  }
 }
