@@ -11,7 +11,7 @@
     "account_number": "b973",
     "payment_terms": "30% Deposit, 70% Net 15",
     "banking_info": {
-        "banking_instutition": "Wells Fargo Bank",
+        "banking_institution": "Wells Fargo Bank",
         "wire": {
             "banking_account": "91234876543",
             "banking_routing": "121042882",

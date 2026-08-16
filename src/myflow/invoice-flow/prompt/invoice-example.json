@@ -11,7 +11,7 @@
     "account_number": "a845",
     "payment_terms": "40% Deposit, 60% Before Dispatch",
     "banking_info": {
-        "banking_instutition": "Bank of America",
+        "banking_institution": "Bank of America",
         "wire": {
             "banking_account": "87654321098",
             "banking_routing": "026009593",
