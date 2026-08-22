@@ -220,9 +220,9 @@ request before the flow moves to `DOBStep`.
 
 `BasicFlow.onRestoreSessionDoc(...)` overrides the flow restore hook. The demo
 currently delegates straight to `super`, preserving PicoFlow's default policy:
-expired or incompatible session documents return `null` and start a new
-session; a current document is returned and persisted before restoration
-continues.
+incompatible session documents return `null` and start a new session; a current
+document is returned and persisted before restoration continues. PicoFlow does
+not impose a framework-wide expiration policy.
 
 ```ts
 protected async onRestoreSessionDoc(
@@ -232,10 +232,10 @@ protected async onRestoreSessionDoc(
 }
 ```
 
-Override this method when a flow needs a different expiration policy or an
-idempotent in-place migration. Return the updated `doc` to continue the
-session, or `null` when it is unsafe to restore. `isSessionCurrent(doc)` and
-`isSessionExpired(doc)` are available to help implement that policy.
+Override this method when a flow needs an idle-time policy or an idempotent
+in-place migration. Return the updated `doc` to continue the session, or `null`
+when it is unsafe to restore. `isSessionCurrent(doc)` and
+`sessionIdleMs(doc)` are available to help implement that policy.
 
 ## Models and memory
 

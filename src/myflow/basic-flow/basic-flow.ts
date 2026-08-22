@@ -28,6 +28,7 @@ export class BasicFlow extends Flow {
       provider: "openai",
       name: "gpt-4o-mini",
       params: { temperature: 0.2 },
+      retryAttempts: 3,
     } as const;
   }
 
@@ -72,13 +73,13 @@ export class BasicFlow extends Flow {
     ];
   }
 
-  //migratiion and session doc validation hook.
+  // Migration and session validation hook.
   protected async onRestoreSessionDoc(
     doc: SessionType,
   ): Promise<SessionType | null> {
     //you can call:
     //this.isSessionCurrent(doc)
-    //this.isSessionExpired(doc)
+    //this.sessionIdleMs(doc)
     return super.onRestoreSessionDoc(doc);
   }
 

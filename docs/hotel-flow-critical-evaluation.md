@@ -313,7 +313,6 @@ The effective Picoflow document is structured like this:
   "revision": 7,
   "version": 1.5,
   "runStatus": "running | completed | aborted",
-  "expireAfter": 600,
   "flow": {
     "name": "HotelFlow",
     "model": { "provider": "openai", "name": "gpt-4o", "params": {} },
@@ -386,11 +385,10 @@ write protection, token totals, warning/error history, or framework-wide
 operational status. Its custom store is clear, but it is application code that
 every direct graph would need to duplicate or extract.
 
-There is also a units difference worth making explicit. Picoflow's default
-expiration is 600 seconds; the direct implementation's fallback is 50,000
-milliseconds, approximately 50 seconds. Neither default should be treated as
-a finished product policy, but the direct fallback is especially short for a
-human conversation.
+HotelLanggraph's fallback expiration is 50,000 milliseconds, approximately 50
+seconds. PicoFlow has no framework-wide timeout: each Flow chooses whether an
+old session may resume in `onRestoreSessionDoc()`. The direct fallback is
+especially short for a human conversation.
 
 | Question | Better choice | Reason |
 | --- | --- | --- |

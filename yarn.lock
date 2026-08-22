@@ -909,10 +909,8 @@
   dependencies:
     tslib "2.8.1"
 
-"@picoflow/core@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@picoflow/core/-/core-1.1.2.tgz#ac325d1a79c664e2dc82dab1c7f98d67132d5eb6"
-  integrity sha512-Qeple9WzuI5uAAdXvVmfwycaRdMg1u+XzQi6dUyzndQbz4IWHO7IzHgrL9hrd5Hqx6cmNXySli8iVReUdpIbhQ==
+"@picoflow/core@file:../picoflow/npmlib/staging/lib":
+  version "1.1.4"
   dependencies:
     "@anthropic-ai/sdk" "0.115.0"
     "@azure/cosmos" "4.10.0"

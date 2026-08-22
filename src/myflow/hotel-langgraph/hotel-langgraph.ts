@@ -79,6 +79,8 @@ type HotelLanggraphDeleteSessionResult = {
   body: { success: boolean; session?: string; message?: string };
 };
 
+const DEFAULT_SESSION_IDLE_MS = 50_000;
+
 const captureChoicesSchema = z.object({
   json: z.string().min(2).describe("The complete HotelJSON object as JSON"),
 });
@@ -156,7 +158,7 @@ export class HotelLanggraph {
     modelFactory: HotelModelFactory = createOpenAiModel,
     private readonly sessionStore: HotelSessionStore =
       new MemoryHotelSessionStore(),
-    private readonly sessionExpiration = sessionExpirationMs(),
+    private readonly sessionIdleMs = DEFAULT_SESSION_IDLE_MS,
   ) {
     this.models = {
       explore: modelFactory("explore", stageTools.explore),
@@ -172,7 +174,6 @@ export class HotelLanggraph {
     return new HotelLanggraph(
       modelFactory,
       await createHotelSessionStoreFromEnvironment(),
-      sessionExpirationMs(),
     );
   }
 
@@ -254,7 +255,7 @@ export class HotelLanggraph {
         state: serializeHotelState(result),
         createdAt: previousDocument?.createdAt ?? now,
         modifiedAt: now,
-        expireAfter: this.sessionExpiration,
+        expireAfter: this.sessionIdleMs,
       });
       return successResult(
         session,
@@ -1054,11 +1055,6 @@ function validateSessionId(value: string): string {
     );
   }
   return session;
-}
-
-function sessionExpirationMs(value = process.env.SESSION_EXPIRATION): number {
-  const configured = Number(value ?? "50000");
-  return Number.isFinite(configured) && configured > 0 ? configured : 50000;
 }
 
 function zodError(error: unknown): string {

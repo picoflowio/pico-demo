@@ -168,6 +168,7 @@ provides these practical subclass hooks:
 | `defineSteps()` | Registers only a terminal step | The flow declares its initial, conversational, internal, nested, and terminal stages |
 | `defineTool()` | Returns `[]` | Multiple steps should use one flow-wide tool definition |
 | `onRestoreSessionDoc(doc)` | Returns the document, or `null` | Stored sessions need compatibility checks, in-place migration, or reset |
+| `sessionIdleMs(doc)` | Milliseconds since the document's last save | A Flow needs an idle-time restore policy |
 | `spawnSteps()` | Returns an empty string | `config._concurrent` should coordinate independent worker sessions |
 | `run(message)` | Dispatches to `spawnSteps()` for concurrent mode, otherwise runs `flow.currentStep` and builds the response envelope | The entire dispatch or response contract intentionally differs from the standard flow lifecycle |
 | `isBatch()` | Returns `false` | A specialized flow needs an extra pre-run session checkpoint; it does not itself select `spawnSteps()` |
@@ -424,7 +425,7 @@ session does not replace the stored context during restore. Use a new session
 for immutable configuration changes, or implement an explicit, validated
 state-changing step.
 
-## 7. Session document migration hooks
+## 7. Session document restore hooks
 
 The protected hook is the compatibility boundary for a stored, running
 session:
@@ -433,7 +434,7 @@ session:
 protected async onRestoreSessionDoc(
   sessionDoc: SessionType,
 ): Promise<SessionType | null> {
-  if (this.isSessionExpired(sessionDoc)) return null;
+  if (this.sessionIdleMs(sessionDoc) >= 30 * 60_000) return null;
   if (this.isSessionCurrent(sessionDoc)) return sessionDoc;
 
   // Mutate an older document in place when it is safe to migrate.
@@ -456,14 +457,14 @@ context, and `flow.currentStep` are read into the new flow instance.
 The hook runs only when all of these are true:
 
 - the supplied session ID exists in the configured store;
-- the document has not expired according to its stored `expireAfter` policy;
 - `runStatus` is neither `completed` nor `aborted`;
 - the stored flow name matches the requested registered flow name; and
 - the document passes the current one-flow structural invariant.
 
-Missing, expired, completed, or aborted sessions are replaced by a new session
-before the hook. A flow-name mismatch or malformed flow envelope fails before
-the hook, so this hook cannot repair those cases.
+Missing, completed, or aborted sessions are replaced by a new session before
+the hook. A Flow decides whether an existing running document is too old to
+restore. A flow-name mismatch or malformed flow envelope fails before the hook,
+so this hook cannot repair those cases.
 
 Returning the document continues restoration. Returning `null` creates a fresh
 session and returns a new session ID; it does not delete the old document. A
@@ -783,8 +784,8 @@ starting patterns.
 6. Implement steps using the [Step contract](./step-authoring-contract.md).
 7. Define legal transitions and explicit completion.
 8. Add `onRestoreSessionDoc()` before shipping a session-schema change.
-9. Configure the session store, expiry, same-session concurrency policy, and
-   `SELF_URL` when batch mode is used.
+9. Configure the session store, each Flow's restore policy, same-session
+   concurrency policy, and `SELF_URL` when batch mode is used.
 10. Make external tool effects idempotent and test registration, invalid input,
     resume, concurrent conflicts, completion, persistence, migration, errors,
     and content type.
