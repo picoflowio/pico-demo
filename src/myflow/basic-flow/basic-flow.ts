@@ -32,6 +32,11 @@ export class BasicFlow extends Flow {
     } as const;
   }
 
+  // Applies to every model invocation in this Flow unless a Step overrides it.
+  protected configLlmCallPolicy() {
+    return { timeoutMs: 60_000 } as const;
+  }
+
   protected initialStep() {
     return this.getContext<boolean>("config.isPresident")
       ? PresidentStep
