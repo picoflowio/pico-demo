@@ -1,0 +1,127 @@
+{
+  "flowName": "HomeInsuranceQuoteFlow",
+  "judgeModel": "gpt-4o",
+  "judgeMinScore": 0.75,
+  "turns": [
+    {
+      "label": "quote scope and location prompt",
+      "input": "Hi, I would like a home insurance quote.",
+      "expectedResponse": "Explain that this is a preliminary, non-binding home insurance estimate and ask for the property's state and five-digit ZIP code.",
+      "completed": false
+    },
+    {
+      "label": "qualification details prompt",
+      "input": "The property is in Oregon, ZIP 97205.",
+      "expectedResponse": "Recognize Oregon and ZIP 97205, then ask for purchase status, occupancy, and the requested coverage effective date.",
+      "completed": false
+    },
+    {
+      "label": "property type and year prompt",
+      "input": "I am buying it as my primary residence and want coverage to start October 1, 2027.",
+      "expectedResponse": "Ask for dwelling type and year built as the next property questions. It need not repeat the already-saved buying, primary residence, and October 1, 2027 facts.",
+      "completed": false
+    },
+    {
+      "label": "property dimensions prompt",
+      "input": "It is a single-family home built in 1998.",
+      "expectedResponse": "Ask for square footage, number of stories, and construction type. It need not verbally repeat the saved single-family and 1998 facts.",
+      "completed": false
+    },
+    {
+      "label": "roof prompt",
+      "input": "It has 2,100 finished square feet, two stories, and wood-frame construction.",
+      "expectedResponse": "Ask for roof material and roof age. It need not verbally repeat the saved property size, stories, and wood-frame construction.",
+      "completed": false
+    },
+    {
+      "label": "system updates prompt",
+      "input": "The composition roof is 6 years old.",
+      "expectedResponse": "Ask for the most recent plumbing, electrical, and HVAC update years. It need not verbally repeat the saved six-year-old composition roof.",
+      "completed": false
+    },
+    {
+      "label": "claims prompt",
+      "input": "Plumbing and electrical were updated in 2018, and HVAC in 2022.",
+      "expectedResponse": "Begin risk questions by asking about home insurance claims in the last five years, including year, type, and amount. It need not verbally repeat the saved system update years.",
+      "completed": false
+    },
+    {
+      "label": "hazards prompt",
+      "input": "There was one water claim in 2024 for about $7,000.",
+      "expectedResponse": "Ask whether the property has a pool, trampoline, or wood stove. It need not verbally repeat the saved 2024 water claim.",
+      "completed": false
+    },
+    {
+      "label": "protective devices prompt",
+      "input": "No pool, no trampoline, and no wood stove.",
+      "expectedResponse": "Ask about smoke alarms, burglar alarm, professional monitoring, and an automatic sprinkler system. It need not verbally repeat the saved hazard answers.",
+      "completed": false
+    },
+    {
+      "label": "dwelling coverage prompt",
+      "input": "We have smoke alarms and a burglar alarm with professional monitoring, but no sprinkler system.",
+      "expectedResponse": "Begin coverage preferences by asking for the estimated cost to rebuild the home. It need not verbally repeat the saved protective-device answers.",
+      "completed": false
+    },
+    {
+      "label": "deductible prompt",
+      "input": "About $450,000 to rebuild.",
+      "expectedResponse": "Ask the customer to choose a $1,000, $2,500, or $5,000 deductible. It need not verbally repeat the saved $450,000 dwelling amount.",
+      "completed": false
+    },
+    {
+      "label": "liability prompt",
+      "input": "Use a $2,500 deductible.",
+      "expectedResponse": "Ask for a personal liability limit from the supported choices. It need not verbally repeat the saved $2,500 deductible.",
+      "completed": false
+    },
+    {
+      "label": "endorsements prompt",
+      "input": "I want $500,000 of liability coverage.",
+      "expectedResponse": "Ask whether the customer wants water backup, identity theft, or equipment breakdown endorsements. It need not verbally repeat the saved $500,000 liability limit.",
+      "completed": false
+    },
+    {
+      "label": "application review",
+      "input": "Add water backup coverage only.",
+      "expectedResponse": "Present a complete application review including Oregon 97205, primary occupancy, property, risk, $450,000 dwelling coverage, $2,500 deductible, $500,000 liability, and water backup; ask for confirmation or corrections.",
+      "completed": false
+    },
+    {
+      "label": "roof correction and refreshed review",
+      "input": "Correction: the roof is actually 4 years old, not 6.",
+      "expectedResponse": "Update the property-owned roof age to four years and present or return to a corrected application review without losing other facts.",
+      "completed": false
+    },
+    {
+      "label": "deterministic quote options",
+      "input": "Everything is correct. Generate the quote.",
+      "expectedResponse": "Generate and present exact preliminary Essential, Enhanced, and Premier quote options with annual and monthly premiums, deductibles, liability limits, a quote reference, validity date, and a clear non-binding disclaimer.",
+      "completed": false
+    },
+    {
+      "label": "exact option comparison",
+      "input": "Compare Essential and Enhanced.",
+      "expectedResponse": "Return a structured comparison of the current Essential and Enhanced options using their exact recorded premiums and coverage details, then offer selection or another change.",
+      "completed": false
+    },
+    {
+      "label": "deductible change and rerating",
+      "input": "Re-run the quote with a $5,000 deductible.",
+      "expectedResponse": "Change the deductible to $5,000, invalidate the old option selection, deterministically re-rate, and present a new set of exact quote options with a new quote reference.",
+      "completed": false
+    },
+    {
+      "label": "select enhanced and request consent",
+      "input": "Select the Enhanced option.",
+      "expectedResponse": "Validate and record the current Enhanced option without claiming coverage is bound, then ask whether the customer consents to agent follow-up. It may explain that name and email are required after consent while phone and property street address are optional.",
+      "completed": false
+    },
+    {
+      "label": "contact consent and completion",
+      "input": "Yes, an agent may contact me. I am Jamie Rivera and my email is jamie.rivera@example.com. No phone or street address for now.",
+      "expectedResponse": "Confirm the requested agent follow-up, identify the selected Enhanced option and quote reference, state that the estimate is non-binding and no payment was taken, and complete the session.",
+      "completed": true
+    }
+  ]
+}

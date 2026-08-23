@@ -2,8 +2,8 @@
 
 This NestJS/Fastify application demonstrates durable PicoFlow workflows and a
 direct LangGraph comparison implementation. It includes conversational,
-hotel-search, invoice-extraction, customer-support, and hotel LangGraph
-examples, together with their tests and developer guides.
+hotel-search, invoice-extraction, customer-support, home-insurance quote, and
+hotel LangGraph examples, together with their tests and developer guides.
 
 ## Prerequisites
 
@@ -65,17 +65,20 @@ npm run test:basic-flow
 npm run test:hotel-flow
 npm run test:invoice-flow
 npm run test:support-flow
+npm run test:home-insurance-flow
 
 # Run the direct LangGraph live evaluation (requires OPENAI_API_KEY)
 npm run test:hotel-langgraph
 ```
 
-The BasicFlow, HotelFlow, InvoiceFlow, and SupportFlow tests use deterministic
-fixtures or fall back to a skipped live scenario when the required credentials
-are missing. The live BasicFlow, HotelFlow, and SupportFlow scenarios require
+The BasicFlow, HotelFlow, InvoiceFlow, SupportFlow, and HomeInsuranceQuoteFlow
+tests use deterministic fixtures or fall back to a skipped live scenario when
+the required credentials are missing. The live BasicFlow, HotelFlow,
+SupportFlow, and 20-turn HomeInsuranceQuoteFlow scenarios require
 `OPENAI_API_KEY` and `PICOFLOW_KEY`; InvoiceFlow requires `GEMINI_API_KEY` and
-`PICOFLOW_KEY`. The LangGraph live evaluation requires `OPENAI_API_KEY` and does
-not silently skip.
+`PICOFLOW_KEY`. Set `RUN_LIVE_HOME_INSURANCE_FLOW_TEST=0` to run only the
+deterministic rating checks. The LangGraph live evaluation requires
+`OPENAI_API_KEY` and does not silently skip.
 
 For implementation details, start with the workflow overview in
 [`docs/picoflow-workflow-developer-guide.md`](./docs/picoflow-workflow-developer-guide.md),

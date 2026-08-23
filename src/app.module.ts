@@ -13,6 +13,7 @@ import { BasicFlow } from "./myflow/basic-flow/basic-flow.js";
 import { HotelFlow } from "./myflow/hotel-flow/hotel-flow.js";
 import { InvoiceFlow } from "./myflow/invoice-flow/invoice-flow.js";
 import { SupportFlow } from "./myflow/support-flow/support-flow.js";
+import { HomeInsuranceQuoteFlow } from "./myflow/home-insurance-flow/home-insurance-flow.js";
 import { HotelLanggraph } from "./myflow/hotel-langgraph/hotel-langgraph.js";
 import { AiLanggraphController } from "./controllers/ai-langgraph-controller.js";
 import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js";
@@ -25,7 +26,13 @@ import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js"
       provide: FlowEngine,
       useFactory: (config: ConfigService) =>
         FlowEngine.create({
-          flows: [BasicFlow, HotelFlow, InvoiceFlow, SupportFlow],
+          flows: [
+            BasicFlow,
+            HotelFlow,
+            InvoiceFlow,
+            SupportFlow,
+            HomeInsuranceQuoteFlow,
+          ],
           //register pre-build providers, only specify what you use.
           providers: [
             ...ModelProvider.createBuiltinAdapters({
