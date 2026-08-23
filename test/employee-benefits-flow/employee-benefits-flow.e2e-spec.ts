@@ -51,7 +51,7 @@ const ancillaryElection: AncillaryElection = {
   longTermDisability: true,
 };
 
-describe("EmployeeBenefitsEnrollmentFlow deterministic policy", () => {
+describe("EmployeeBenefitsFlow deterministic policy", () => {
   it("owns employee eligibility and enrollment windows in code", () => {
     const eligible = BenefitsPolicy.evaluateEligibility(request, testDate);
     assert.equal(eligible.eligible, true);
@@ -152,6 +152,7 @@ process.env.MONGODB_URL ??= "mongodb://unused-in-employee-benefits-flow-test";
 
 const scenarioPath = join(process.cwd(), "test", "employee-benefits-flow", "employee-benefits-flow.scenario.json");
 const failureArtifactPath = join(process.cwd(), "test", ".tmp", "employee-benefits-flow-semantic-failure.json");
+const liveTranscriptPath = join(process.cwd(), "test", ".tmp", "employee-benefits-flow-live-transcript.json");
 const scenario = loadScenario();
 const judgeModel = process.env.EMPLOYEE_BENEFITS_FLOW_JUDGE_MODEL ?? scenario.judgeModel ?? "gpt-4o";
 const timeoutMs = Number(process.env.EMPLOYEE_BENEFITS_FLOW_TEST_TIMEOUT_MS ?? 1_200_000);
@@ -159,10 +160,10 @@ const missingLiveConfig = ["OPENAI_API_KEY", "PICOFLOW_KEY"].filter((key) => !pr
 const shouldRunLive = process.env.RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST !== "0" && missingLiveConfig.length === 0;
 const skipReason = process.env.RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST === "0"
   ? "RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST=0"
-  : `Missing live EmployeeBenefitsEnrollmentFlow config: ${missingLiveConfig.join(", ")}`;
+  : `Missing live EmployeeBenefitsFlow config: ${missingLiveConfig.join(", ")}`;
 
 test(
-  "EmployeeBenefitsEnrollmentFlow completes all 22 live conversation turns",
+  "EmployeeBenefitsFlow completes all 22 live conversation turns",
   { timeout: timeoutMs, skip: shouldRunLive ? false : skipReason },
   async () => {
     const app = await createApp();
@@ -171,7 +172,7 @@ test(
     const transcript: TranscriptTurn[] = [];
     try {
       for (const [index, turn] of scenario.turns.entries()) {
-        console.log(`[EmployeeBenefitsEnrollmentFlow live] turn ${index + 1}/${scenario.turns.length}: ${turn.label}`);
+        console.log(`[EmployeeBenefitsFlow live] turn ${index + 1}/${scenario.turns.length}: ${turn.label}`);
         const response = await server.inject({
           method: "POST",
           url: "/ai/run",
@@ -189,10 +190,16 @@ test(
         transcript.push(transcriptTurn);
         transcriptTurn.judge = await judgeResponse(turn, body);
         expectSemanticMatch(transcriptTurn, transcript);
-        console.log(`[EmployeeBenefitsEnrollmentFlow live] response: ${preview(body.message)}`);
+        console.log(`[EmployeeBenefitsFlow live] response: ${preview(body.message)}`);
       }
       assert.ok(sessionId, "Expected a session id");
       await expectSessionState(app, sessionId);
+      writeFileSync(liveTranscriptPath, JSON.stringify({
+        flowName: scenario.flowName,
+        testDate: testDate.toISOString(),
+        judgeModel,
+        turns: transcript,
+      }, null, 2), "utf8");
     } finally {
       try { await app.get(FlowEngine).close(); } finally { await app.close(); }
     }
@@ -204,13 +211,13 @@ async function createApp(): Promise<NestFastifyApplication> {
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  assert.ok(app.get(FlowEngine).getFlowNames().includes("EmployeeBenefitsEnrollmentFlow"));
+  assert.ok(app.get(FlowEngine).getFlowNames().includes("EmployeeBenefitsFlow"));
   return app;
 }
 
 function loadScenario(): Scenario {
   const parsed = JSON.parse(readFileSync(scenarioPath, "utf8")) as Scenario;
-  assert.equal(parsed.flowName, "EmployeeBenefitsEnrollmentFlow");
+  assert.equal(parsed.flowName, "EmployeeBenefitsFlow");
   assert.equal(parsed.turns.length, 22, "Live scenario must contain exactly 22 turns");
   for (const turn of parsed.turns) {
     assert.ok(turn.label && turn.input && turn.expectedResponse, "Every scenario turn requires a label, input, and expected response");
@@ -267,7 +274,7 @@ function expectSemanticMatch(turn: TranscriptTurn, transcript: TranscriptTurn[])
 
 async function expectSessionState(app: NestFastifyApplication, sessionId: string): Promise<void> {
   const session = await app.get(FlowEngine).getFlowSession().fetchAll(sessionId);
-  assert.equal(session.flow?.name, "EmployeeBenefitsEnrollmentFlow");
+  assert.equal(session.flow?.name, "EmployeeBenefitsFlow");
   assert.equal(session.runStatus, "completed");
   assert.equal(stepState(session.flow!, "EligibilityStep").request.employeeId, "E-1042");
   assert.equal(stepState(session.flow!, "HouseholdStep").household.coverageTier, "family");

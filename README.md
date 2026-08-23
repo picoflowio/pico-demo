@@ -74,11 +74,11 @@ npm run test:hotel-langgraph
 ```
 
 The BasicFlow, HotelFlow, InvoiceFlow, SupportFlow, HomeInsuranceQuoteFlow, and
-EmployeeBenefitsEnrollmentFlow
+EmployeeBenefitsFlow
 tests use deterministic fixtures or fall back to a skipped live scenario when
 the required credentials are missing. The live BasicFlow, HotelFlow,
 SupportFlow, 20-turn HomeInsuranceQuoteFlow, and 22-turn
-EmployeeBenefitsEnrollmentFlow scenarios require
+EmployeeBenefitsFlow scenarios require
 `OPENAI_API_KEY` and `PICOFLOW_KEY`; InvoiceFlow requires `GEMINI_API_KEY` and
 `PICOFLOW_KEY`. Set `RUN_LIVE_HOME_INSURANCE_FLOW_TEST=0` to run only the
 deterministic rating checks, or `RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST=0` to run

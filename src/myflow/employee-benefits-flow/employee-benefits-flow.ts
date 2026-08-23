@@ -14,7 +14,7 @@ import { IneligibleBenefitsStep } from "./ineligible-benefits-step.js";
 
 const SESSION_IDLE_MS = 45 * 60_000;
 
-export class EmployeeBenefitsEnrollmentFlow extends Flow {
+export class EmployeeBenefitsFlow extends Flow {
   constructor() {
     super();
     this.getMemory()

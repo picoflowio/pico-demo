@@ -1,5 +1,5 @@
 {
-  "flowName": "EmployeeBenefitsEnrollmentFlow",
+  "flowName": "EmployeeBenefitsFlow",
   "judgeModel": "gpt-4o",
   "judgeMinScore": 0.75,
   "turns": [
