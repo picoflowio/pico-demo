@@ -154,12 +154,12 @@ export class BenefitsPolicy {
     return { planYear, rulesVersion: RULES_VERSION, coverageTier: household.coverageTier, recommendedPlanId, recommendationReasons, options };
   }
 
-  public static providerNetwork(planId: MedicalPlanOption["id"], providerName: string): { inNetwork: boolean | null; message: string } {
+  public static providerNetwork(plan: Pick<MedicalPlanOption, "id" | "name">, providerName: string): { inNetwork: boolean | null; message: string } {
     const normalized = providerName.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
     const knownPlans = providerNetworks[normalized];
     if (!knownPlans) return { inNetwork: null, message: `${providerName} is not in the fictional demo directory. Verify network status with the carrier before enrolling.` };
-    const inNetwork = knownPlans.includes(planId);
-    return { inNetwork, message: `${providerName} is ${inNetwork ? "in network" : "out of network"} for ${planId} in the fictional demo directory. Recheck before receiving care.` };
+    const inNetwork = knownPlans.includes(plan.id);
+    return { inNetwork, message: `${providerName} is ${inNetwork ? "in network" : "out of network"} for ${plan.name} in the fictional demo directory. Recheck before receiving care.` };
   }
 
   public static evaluateHealthAccount(plan: MedicalPlanOption, tier: Household["coverageTier"], election: HealthAccountElection): HealthAccountResult {

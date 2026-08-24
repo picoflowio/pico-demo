@@ -80,7 +80,7 @@ export class MedicalPlanStep extends Step {
   protected async check_benefits_provider_network(args: { planId: string; providerName: string }): Promise<ToolResponseType> {
     const option = this.findPlan(args.planId);
     if (!option) return stay(`Choose a current plan ID: ${this.evaluation().options.map((candidate) => candidate.id).join(", ")}.`);
-    return direct(BenefitsPolicy.providerNetwork(option.id, args.providerName).message);
+    return direct(BenefitsPolicy.providerNetwork(option, args.providerName).message);
   }
 
   @Tool

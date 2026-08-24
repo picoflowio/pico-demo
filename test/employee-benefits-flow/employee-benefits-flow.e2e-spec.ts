@@ -74,8 +74,13 @@ describe("EmployeeBenefitsFlow deterministic policy", () => {
     assert.deepEqual(evaluation.options.map((option) => option.id), ["EPO_VALUE", "HDHP_HSA", "PPO_STANDARD"]);
     assert.deepEqual(evaluation.options.map((option) => option.employeePremiumPerPayPeriod), [155, 125, 220]);
     assert.equal(evaluation.recommendedPlanId, "HDHP_HSA");
-    assert.equal(BenefitsPolicy.providerNetwork("EPO_VALUE", "Dr. Maya Chen").inNetwork, false);
-    assert.equal(BenefitsPolicy.providerNetwork("HDHP_HSA", "Dr. Maya Chen").inNetwork, true);
+    const valueEpo = evaluation.options.find((option) => option.id === "EPO_VALUE")!;
+    const hdhp = evaluation.options.find((option) => option.id === "HDHP_HSA")!;
+    const providerResult = BenefitsPolicy.providerNetwork(valueEpo, "Dr. Maya Chen");
+    assert.equal(providerResult.inNetwork, false);
+    assert.match(providerResult.message, /Value EPO/);
+    assert.doesNotMatch(providerResult.message, /EPO_VALUE/);
+    assert.equal(BenefitsPolicy.providerNetwork(hdhp, "Dr. Maya Chen").inNetwork, true);
     assert.match(BenefitsPresenter.medicalPlans(evaluation), /fictional demo terms/i);
     const comparison = BenefitsPresenter.compareMedicalPlans(evaluation.options.filter((option) => option.id !== "EPO_VALUE"));
     assert.match(comparison, /HSA \/ employer funding/);

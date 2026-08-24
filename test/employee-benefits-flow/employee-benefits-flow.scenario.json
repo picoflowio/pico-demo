@@ -42,7 +42,7 @@
     {
       "label": "provider network lookup",
       "input": "Is Dr. Maya Chen in network for the Value EPO?",
-      "expectedResponse": "Use the fictional provider directory and state that Dr. Maya Chen is out of network for EPO_VALUE, with a reminder to verify before care. Do not infer status from plan type alone.",
+      "expectedResponse": "Use the fictional provider directory and state that Dr. Maya Chen is out of network for the Value EPO, with a reminder to verify before care. Do not expose the internal plan ID. Do not infer status from plan type alone.",
       "completed": false
     },
     {
