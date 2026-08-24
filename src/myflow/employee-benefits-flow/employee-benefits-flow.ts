@@ -37,12 +37,12 @@ export class EmployeeBenefitsFlow extends Flow {
       new HouseholdStep(this).useMemory("benefits-intake"),
       new PreferencesStep(this).useMemory("benefits-intake"),
       new PlanEvaluationStep(this),
-      new MedicalPlanStep(this).useMemory("benefits-medical"),
-      new HealthAccountStep(this).useMemory("benefits-accounts"),
-      new AncillaryBenefitsStep(this).useMemory("benefits-ancillary"),
-      new BeneficiaryStep(this).useMemory("benefits-beneficiaries"),
-      new DependentCareStep(this).useMemory("benefits-dependent-care"),
-      new EnrollmentReviewStep(this).useMemory("benefits-review"),
+      new MedicalPlanStep(this).useMemory("benefits-medical").useModel(complexBenefitsModel),
+      new HealthAccountStep(this).useMemory("benefits-accounts").useModel(complexBenefitsModel),
+      new AncillaryBenefitsStep(this).useMemory("benefits-ancillary").useModel(complexBenefitsModel),
+      new BeneficiaryStep(this).useMemory("benefits-beneficiaries").useModel(complexBenefitsModel),
+      new DependentCareStep(this).useMemory("benefits-dependent-care").useModel(complexBenefitsModel),
+      new EnrollmentReviewStep(this).useMemory("benefits-review").useModel(complexBenefitsModel),
       new CommitEnrollmentStep(this),
       new IneligibleBenefitsStep(this).useMemory("benefits-ineligible"),
       new TerminateSessionStep(this).useMemory("benefits-terminal"),
@@ -55,3 +55,9 @@ export class EmployeeBenefitsFlow extends Flow {
     return this.sessionIdleMs(restored) >= SESSION_IDLE_MS ? null : restored;
   }
 }
+
+const complexBenefitsModel = {
+  provider: "openai",
+  name: "gpt-5.1",
+  params: { reasoning: { effort: "low" } },
+} as const;

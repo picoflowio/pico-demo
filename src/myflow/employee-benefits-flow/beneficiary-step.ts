@@ -30,6 +30,19 @@ export class BeneficiaryStep extends Step {
     return new HumanMessageEx(this, "Collect life-insurance beneficiary names, relationships, and percentages.");
   }
 
+  public override async onResponse(llmResult: string | object) {
+    if (this.getState<boolean>("needsPresentation")) {
+      const pendingRequirements = this.getState<string[]>("pendingRequirements") ?? [];
+      this.removeState("needsPresentation");
+      this.removeState("pendingRequirements");
+      const pendingNote = pendingRequirements.includes("EVIDENCE_OF_INSURABILITY")
+        ? " Your 3× supplemental-life election requires evidence of insurability and remains pending until approved."
+        : "";
+      return `Your ancillary elections have been recorded.${pendingNote} Next, provide the name, relationship, and percentage allocation for each supplemental-life beneficiary. The total allocation must equal exactly 100%.`;
+    }
+    return super.onResponse(llmResult);
+  }
+
   public getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Instructions}`;
   }

@@ -68,7 +68,9 @@ export class AncillaryBenefitsStep extends Step {
     if (!parsed.success) return stay("Collect supported dental, vision, supplemental-life, short-term disability, and long-term disability elections.");
     const quote = BenefitsPolicy.quoteAncillary(parsed.data, this.eligibility().employee!, this.household().coverageTier);
     this.saveState({ election: durableBenefitsJson(parsed.data), quote: durableBenefitsJson(quote) });
-    return parsed.data.supplementalLifeMultiple > 0 ? go(BeneficiaryStep) : go(DependentCareStep);
+    return parsed.data.supplementalLifeMultiple > 0
+      ? go(BeneficiaryStep).withState({ needsPresentation: true, pendingRequirements: quote.pendingRequirements })
+      : go(DependentCareStep);
   }
 
   @Tool
