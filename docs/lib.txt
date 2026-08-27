@@ -1,1 +1,2 @@
-"@picoflow/core": "^1.1.1",
+"@picoflow/core": "^1.1.8",
+"@picoflow/core": "link:../picoflow/npmlib/staging/lib",
