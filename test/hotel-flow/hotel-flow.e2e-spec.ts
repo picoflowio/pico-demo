@@ -104,13 +104,8 @@ const testTimeoutMs = Number(process.env.HOTEL_FLOW_TEST_TIMEOUT_MS ?? 900_000);
 const missingLiveConfig = ['OPENAI_API_KEY', 'PICOFLOW_KEY'].filter(
   (key) => !process.env[key]?.trim(),
 );
-const shouldRunLiveTest =
-  process.env.RUN_LIVE_HOTEL_FLOW_TEST !== '0' &&
-  missingLiveConfig.length === 0;
-const skipReason =
-  process.env.RUN_LIVE_HOTEL_FLOW_TEST === '0'
-    ? 'RUN_LIVE_HOTEL_FLOW_TEST=0'
-    : `Missing live HotelFlow config: ${missingLiveConfig.join(', ')}`;
+const shouldRunLiveTest = missingLiveConfig.length === 0;
+const skipReason = `Missing live HotelFlow config: ${missingLiveConfig.join(', ')}`;
 
 test(
   'HotelFlow completes a realistic search, comparison, and booking conversation',

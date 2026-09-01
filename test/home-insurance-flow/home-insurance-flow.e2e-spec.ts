@@ -81,10 +81,8 @@ const scenario = loadScenario();
 const judgeModel = process.env.HOME_INSURANCE_FLOW_JUDGE_MODEL ?? scenario.judgeModel ?? "gpt-4o";
 const timeoutMs = Number(process.env.HOME_INSURANCE_FLOW_TEST_TIMEOUT_MS ?? 1_200_000);
 const missingLiveConfig = ["OPENAI_API_KEY", "PICOFLOW_KEY"].filter((key) => !process.env[key]?.trim());
-const shouldRunLive = process.env.RUN_LIVE_HOME_INSURANCE_FLOW_TEST !== "0" && missingLiveConfig.length === 0;
-const skipReason = process.env.RUN_LIVE_HOME_INSURANCE_FLOW_TEST === "0"
-  ? "RUN_LIVE_HOME_INSURANCE_FLOW_TEST=0"
-  : `Missing live HomeInsuranceQuoteFlow config: ${missingLiveConfig.join(", ")}`;
+const shouldRunLive = missingLiveConfig.length === 0;
+const skipReason = `Missing live HomeInsuranceQuoteFlow config: ${missingLiveConfig.join(", ")}`;
 
 test(
   "HomeInsuranceQuoteFlow completes all 20 live conversation turns",

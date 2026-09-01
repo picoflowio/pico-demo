@@ -75,15 +75,13 @@ npm run test:hotel-langgraph
 
 The BasicFlow, HotelFlow, InvoiceFlow, SupportFlow, HomeInsuranceQuoteFlow, and
 EmployeeBenefitsFlow
-tests use deterministic fixtures or fall back to a skipped live scenario when
-the required credentials are missing. The live BasicFlow, HotelFlow,
+tests load credentials from `.env` and run their live scenarios when the
+required credentials are available. The live BasicFlow, HotelFlow,
 SupportFlow, 20-turn HomeInsuranceQuoteFlow, and 22-turn
 EmployeeBenefitsFlow scenarios require
 `OPENAI_API_KEY` and `PICOFLOW_KEY`; InvoiceFlow requires `GEMINI_API_KEY` and
-`PICOFLOW_KEY`. Set `RUN_LIVE_HOME_INSURANCE_FLOW_TEST=0` to run only the
-deterministic rating checks, or `RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST=0` to run
-only the deterministic benefits-policy checks. The LangGraph live evaluation requires
-`OPENAI_API_KEY` and does not silently skip.
+`PICOFLOW_KEY`.
+The LangGraph live evaluation requires `OPENAI_API_KEY` and does not silently skip.
 
 For implementation details, start with the workflow overview in
 [`docs/picoflow-workflow-developer-guide.md`](./docs/picoflow-workflow-developer-guide.md),

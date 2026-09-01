@@ -66,22 +66,16 @@ if ((process.env.SESSION_STORE ?? 'SQLITE').toUpperCase() === 'SQLITE') {
 
 const scenario = loadScenario();
 const testTimeoutMs = Number(process.env.BASIC_FLOW_TEST_TIMEOUT_MS ?? 900_000);
-const useScriptedModel = process.env.BASIC_FLOW_USE_SCRIPTED_MODEL === '1';
-const requiredConfig = useScriptedModel
-  ? ['PICOFLOW_KEY']
-  : ['OPENAI_API_KEY', 'PICOFLOW_KEY'];
+const requiredConfig = ['OPENAI_API_KEY', 'PICOFLOW_KEY'];
 const missingConfig = requiredConfig.filter(
   (key) => !process.env[key]?.trim(),
 );
 const skipReason = `Missing BasicFlow config: ${missingConfig.join(', ')}`;
 
 test(
-  `BasicFlow completes a realistic conversation through a real NestJS app (${useScriptedModel ? 'scripted model' : 'live model'})`,
+  'BasicFlow completes a realistic conversation through a real NestJS app (live model)',
   { timeout: testTimeoutMs, skip: missingConfig.length === 0 ? false : skipReason },
   async () => {
-    const restoreModel = useScriptedModel
-      ? installScriptedBasicFlowModel()
-      : () => undefined;
     const app = await createApp();
     const server = app.getHttpAdapter().getInstance();
     let sessionId: string | undefined;
@@ -154,11 +148,7 @@ test(
       try {
         await app.get(FlowEngine).close();
       } finally {
-        try {
-          await app.close();
-        } finally {
-          restoreModel();
-        }
+        await app.close();
       }
     }
   },

@@ -62,13 +62,8 @@ if ((process.env.SESSION_STORE ?? "SQLITE").toUpperCase() === "SQLITE") {
 const testTimeoutMs = Number(
   process.env.INVOICE_FLOW_TEST_TIMEOUT_MS ?? 300_000,
 );
-const shouldRunLiveTest =
-  process.env.RUN_LIVE_INVOICE_FLOW_TEST !== "0" &&
-  missingLiveConfig.length === 0;
-const skipReason =
-  process.env.RUN_LIVE_INVOICE_FLOW_TEST === "0"
-    ? "RUN_LIVE_INVOICE_FLOW_TEST=0"
-    : `Missing live InvoiceFlow config: ${missingLiveConfig.join(", ")}`;
+const shouldRunLiveTest = missingLiveConfig.length === 0;
+const skipReason = `Missing live InvoiceFlow config: ${missingLiveConfig.join(", ")}`;
 
 test("InvoiceFlow usage and fixture remain in the demo project", () => {
   assert.equal(InvoiceFlow.name, "InvoiceFlow");

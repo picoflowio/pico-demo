@@ -909,10 +909,10 @@
   dependencies:
     tslib "2.8.1"
 
-"@picoflow/core@^1.1.8":
-  version "1.1.8"
-  resolved "https://registry.yarnpkg.com/@picoflow/core/-/core-1.1.8.tgz#3a6956d58a0eaf6ab2238977708c3bc2f9d4bc32"
-  integrity sha512-jaA+Qk1V5KfIqGYGi/dREZmQG7Y+Dz5HNUhNl5BxO2ASscpGHwBhZJeWX+at1cn3XMt9BMkb8EtVDPKaiwGC4g==
+"@picoflow/core@^1.1.10":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@picoflow/core/-/core-1.1.10.tgz#21f04fc7b02ac537c23b9d00a8ecae306d0da9d3"
+  integrity sha512-PcC9dVLetNn5Pfdl4JPs/mqGO4PsXpJ5azs1ujNJ5NvNExHoDzxD1PIpQ9JDlVbIbF7hRKhwWypHzyn5lwYEfg==
   dependencies:
     "@anthropic-ai/sdk" "0.115.0"
     "@azure/cosmos" "4.10.0"

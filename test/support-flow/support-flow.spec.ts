@@ -42,10 +42,8 @@ describe("SupportFlow deterministic services", () => {
 const missingLiveConfig = ["OPENAI_API_KEY", "PICOFLOW_KEY"].filter(
   (key) => !process.env[key]?.trim(),
 );
-const runLive = process.env.RUN_LIVE_SUPPORT_FLOW_TEST !== "0" && missingLiveConfig.length === 0;
-const liveSkipReason = process.env.RUN_LIVE_SUPPORT_FLOW_TEST === "0"
-  ? "RUN_LIVE_SUPPORT_FLOW_TEST=0"
-  : `Missing live SupportFlow config: ${missingLiveConfig.join(", ")}`;
+const runLive = missingLiveConfig.length === 0;
+const liveSkipReason = `Missing live SupportFlow config: ${missingLiveConfig.join(", ")}`;
 
 type Scenario = {
   flowName: string;

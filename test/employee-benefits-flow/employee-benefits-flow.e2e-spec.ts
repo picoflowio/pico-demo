@@ -162,10 +162,8 @@ const scenario = loadScenario();
 const judgeModel = process.env.EMPLOYEE_BENEFITS_FLOW_JUDGE_MODEL ?? scenario.judgeModel ?? "gpt-4o";
 const timeoutMs = Number(process.env.EMPLOYEE_BENEFITS_FLOW_TEST_TIMEOUT_MS ?? 1_200_000);
 const missingLiveConfig = ["OPENAI_API_KEY", "PICOFLOW_KEY"].filter((key) => !process.env[key]?.trim());
-const shouldRunLive = process.env.RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST !== "0" && missingLiveConfig.length === 0;
-const skipReason = process.env.RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST === "0"
-  ? "RUN_LIVE_EMPLOYEE_BENEFITS_FLOW_TEST=0"
-  : `Missing live EmployeeBenefitsFlow config: ${missingLiveConfig.join(", ")}`;
+const shouldRunLive = missingLiveConfig.length === 0;
+const skipReason = `Missing live EmployeeBenefitsFlow config: ${missingLiveConfig.join(", ")}`;
 
 test(
   "EmployeeBenefitsFlow completes all 22 live conversation turns",
