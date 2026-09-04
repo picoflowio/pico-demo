@@ -10,10 +10,20 @@ import type { JsonValue, LastResponseType } from "@picoflow/core";
 
 @Parallel
 export class ConcurStep1 extends Step {
+  /**
+   * Initializes the ConcurStep1 instance.
+   *
+   * @param flow - The enclosing Flow instance.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Returns system instructions for parallel execution step 1.
+   *
+   * @returns Prompt string confirming completion.
+   */
   public override getPrompt(): string {
     return `
     You are ConcurStep1.
@@ -21,6 +31,12 @@ export class ConcurStep1 extends Step {
     `;
   }
 
+  /**
+   * Processes the LLM response, saves state, and triggers chained parallel step `ConcurStep3`.
+   *
+   * @param llmResult - Model response output.
+   * @returns Raw string result.
+   */
   public async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {

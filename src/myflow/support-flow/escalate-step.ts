@@ -12,8 +12,18 @@ import { TriageStep } from "./triage-step.js";
  * control returns to the hub.
  */
 export class EscalateStep extends LogicStep {
+  /**
+   * Creates the billing escalation worker attached to the current flow.
+   *
+   * @param flow - The parent SupportFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Creates a durable escalation ticket from the validated billing dispute and updates TriageStep state.
+   *
+   * @returns Navigation response returning to TriageStep with updated tickets list.
+   */
   override async runLogic(): Promise<LogicResponseType> {
     const dispute = this.getState<BillingDispute>("dispute");
     if (!dispute) throw new Error("EscalateStep requires a captured dispute.");

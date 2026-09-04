@@ -25,16 +25,35 @@ import { EmployeeBenefitsPrompt } from "./prompt/employee-benefits-prompt.js";
 const Instructions = Prompt.file("prompt/dependent-care.md");
 
 export class DependentCareStep extends Step {
+  /**
+   * Initializes the DependentCareStep instance.
+   *
+   * @param flow - The parent EmployeeBenefitsFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Cleans up transient conversation memory upon step entry to focus on dependent care FSA.
+   */
   protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
+  /**
+   * Supplies initial synthetic user prompt requesting the dependent-care FSA explanation and question.
+   *
+   * @param _userMessage - Inbound user message.
+   * @returns Synthetic user message.
+   */
   public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Render the authoritative dependent-care FSA explanation and election question exactly.");
   }
 
+  /**
+   * Builds prompt instructing the LLM on dependent-care FSA rules, IRS limits, and qualifying dependents.
+   *
+   * @returns Formatted dependent-care prompt text.
+   */
   public override getPrompt(): string {
     const preliminary = BenefitsPolicy.evaluateDependentCare(this.household(), { annualContribution: 0 }, this.request().planYear);
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
@@ -42,6 +61,11 @@ export class DependentCareStep extends Step {
     })}`;
   }
 
+  /**
+   * Defines tool schemas for explaining dependent-care FSA, saving contributions, and exiting.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       { name: "explain_benefits_dependent_care", description: "Render the exact fictional dependent-care FSA explanation, including its healthcare-FSA distinction and $5,000 annual limit.", schema: z.object({}) },
@@ -50,11 +74,22 @@ export class DependentCareStep extends Step {
     ];
   }
 
+  /**
+   * Returns authoritative explanation of dependent care FSA rules directly to the user.
+   *
+   * @returns Direct tool response with explanation text.
+   */
   @Tool
   protected async explain_benefits_dependent_care(): Promise<ToolResponseType> {
     return direct(BenefitsPresenter.dependentCareExplanation());
   }
 
+  /**
+   * Outputs dependent-care FSA explanation on initial entry when requested.
+   *
+   * @param llmResult - Model generation output.
+   * @returns Direct presentation text or delegates to super.
+   */
   public override async onResponse(llmResult: string | object) {
     if (this.getState<boolean>("needsPresentation")) {
       this.removeState("needsPresentation");
@@ -63,6 +98,13 @@ export class DependentCareStep extends Step {
     return super.onResponse(llmResult);
   }
 
+  /**
+   * Validates dependent-care FSA contribution amount against IRS caps and qualifying child presence,
+   * advancing to EnrollmentReviewStep.
+   *
+   * @param args - Tool invocation arguments matching DependentCareElectionSchema.
+   * @returns Navigation response to EnrollmentReviewStep or stay if limits exceeded.
+   */
   @Tool
   protected async capture_benefits_dependent_care(args: unknown): Promise<ToolResponseType> {
     const parsed = DependentCareElectionSchema.safeParse(args);
@@ -73,17 +115,32 @@ export class DependentCareStep extends Step {
     return go(EnrollmentReviewStep).withState({ needsPresentation: true });
   }
 
+  /**
+   * Handles user exit during dependent-care FSA collection.
+   *
+   * @returns Navigation response transitioning to TerminateSessionStep.
+   */
   @Tool
   protected async end_dependent_care_enrollment(): Promise<ToolResponseType> {
     return go(TerminateSessionStep).withPrompt(benefitsTerminalPrompt("Confirm that no benefits elections were submitted."));
   }
 
+  /**
+   * Retrieves the enrollment request from EligibilityStep state.
+   *
+   * @returns EnrollmentRequest object.
+   */
   private request(): EnrollmentRequest {
     const request = this.flow.getStepState<EnrollmentRequest>(EligibilityStep, "request");
     if (!request) throw new Error("DependentCareStep requires EligibilityStep.request.");
     return request;
   }
 
+  /**
+   * Retrieves the covered household from HouseholdStep state.
+   *
+   * @returns Household object.
+   */
   private household(): Household {
     const household = this.flow.getStepState<Household>(HouseholdStep, "household");
     if (!household) throw new Error("DependentCareStep requires HouseholdStep.household.");

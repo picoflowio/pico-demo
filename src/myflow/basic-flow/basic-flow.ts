@@ -23,6 +23,9 @@ import { ConcurStep3 } from "./concur-step3.js";
 import { ConcurStep4 } from "./concur-step4.js";
 
 export class BasicFlow extends Flow {
+  /**
+   * Configures the default language model, temperature, and retry behavior for this flow.
+   */
   protected override configModel() {
     return {
       provider: "openai",
@@ -32,17 +35,31 @@ export class BasicFlow extends Flow {
     } as const;
   }
 
-  // Applies to every model invocation in this Flow unless a Step overrides it.
+  /**
+   * Configures global LLM execution policies, such as the per-invocation timeout.
+   * Applies to every model invocation in this Flow unless overridden by a Step.
+   */
   protected override configLlmCallPolicy() {
     return { timeoutMs: 60_000 } as const;
   }
 
+  /**
+   * Determines the initial step of the conversation based on flow context configuration.
+   *
+   * @returns PresidentStep if `config.isPresident` is enabled; otherwise WeatherStep.
+   */
   protected override initialStep() {
     return this.getContext<boolean>("config.isPresident")
       ? PresidentStep
       : WeatherStep;
   }
 
+  /**
+   * Registers all conversation steps, logic steps, and terminal steps participating in this flow,
+   * along with their memory partition and step-specific model overrides.
+   *
+   * @returns Array of initialized Step instances.
+   */
   protected override defineSteps(): Step[] {
     const isPresident = this.getContext<boolean>("config.isPresident");
     return [
@@ -78,7 +95,13 @@ export class BasicFlow extends Flow {
     ];
   }
 
-  // Migration and session validation hook.
+  /**
+   * Hook invoked when restoring a session document from persistence, allowing migration
+   * or session freshness checks before resuming flow execution.
+   *
+   * @param doc - The serialized session document retrieved from persistence.
+   * @returns The restored session document or null if invalid.
+   */
   protected async onRestoreSessionDoc(
     doc: SessionType,
   ): Promise<SessionType | null> {
@@ -88,6 +111,12 @@ export class BasicFlow extends Flow {
     return super.onRestoreSessionDoc(doc);
   }
 
+  /**
+   * Demonstrates concurrent step execution across a batch of items (e.g. historical US president ordinals),
+   * aggregating responses into step state and marking the session complete.
+   *
+   * @returns Completion confirmation message string.
+   */
   protected async spawnSteps(): Promise<string> {
     const step = await this.goto(PresidentStep);
     const nths = ["10th", "11th", "12th", "13th", "14th", "15th", "16th"];

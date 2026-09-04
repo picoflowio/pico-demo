@@ -8,7 +8,19 @@ import { TriageStep } from "./triage-step.js";
 
 /** Applies policy and refund arithmetic without an LLM turn. */
 export class AdjudicateStep extends LogicStep {
+  /**
+   * Creates a deterministic adjudication worker attached to the current flow.
+   *
+   * @param flow - The parent SupportFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
+
+  /**
+   * Evaluates business return policies deterministically against the order book,
+   * routing denials back to ReturnsStep, approvals to TriageStep, and flagged requests to ApprovalStep.
+   *
+   * @returns Navigation response to ReturnsStep, ApprovalStep, or TriageStep.
+   */
   override async runLogic(): Promise<LogicResponseType> {
     const request = this.getState<ReturnRequest>("request");
     if (!request) throw new Error("AdjudicateStep requires a return request.");
@@ -26,4 +38,10 @@ export class AdjudicateStep extends LogicStep {
     return go(TriageStep).withState({ refunds: [...refunds, refund] });
   }
 }
-function generateRma() { return `RMA-${Math.floor(100000 + Math.random() * 900000)}`; }
+
+/**
+ * Generates a unique 6-digit RMA (Return Merchandise Authorization) identifier.
+ *
+ * @returns Formatted RMA string (e.g. 'RMA-123456').
+ */
+function generateRma(): string { return `RMA-${Math.floor(100000 + Math.random() * 900000)}`; }

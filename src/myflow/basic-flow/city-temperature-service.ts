@@ -9,7 +9,12 @@ export type CityTemperature = {
   temperature: number | null;
 };
 
-/** Deterministic local fixture used by BasicFlow's tool-batching example. */
+/**
+ * Resolves fixture temperature values for a list of city names/aliases.
+ *
+ * @param cities - Array of city alias strings (e.g., 'LA', 'NYC').
+ * @returns Array of objects mapping each city to its numeric temperature or null if unsupported.
+ */
 export function getCityTemperatures(cities: string[]): CityTemperature[] {
   return cities.map((city) => ({
     city,
@@ -17,6 +22,12 @@ export function getCityTemperatures(cities: string[]): CityTemperature[] {
   }));
 }
 
+/**
+ * Returns static mock temperature data for supported city aliases.
+ *
+ * @param city - City name or alias string.
+ * @returns Temperature in Fahrenheit, or null if the city is not recognized.
+ */
 function temperatureForCity(city: string): number | null {
   const normalized = city.trim().toLowerCase();
   if (normalized === 'nyc') {

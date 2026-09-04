@@ -14,10 +14,20 @@ import { ConcurStep4 } from "./concur-step4.js";
 
 @Parallel
 export class ConcurStep2 extends Step {
+  /**
+   * Initializes the ConcurStep2 instance.
+   *
+   * @param flow - The enclosing Flow instance.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Returns system instructions for parallel execution step 2.
+   *
+   * @returns Prompt string confirming completion.
+   */
   public override getPrompt(): string {
     return `
     You are ConcurStep2.
@@ -25,6 +35,9 @@ export class ConcurStep2 extends Step {
     `;
   }
 
+  /**
+   * Runs concurrent follow-up step `ConcurStep4` during step entry lifecycle.
+   */
   protected override async onEnter() {
     await super.onEnter();
     const batch = await this.runSteps([
@@ -38,6 +51,12 @@ export class ConcurStep2 extends Step {
     }
   }
 
+  /**
+   * Persists step 2 response in state and returns the response string.
+   *
+   * @param llmResult - Model response output.
+   * @returns Raw string result.
+   */
   public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {

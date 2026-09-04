@@ -12,10 +12,23 @@ import { ConcurStep2 } from "./concur-step2.js";
 import type { JsonValue, LastResponseType } from "@picoflow/core";
 
 export class InContextStep extends Step {
+  /**
+   * Initializes the InContextStep with the parent Flow instance.
+   *
+   * @param flow - The Flow instance orchestrating this step.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Intercepts the user message crossing step boundary to substitute a standardized
+   * prompt trigger for structured generation.
+   *
+   * @param _langMessage - The raw message crossing into this step.
+   * @param _priorStep - The name of the previous step.
+   * @returns Synthetic human message prompting the model to adhere to system prompt.
+   */
   public override onCrossing(
     _langMessage: MessageTypes,
     _priorStep?: string,
@@ -24,12 +37,21 @@ export class InContextStep extends Step {
     return new HumanMessageEx(this, "Follow system prompt");
   }
 
+  /**
+   * Supplies the system prompt instructing the model to generate a sci-fi movie concept.
+   *
+   * @returns System prompt string.
+   */
   public override getPrompt(): string {
     return `
       "Generate a sci-fi movie idea suitable for teens.";
     `;
   }
 
+  /**
+   * Lifecycle hook executed when entering the step. Demonstrates reading transient state
+   * and executing parallel sub-steps (`ConcurStep1` and `ConcurStep2`), saving their output.
+   */
   protected override async onEnter() {
     await super.onEnter();
     const msg = this.getTransientState<string>("msg");
@@ -56,6 +78,12 @@ export class InContextStep extends Step {
     });
   }
 
+  /**
+   * Processes the model's structured response, persisting it into step state.
+   *
+   * @param llmResult - Structured response object or string returned by the model.
+   * @returns Stringified response representation.
+   */
   public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
@@ -63,6 +91,11 @@ export class InContextStep extends Step {
     return JSON.stringify(llmResult);
   }
 
+  /**
+   * Defines the structured output schema for the LLM response using Zod.
+   *
+   * @returns Zod schema object specifying required movie fields.
+   */
   public structOutputSchema(): object {
     return z.object({
       title: z.string().describe("Movie title"),

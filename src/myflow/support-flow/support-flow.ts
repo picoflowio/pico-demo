@@ -11,11 +11,16 @@ const DEFAULT_APPROVAL_HOLD_MS = 10 * 60_000;
 
 /** Northwind Outfitters post-purchase support, ported from SupportGraph. */
 export class SupportFlow extends Flow {
+  /** Configures shared support memory and the summary model for this session. */
   constructor() {
     super();
     this.getMemory().setSummaryModel({ provider: "openai", name: "gpt-4o", retryAttempts: 3 }).setSummaryConfig({ minMessages: 8, recentMessages: 4 }).enableSummary("support-triage");
   }
+
+  /** Selects the default model used by support-flow steps without their own model. */
   protected override configModel() { return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const; }
+
+  /** Builds the ordered support workflow and assigns memory/model policies per step. */
   protected override defineSteps(): Step[] {
     return [
       new TriageStep(this).useMemory("support-triage").useModel({ provider: "openai", name: "gpt-4o", params: { temperature: 0.3 } }),
@@ -27,7 +32,9 @@ export class SupportFlow extends Flow {
       new TerminateSessionStep(this).useMemory("support-terminal"),
     ];
   }
-  protected async onRestoreSessionDoc(session: SessionType): Promise<SessionType | null> {
+
+  /** Expires stale sessions and releases abandoned approval holds on restoration. */
+  protected override async onRestoreSessionDoc(session: SessionType): Promise<SessionType | null> {
     const restored = await super.onRestoreSessionDoc(session);
     if (!restored) return null;
     const idleMs = this.sessionIdleMs(restored);

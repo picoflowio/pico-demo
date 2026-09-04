@@ -22,18 +22,39 @@ import { EmployeeBenefitsPrompt } from "./prompt/employee-benefits-prompt.js";
 const Instructions = Prompt.file("prompt/eligibility.md");
 
 export class EligibilityStep extends Step {
+  /**
+   * Initializes the EligibilityStep instance.
+   *
+   * @param flow - The parent EmployeeBenefitsFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Supplies initial synthetic user prompt triggering benefits enrollment.
+   *
+   * @param _userMessage - Inbound user message.
+   * @returns Synthetic message to start enrollment.
+   */
   public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Start the fictional employee benefits enrollment.");
   }
 
+  /**
+   * Builds the prompt instructing the LLM to collect employee ID, enrollment event, and plan year.
+   *
+   * @returns Formatted eligibility prompt string.
+   */
   public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       CURRENT_DATE: employeeBenefitsCurrentDate().toISOString().slice(0, 10),
     })}`;
   }
 
+  /**
+   * Defines tool schemas for evaluating employee eligibility and exiting.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       { name: "check_benefits_eligibility", description: "Validate the enrollment request and check the fictional employee directory and enrollment rules.", schema: EnrollmentRequestSchema },
@@ -41,6 +62,13 @@ export class EligibilityStep extends Step {
     ];
   }
 
+  /**
+   * Evaluates employee eligibility against the corporate directory and enrollment window rules,
+   * advancing to HouseholdStep if eligible, or IneligibleBenefitsStep if not.
+   *
+   * @param args - Tool invocation arguments matching EnrollmentRequestSchema.
+   * @returns Navigation response to HouseholdStep or IneligibleBenefitsStep.
+   */
   @Tool
   protected async check_benefits_eligibility(args: unknown): Promise<ToolResponseType> {
     const parsed = EnrollmentRequestSchema.safeParse(args);
@@ -52,6 +80,11 @@ export class EligibilityStep extends Step {
     return go(HouseholdStep);
   }
 
+  /**
+   * Handles user exit during eligibility determination.
+   *
+   * @returns Navigation response transitioning to TerminateSessionStep.
+   */
   @Tool
   protected async end_benefits_enrollment(): Promise<ToolResponseType> {
     return go(TerminateSessionStep).withPrompt(benefitsTerminalPrompt("Confirm that no benefits elections were submitted."));

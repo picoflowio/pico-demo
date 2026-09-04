@@ -14,10 +14,21 @@ import { Prompt } from "@picoflow/core";
 import { AddressStep } from "./address-step.js";
 
 export class DOBStep extends Step {
+  /**
+   * Initializes the DOBStep with the enclosing flow.
+   *
+   * @param flow - The Flow instance managing execution.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Constructs the prompt instructing the LLM to request the user's date of birth,
+   * interpolating the user's name captured in the preceding NameStep.
+   *
+   * @returns Rendered prompt string with user name.
+   */
   public override getPrompt(): string {
     const template = `
     ${DemoPrompt.DemoPrompt}
@@ -34,6 +45,11 @@ export class DOBStep extends Step {
     return prompt;
   }
 
+  /**
+   * Defines the tool schema for extracting structured year, month, and day fields.
+   *
+   * @returns Array containing the `dob` tool schema definition.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -64,6 +80,13 @@ export class DOBStep extends Step {
     ];
   }
 
+  /**
+   * Validates calendar date correctness (e.g. leap years, month boundaries),
+   * saves valid date components to step state, and advances to `AddressStep`.
+   *
+   * @param args - Tool invocation arguments containing numeric `year`, `month`, and `day`.
+   * @returns `stay` if the date is invalid; otherwise `go(AddressStep)`.
+   */
   @Tool
   protected async dob(args: Record<string, any>): Promise<ToolResponseType> {
     const date = new Date(Date.UTC(args.year, args.month - 1, args.day));
@@ -86,6 +109,12 @@ export class DOBStep extends Step {
     // go(...) advances to address collection after saving the valid date.
     return go(AddressStep);
   }
+
+  /**
+   * Handles user exit requests by redirecting to the terminal step.
+   *
+   * @returns Tool response transitioning to `TerminateSessionStep` with abrupt end message.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step with the abrupt-end prompt.

@@ -11,10 +11,20 @@ import { ExtractInvoiceStep } from "./extract-invoice.js";
 
 const PromptTemplate = Prompt.file("prompt/nt-prompt.md");
 export class NoToolStep extends Step {
+  /**
+   * Initializes the NoToolStep instance.
+   *
+   * @param flow - The Flow instance managing execution.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Generates a prompt with structured address variables demonstrating tool-less JSON generation.
+   *
+   * @returns Formatted prompt string.
+   */
   public override getPrompt(): string {
     const randomZip = (): string => {
       return Math.random() < 0.5 ? "97006" : "97005";
@@ -31,6 +41,12 @@ export class NoToolStep extends Step {
     return prompt;
   }
 
+  /**
+   * Parses the model's text response as JSON, saves state, and advances to `ExtractInvoiceStep`.
+   *
+   * @param llmResult - Model output string or object.
+   * @returns Tool response navigating to `ExtractInvoiceStep`.
+   */
   public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {

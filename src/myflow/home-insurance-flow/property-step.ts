@@ -21,14 +21,30 @@ import { ReviewStep } from "./review-step.js";
 const Instructions = Prompt.file("prompt/property.md");
 
 export class PropertyStep extends Step {
+  /**
+   * Initializes the PropertyStep instance.
+   *
+   * @param flow - The parent HomeInsuranceQuoteFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Supplies initial starter message or forwards user message if in correction mode.
+   *
+   * @param userMessage - Inbound user message.
+   * @returns Message initializing or continuing property collection.
+   */
   public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Begin collecting the property characteristics.");
   }
 
+  /**
+   * Builds the prompt instructing the LLM to gather property characteristics (construction, year built, square footage, systems).
+   *
+   * @returns Formatted prompt string.
+   */
   public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       PROPERTY: JSON.stringify(this.getState<PropertyProfile>("property") ?? null),
@@ -36,6 +52,11 @@ export class PropertyStep extends Step {
     })}`;
   }
 
+  /**
+   * Defines tool schemas for capturing property profile data and ending the quote.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_property", description: "Validate and save the complete property profile.", schema: PropertyProfileSchema },
@@ -43,6 +64,12 @@ export class PropertyStep extends Step {
     ];
   }
 
+  /**
+   * Validates property construction parameters and renovation years, advancing to RiskStep (or ReviewStep if correcting).
+   *
+   * @param args - Raw tool arguments matching PropertyProfileSchema.
+   * @returns Navigation response to ReviewStep, RiskStep, or stay if validation fails.
+   */
   @Tool
   protected async capture_home_property(args: unknown): Promise<ToolResponseType> {
     const parsed = PropertyProfileSchema.safeParse(args);
@@ -61,6 +88,11 @@ export class PropertyStep extends Step {
     return correctionMode ? go(ReviewStep) : go(RiskStep);
   }
 
+  /**
+   * Handles user exit during property profile collection.
+   *
+   * @returns Navigation response transitioning to TerminateSessionStep.
+   */
   @Tool
   protected async end_property_quote(): Promise<ToolResponseType> {
     return go(TerminateSessionStep).withPrompt(terminalPrompt("Thank the customer and close the unfinished preliminary quote."));

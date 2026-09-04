@@ -15,6 +15,9 @@ import { IneligibleBenefitsStep } from "./ineligible-benefits-step.js";
 const SESSION_IDLE_MS = 45 * 60_000;
 
 export class EmployeeBenefitsFlow extends Flow {
+  /**
+   * Initializes the EmployeeBenefitsFlow and enables conversation summarization for intake steps.
+   */
   constructor() {
     super();
     this.getMemory()
@@ -23,14 +26,25 @@ export class EmployeeBenefitsFlow extends Flow {
       .enableSummary("benefits-intake");
   }
 
+  /**
+   * Configures default language model (GPT-4o) and retry policy.
+   */
   protected override configModel() {
     return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const;
   }
 
+  /**
+   * Sets the per-step LLM call timeout policy to 120 seconds.
+   */
   protected override configLlmCallPolicy() {
     return { timeoutMs: 120_000 };
   }
 
+  /**
+   * Registers all sequential steps in the annual employee benefits enrollment process.
+   *
+   * @returns Array of Step instances.
+   */
   protected override defineSteps(): Step[] {
     return [
       new EligibilityStep(this).useMemory("benefits-intake"),
@@ -49,6 +63,12 @@ export class EmployeeBenefitsFlow extends Flow {
     ];
   }
 
+  /**
+   * Prunes restored sessions that have been idle for 45 minutes or longer.
+   *
+   * @param session - Restored session document.
+   * @returns Active session document or null if expired.
+   */
   protected async onRestoreSessionDoc(session: SessionType): Promise<SessionType | null> {
     const restored = await super.onRestoreSessionDoc(session);
     if (!restored) return null;

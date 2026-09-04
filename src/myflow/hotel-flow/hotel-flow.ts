@@ -11,6 +11,10 @@ import { PresentStep } from './present-step.js';
 import { CompareStep } from './compare-step.js';
 
 export class HotelFlow extends Flow {
+  /**
+   * Initializes the HotelFlow instance and configures memory compaction with summarization
+   * for the 'hotel-explore' memory namespace.
+   */
   public constructor() {
     super();
 
@@ -22,10 +26,19 @@ export class HotelFlow extends Flow {
       .enableSummary('hotel-explore');
   }
 
+  /**
+   * Configures the default language model and retry policy for this flow.
+   */
   protected override configModel() {
     return { provider: 'openai', name: 'gpt-4o', retryAttempts: 3 } as const;
   }
 
+  /**
+   * Registers all conversation steps in the hotel recommendation journey:
+   * ExploreStep, PresentStep, CompareStep, and TerminateSessionStep.
+   *
+   * @returns Array of configured Step instances.
+   */
   protected override defineSteps(): Step[] {
     return [
       new ExploreStep(this)

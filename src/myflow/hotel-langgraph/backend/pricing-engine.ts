@@ -21,6 +21,19 @@ const US_PUBLIC_HOLIDAYS = [
 
 /** Pricing rules and catalog queries ported from the reference HotelFlow. */
 export class PricingEngine {
+  /**
+   * Searches the hotel catalog matching amenities and room types, calculating stay costs and filtering by budget.
+   *
+   * @param startDate - Arrival date.
+   * @param endDate - Departure date.
+   * @param amenities - Array of required amenity keys.
+   * @param roomTypes - Array of acceptable room types.
+   * @param maxBudget - Optional maximum nightly rate.
+   * @param minBudget - Optional minimum nightly rate.
+   * @param airport - Optional max airport distance in miles.
+   * @param cityCenter - Optional max city center distance in miles.
+   * @returns Array of hotel search results with calculated prices and total.
+   */
   static searchHotel(
     startDate: Date,
     endDate: Date,
@@ -51,6 +64,12 @@ export class PricingEngine {
     );
   }
 
+  /**
+   * Retrieves hotel attributes (amenities, room types, distances) for comparison.
+   *
+   * @param names - Array of hotel names.
+   * @returns Array of hotel attribute records.
+   */
   static fetchHotels(names: string[]) {
     return HotelCatalog.fetch(names).map((hotel) => ({
       hotelName: hotel.name,
@@ -61,6 +80,17 @@ export class PricingEngine {
     }));
   }
 
+  /**
+   * Evaluates nightly prices across candidate hotels and excludes those exceeding budget limits.
+   *
+   * @param startDate - Start date of the stay.
+   * @param endDate - End date of the stay.
+   * @param roomType - Selected room type string.
+   * @param hotels - Candidate hotel price entries.
+   * @param maxBudget - Optional maximum allowable nightly price.
+   * @param minBudget - Optional minimum allowable nightly price.
+   * @returns Array of qualifying hotel search results.
+   */
   static findHotelByBudget(
     startDate: Date,
     endDate: Date,
@@ -92,6 +122,15 @@ export class PricingEngine {
     });
   }
 
+  /**
+   * Computes the nightly rates across a date span for a hotel's base tier and room type.
+   *
+   * @param startDate - Check-in date.
+   * @param endDate - Check-out date.
+   * @param basePrice - Base rate per night.
+   * @param roomType - Selected room type.
+   * @returns Array of nightly prices.
+   */
   static findPrices(
     startDate: Date,
     endDate: Date,
@@ -104,12 +143,27 @@ export class PricingEngine {
     });
   }
 
+  /**
+   * Generates ISO date strings (YYYY-MM-DD) for each day between start and end dates.
+   *
+   * @param startDate - Check-in date.
+   * @param endDate - Check-out date.
+   * @returns Array of formatted date strings.
+   */
   static enumerateDateStrings(startDate: Date, endDate: Date): string[] {
     return enumerateDates(startDate, endDate).map((date) =>
       date.toISOString().slice(0, 10),
     );
   }
 
+  /**
+   * Calculates the adjusted rate for a single date factoring seasonal demand, holidays, weekends, and room tiers.
+   *
+   * @param date - The specific calendar date.
+   * @param basePrice - Hotel tier base price.
+   * @param roomType - Optional room type multiplier.
+   * @returns Calculated price or null if invalid.
+   */
   private static findPriceOneDay(
     date: Date,
     basePrice: number,
@@ -141,6 +195,13 @@ export class PricingEngine {
   }
 }
 
+/**
+ * Returns an array of Date objects covering all days between two dates inclusive.
+ *
+ * @param startDate - Start date.
+ * @param endDate - End date.
+ * @returns Array of dates in sequential order.
+ */
 function enumerateDates(startDate: Date, endDate: Date): Date[] {
   let start = new Date(startDate);
   let end = new Date(endDate);
@@ -161,10 +222,25 @@ function enumerateDates(startDate: Date, endDate: Date): Date[] {
   return dates;
 }
 
+/**
+ * Verifies if a Date object is valid (non-NaN).
+ *
+ * @param date - Date to check.
+ * @returns True if valid date.
+ */
 function isValidDate(date: Date): boolean {
   return !Number.isNaN(date.getTime());
 }
 
+/**
+ * Computes the calendar Date for the nth occurrence of a weekday in a given month/year.
+ *
+ * @param year - Four-digit year.
+ * @param month - Zero-indexed month (0 = January).
+ * @param weekday - Zero-indexed day of week (0 = Sunday, 1 = Monday).
+ * @param nth - 1-indexed occurrence count.
+ * @returns Computed Date object.
+ */
 function nthWeekdayOfMonth(
   year: number,
   month: number,
@@ -176,6 +252,14 @@ function nthWeekdayOfMonth(
   return new Date(year, month, 1 + offset + (nth - 1) * 7);
 }
 
+/**
+ * Computes the calendar Date for the last occurrence of a weekday in a given month/year.
+ *
+ * @param year - Four-digit year.
+ * @param month - Zero-indexed month (0 = January).
+ * @param weekday - Zero-indexed day of week.
+ * @returns Computed Date object.
+ */
 function lastWeekdayOfMonth(
   year: number,
   month: number,

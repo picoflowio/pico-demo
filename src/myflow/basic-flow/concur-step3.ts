@@ -14,10 +14,20 @@ import { ConcurStep1 } from "./concur-step1.js";
 
 @Parallel
 export class ConcurStep3 extends Step {
+  /**
+   * Initializes the ConcurStep3 instance.
+   *
+   * @param flow - The enclosing Flow instance.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Returns system instructions for parallel execution step 3.
+   *
+   * @returns Prompt string confirming completion.
+   */
   public override getPrompt(): string {
     return `
     You are ConcurStep3.
@@ -25,6 +35,12 @@ export class ConcurStep3 extends Step {
     `;
   }
 
+  /**
+   * Retrieves state from sibling `ConcurStep1`, persists step 3 results, and returns output.
+   *
+   * @param llmResult - Model response output.
+   * @returns Raw string result.
+   */
   public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {

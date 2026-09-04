@@ -21,14 +21,30 @@ import { ReviewStep } from "./review-step.js";
 const Instructions = Prompt.file("prompt/risk.md");
 
 export class RiskStep extends Step {
+  /**
+   * Initializes the RiskStep instance.
+   *
+   * @param flow - The parent HomeInsuranceQuoteFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Supplies initial starter message or forwards user message if in correction mode.
+   *
+   * @param userMessage - Inbound user message.
+   * @returns Message initializing or continuing risk profile collection.
+   */
   public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Begin the claims, hazards, and protection questions.");
   }
 
+  /**
+   * Builds the prompt instructing the LLM to collect past claims, property hazards, and protective devices.
+   *
+   * @returns Formatted prompt string.
+   */
   public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       RISK: JSON.stringify(this.getState<RiskProfile>("risk") ?? null),
@@ -36,6 +52,11 @@ export class RiskStep extends Step {
     })}`;
   }
 
+  /**
+   * Defines tool schemas for capturing the risk profile and ending the quote.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_risk", description: "Validate and save the complete claims, hazards, and protection profile.", schema: RiskProfileSchema },
@@ -43,6 +64,12 @@ export class RiskStep extends Step {
     ];
   }
 
+  /**
+   * Validates risk claims and protection devices, advancing to CoverageStep (or ReviewStep if correcting).
+   *
+   * @param args - Tool invocation arguments conforming to RiskProfileSchema.
+   * @returns Navigation response to ReviewStep, CoverageStep, or stay if validation fails.
+   */
   @Tool
   protected async capture_home_risk(args: unknown): Promise<ToolResponseType> {
     const parsed = RiskProfileSchema.safeParse(args);
@@ -56,6 +83,11 @@ export class RiskStep extends Step {
     return correctionMode ? go(ReviewStep) : go(CoverageStep);
   }
 
+  /**
+   * Handles user exit during risk collection.
+   *
+   * @returns Navigation response transitioning to TerminateSessionStep.
+   */
   @Tool
   protected async end_risk_quote(): Promise<ToolResponseType> {
     return go(TerminateSessionStep).withPrompt(terminalPrompt("Thank the customer and close the unfinished preliminary quote."));

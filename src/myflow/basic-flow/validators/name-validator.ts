@@ -11,6 +11,13 @@ type ParsedName =
     }
   | { error: string };
 
+/**
+ * Parses a full name into first, middle (optional), and last name parts,
+ * returning an error if the name does not contain at least first and last parts.
+ *
+ * @param fullName - The raw full name string to validate.
+ * @returns Object with parsed name fields or an error description.
+ */
 export function ValidateName(fullName: string): ParsedName {
   if (!fullName || typeof fullName !== 'string') {
     return { error: 'A full name is required.' };

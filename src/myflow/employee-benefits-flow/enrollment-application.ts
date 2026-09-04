@@ -24,6 +24,12 @@ import { MedicalPlanStep } from "./medical-plan-step.js";
 import { PlanEvaluationStep } from "./plan-evaluation-step.js";
 import { PreferencesStep } from "./preferences-step.js";
 
+/**
+ * Aggregates all validated benefit election slices from across flow step states into a unified EnrollmentApplication.
+ *
+ * @param flow - Active Flow instance.
+ * @returns Fully populated EnrollmentApplication object.
+ */
 export function readEnrollmentApplication(flow: Flow): EnrollmentApplication {
   const request = required<EnrollmentRequest>(flow, EligibilityStep, "request");
   const eligibility = required<EligibilityDecision>(flow, EligibilityStep, "decision");
@@ -55,6 +61,14 @@ export function readEnrollmentApplication(flow: Flow): EnrollmentApplication {
   };
 }
 
+/**
+ * Reads a required step state field, throwing an informative error if absent or null.
+ *
+ * @param flow - Active Flow instance.
+ * @param step - Target step constructor.
+ * @param key - State property key.
+ * @returns Stored state value.
+ */
 function required<T>(flow: Flow, step: new (flow: Flow) => { getPrompt(): string }, key: string): T {
   const value = flow.getStepState<T>(step as never, key);
   if (value == null) throw new Error(`Enrollment application requires ${step.name}.${key}.`);

@@ -153,6 +153,14 @@ export class HotelLanggraph {
   private readonly models: Record<HotelStage, HotelBoundModel>;
   private readonly compiledGraph: ReturnType<HotelLanggraph["buildGraph"]>;
 
+  /**
+   * Initializes the HotelLanggraph instance, binding models with stage-specific tools
+   * and compiling the state graph.
+   *
+   * @param modelFactory - Factory function creating stage-bound model wrappers.
+   * @param sessionStore - Persistence store for session documents.
+   * @param sessionIdleMs - Maximum idle time before session expiration.
+   */
   constructor(
     modelFactory: HotelModelFactory = createOpenAiModel,
     private readonly sessionStore: HotelSessionStore =
@@ -167,6 +175,12 @@ export class HotelLanggraph {
     this.compiledGraph = this.buildGraph();
   }
 
+  /**
+   * Factory creating a HotelLanggraph instance wired to the session store configured in environment variables.
+   *
+   * @param modelFactory - Optional model factory override.
+   * @returns Configured HotelLanggraph instance.
+   */
   static async createFromEnvironment(
     modelFactory: HotelModelFactory = createOpenAiModel,
   ): Promise<HotelLanggraph> {
@@ -193,6 +207,12 @@ export class HotelLanggraph {
     return this.sessionStore.kind;
   }
 
+  /**
+   * Executes a single turn of the hotel booking conversation through the compiled LangGraph.
+   *
+   * @param input - Inbound turn data including userMessage, optional config, and sessionId.
+   * @returns Response object with execution status, bot response message, and session id.
+   */
   async run(input: HotelLanggraphRunInput): Promise<HotelLanggraphRunResult> {
     const userMessage =
       typeof input.userMessage === "string" ? input.userMessage.trim() : "";
@@ -276,11 +296,23 @@ export class HotelLanggraph {
     }
   }
 
+  /**
+   * Checks whether a non-expired session exists in the store.
+   *
+   * @param sessionId - Session identifier string to check.
+   * @returns True if active session exists; otherwise false.
+   */
   async hasSession(sessionId: string): Promise<boolean> {
     const session = validateSessionId(sessionId);
     return (await this.loadSession(session)) !== undefined;
   }
 
+  /**
+   * Retrieves hydrated state for an active session.
+   *
+   * @param sessionId - Session identifier string.
+   * @returns Hydrated state object or undefined if not found or expired.
+   */
   async getSessionState(
     sessionId: string,
   ): Promise<HotelLanggraphStateType | undefined> {
@@ -288,6 +320,12 @@ export class HotelLanggraph {
     return document ? hydrateHotelState(document.state) : undefined;
   }
 
+  /**
+   * Deletes a session document from the session store.
+   *
+   * @param sessionId - Session identifier to remove.
+   * @returns Result indicating deletion success or error.
+   */
   async deleteSession(
     sessionId?: string,
   ): Promise<HotelLanggraphDeleteSessionResult> {
@@ -313,10 +351,19 @@ export class HotelLanggraph {
     }
   }
 
+  /**
+   * Closes underlying connections and resources maintained by the session store.
+   */
   async close(): Promise<void> {
     await this.sessionStore.close();
   }
 
+  /**
+   * Loads and validates a session document, automatically pruning it if expired.
+   *
+   * @param sessionId - Session ID to load.
+   * @returns Valid session document or undefined if missing or expired.
+   */
   private async loadSession(
     sessionId: string,
   ): Promise<HotelSessionDocument | undefined> {
@@ -338,6 +385,11 @@ export class HotelLanggraph {
     return document;
   }
 
+  /**
+   * Compiles the LangGraph StateGraph defining agent and tool nodes across explore, present, and compare stages.
+   *
+   * @returns Compiled executable StateGraph.
+   */
   private buildGraph() {
     return new StateGraph(HotelLanggraphState)
       .addNode("exploreAgent", this.exploreAgent)
@@ -385,6 +437,9 @@ export class HotelLanggraph {
       .compile();
   }
 
+  /**
+   * Node handler executing the explore stage model turn using accumulated search criteria.
+   */
   private readonly exploreAgent = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -401,6 +456,9 @@ export class HotelLanggraph {
     );
   };
 
+  /**
+   * Node handler executing the present stage model turn with available search results.
+   */
   private readonly presentAgent = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -418,6 +476,9 @@ export class HotelLanggraph {
     );
   };
 
+  /**
+   * Node handler executing the compare stage model turn with selected and available hotel data.
+   */
   private readonly compareAgent = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -433,6 +494,16 @@ export class HotelLanggraph {
     );
   };
 
+  /**
+   * Common helper invoking stage-specific LLM with system prompt, historical messages, and user input.
+   *
+   * @param state - Current graph state.
+   * @param stage - Active stage identifier ('explore', 'present', or 'compare').
+   * @param messageKey - State property key for the stage's message array.
+   * @param prompt - System prompt string.
+   * @param extra - Additional state updates to merge.
+   * @returns State update containing model response and consumed input flags.
+   */
   private async callAgent(
     state: HotelLanggraphStateType,
     stage: HotelStage,
@@ -460,6 +531,9 @@ export class HotelLanggraph {
     };
   }
 
+  /**
+   * Node handler processing tool invocations emitted by the explore agent (e.g. `capture_choices` or `terminate_session`).
+   */
   private readonly exploreTools = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -549,6 +623,10 @@ export class HotelLanggraph {
     };
   };
 
+  /**
+   * Node handler processing tool invocations emitted by the present agent
+   * (e.g. `chosen_hotel`, `search_again`, `go_compare`, or `terminate_session`).
+   */
   private readonly presentTools = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -673,6 +751,10 @@ export class HotelLanggraph {
     );
   };
 
+  /**
+   * Node handler processing tool invocations emitted by the compare agent
+   * (e.g. `resume_booking`, `generate_comparison`, or `terminate_session`).
+   */
   private readonly compareTools = async (
     state: HotelLanggraphStateType,
   ): Promise<HotelLanggraphStateUpdate> => {
@@ -781,23 +863,48 @@ export class LazyHotelLanggraph {
   readonly name = "HotelLanggraph";
   private instancePromise?: Promise<HotelLanggraph>;
 
+  /**
+   * Initializes the LazyHotelLanggraph with an async factory function.
+   *
+   * @param create - Factory function creating the HotelLanggraph instance on demand.
+   */
   constructor(private readonly create: () => Promise<HotelLanggraph>) { }
 
+  /**
+   * Returns the cached or newly initialized HotelLanggraph instance.
+   *
+   * @returns Promise resolving to the singleton HotelLanggraph instance.
+   */
   private getInstance(): Promise<HotelLanggraph> {
     this.instancePromise ??= this.create();
     return this.instancePromise;
   }
 
+  /**
+   * Delegates conversation execution to the lazy-loaded HotelLanggraph instance.
+   *
+   * @param input - Inbound turn parameters.
+   * @returns Turn execution result.
+   */
   async run(input: HotelLanggraphRunInput): Promise<HotelLanggraphRunResult> {
     return (await this.getInstance()).run(input);
   }
 
+  /**
+   * Delegates session deletion to the lazy-loaded HotelLanggraph instance.
+   *
+   * @param sessionId - Session ID to remove.
+   * @returns Deletion status.
+   */
   async deleteSession(
     sessionId?: string,
   ): Promise<HotelLanggraphDeleteSessionResult> {
     return (await this.getInstance()).deleteSession(sessionId);
   }
 
+  /**
+   * Closes the underlying HotelLanggraph session store if initialized.
+   */
   async close(): Promise<void> {
     if (this.instancePromise) {
       await (await this.instancePromise).close();
@@ -805,6 +912,13 @@ export class LazyHotelLanggraph {
   }
 }
 
+/**
+ * Creates and configures an OpenAI chat model bound with stage-appropriate tools.
+ *
+ * @param stage - Conversation stage ('explore', 'present', or 'compare').
+ * @param tools - Tools to bind to the model.
+ * @returns Object providing an `invoke` method.
+ */
 function createOpenAiModel(
   stage: HotelStage,
   tools: readonly StructuredToolInterface[],
@@ -825,37 +939,79 @@ function createOpenAiModel(
   };
 }
 
+/**
+ * Determines the starting graph node based on the state's active phase.
+ *
+ * @param state - Current graph state.
+ * @returns Target node route name or 'end'.
+ */
 function routeFromPhase(state: HotelLanggraphStateType): HotelLanggraphRoute {
   if (state.completed || state.phase === "terminal") return "end";
   return `${state.phase}Agent` as HotelLanggraphRoute;
 }
 
+/**
+ * Routes to `exploreTools` if the model produced a tool call; otherwise concludes the turn.
+ *
+ * @param state - Current graph state.
+ * @returns Next node name ('exploreTools' or 'end').
+ */
 function routeAfterExploreAgent(
   state: HotelLanggraphStateType,
 ): "exploreTools" | "end" {
   return hasToolCall(state.exploreMessages) ? "exploreTools" : "end";
 }
 
+/**
+ * Routes to `presentTools` if the model produced a tool call; otherwise concludes the turn.
+ *
+ * @param state - Current graph state.
+ * @returns Next node name ('presentTools' or 'end').
+ */
 function routeAfterPresentAgent(
   state: HotelLanggraphStateType,
 ): "presentTools" | "end" {
   return hasToolCall(state.presentMessages) ? "presentTools" : "end";
 }
 
+/**
+ * Routes to `compareTools` if the model produced a tool call; otherwise concludes the turn.
+ *
+ * @param state - Current graph state.
+ * @returns Next node name ('compareTools' or 'end').
+ */
 function routeAfterCompareAgent(
   state: HotelLanggraphStateType,
 ): "compareTools" | "end" {
   return hasToolCall(state.compareMessages) ? "compareTools" : "end";
 }
 
+/**
+ * Routes execution after tool execution to the node designated in the state's `route` field.
+ *
+ * @param state - Graph state after tool node processing.
+ * @returns Next node route name.
+ */
 function routeAfterTools(state: HotelLanggraphStateType): HotelLanggraphRoute {
   return state.route;
 }
 
+/**
+ * Checks if the message sequence contains any pending tool call.
+ *
+ * @param messages - Array of conversation messages.
+ * @returns True if a tool call was found.
+ */
 function hasToolCall(messages: readonly BaseMessage[]): boolean {
   return latestToolCall(messages) !== undefined;
 }
 
+/**
+ * Extracts the latest tool call from the most recent AIMessage in the message list.
+ *
+ * @param messages - Array of conversation messages.
+ * @returns The tool call object, prioritizing `terminate_session` if present.
+ */
 function latestToolCall(messages: readonly BaseMessage[]): ToolCall | undefined {
   const message = [...messages]
     .reverse()
@@ -866,6 +1022,13 @@ function latestToolCall(messages: readonly BaseMessage[]): ToolCall | undefined 
   );
 }
 
+/**
+ * Constructs a LangChain ToolMessage packaging tool execution results.
+ *
+ * @param call - The originating tool call object.
+ * @param output - The result payload object to serialize.
+ * @returns ToolMessage instance.
+ */
 function toolResult(
   call: ToolCall,
   output: Record<string, unknown>,
@@ -877,6 +1040,15 @@ function toolResult(
   });
 }
 
+/**
+ * Creates a state update representing an invalid tool invocation with error feedback.
+ *
+ * @param messageKey - The stage's message array key.
+ * @param call - The tool call that failed.
+ * @param error - Descriptive error text.
+ * @param route - The route to transition back to for correction.
+ * @returns Graph state update object.
+ */
 function invalidToolUpdate(
   messageKey: HotelMessageKey,
   call: ToolCall,
@@ -890,6 +1062,13 @@ function invalidToolUpdate(
   };
 }
 
+/**
+ * Creates a state update marking the session as terminated with customer service exit text.
+ *
+ * @param messageKey - The stage's message array key.
+ * @param call - The termination tool call.
+ * @returns Graph state update object.
+ */
 function terminateUpdate(
   messageKey: HotelMessageKey,
   call: ToolCall,
@@ -904,6 +1083,12 @@ function terminateUpdate(
   };
 }
 
+/**
+ * Merges persisted search criteria with default prompt templates and current date settings.
+ *
+ * @param saved - Previously saved criteria if any.
+ * @returns Fully populated HotelSearchCriteria object.
+ */
 function criteriaFor(
   saved: HotelSearchCriteria | undefined,
 ): HotelSearchCriteria {
@@ -924,6 +1109,13 @@ function criteriaFor(
   };
 }
 
+/**
+ * Validates, cleans, and normalizes candidate search criteria received from tool input.
+ *
+ * @param value - Raw submitted criteria object.
+ * @param current - Baseline search criteria to fall back upon.
+ * @returns Normalized criteria or an error object.
+ */
 function normalizeCriteria(
   value: unknown,
   current: HotelSearchCriteria,
@@ -975,6 +1167,15 @@ function normalizeCriteria(
   };
 }
 
+/**
+ * Transforms hotel catalog documents into structured rows formatted for feature comparison.
+ *
+ * @param documents - Catalog records of selected hotels.
+ * @param feature - The comparison feature dimension ('amenities', 'roomType', 'distance', or 'price').
+ * @param results - Search results containing pricing calculations.
+ * @param criteria - Active search criteria.
+ * @returns Array of row objects formatted for table generation.
+ */
 function comparisonRows(
   documents: ReturnType<typeof PricingEngine.fetchHotels>,
   feature: HotelComparisonFeature,
@@ -1014,6 +1215,14 @@ function comparisonRows(
   });
 }
 
+/**
+ * Formats a successful turn response matching the standard controller API payload.
+ *
+ * @param session - Session ID string.
+ * @param message - Output text response.
+ * @param completed - Whether the session is completed.
+ * @returns HotelLanggraphRunResult object.
+ */
 function successResult(
   session: string,
   message: string,
@@ -1032,6 +1241,12 @@ function successResult(
   };
 }
 
+/**
+ * Extracts plain text content from a BaseMessage (string or complex multimodal content parts).
+ *
+ * @param message - LangChain BaseMessage instance.
+ * @returns Flattened text string.
+ */
 function messageText(message: BaseMessage): string {
   if (typeof message.content === "string") return message.content;
   return message.content
@@ -1045,6 +1260,13 @@ function messageText(message: BaseMessage): string {
     .join("");
 }
 
+/**
+ * Validates that a session identifier meets alphanumeric and length constraints.
+ *
+ * @param value - Candidate session ID string.
+ * @returns Trimmed valid session ID.
+ * @throws Error if the ID format is invalid.
+ */
 function validateSessionId(value: string): string {
   const session = value.trim();
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(session)) {
@@ -1055,6 +1277,12 @@ function validateSessionId(value: string): string {
   return session;
 }
 
+/**
+ * Formats an unknown error or ZodError into a readable string message.
+ *
+ * @param error - Caught error object.
+ * @returns Human-readable error message.
+ */
 function zodError(error: unknown): string {
   return error instanceof z.ZodError
     ? error.issues.map((issue) => issue.message).join("; ")
@@ -1063,36 +1291,84 @@ function zodError(error: unknown): string {
       : String(error);
 }
 
+/**
+ * Trims strings and eliminates duplicates from an array.
+ *
+ * @param values - Array of string values.
+ * @returns Array with unique trimmed strings.
+ */
 function uniqueTrimmed(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()))];
 }
 
+/**
+ * Type guard verifying that a value is a non-null, non-array object record.
+ *
+ * @param value - Value to check.
+ * @returns True if value is a record object.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+/**
+ * Filters an unknown value into an array containing only string items.
+ *
+ * @param value - Value to inspect.
+ * @returns Array of strings.
+ */
 function stringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : [];
 }
 
+/**
+ * Returns a trimmed string if non-empty, or null otherwise.
+ *
+ * @param value - Unknown input value.
+ * @returns Trimmed string or null.
+ */
 function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+/**
+ * Returns a finite number if valid, or null otherwise.
+ *
+ * @param value - Unknown input value.
+ * @returns Finite number or null.
+ */
 function finiteNumberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+/**
+ * Converts null to undefined for optional numeric fields.
+ *
+ * @param value - Number or null.
+ * @returns Number or undefined.
+ */
 function numberOrUndefined(value: number | null): number | undefined {
   return value === null ? undefined : value;
 }
 
+/**
+ * Parses an ISO date string into a Date object.
+ *
+ * @param value - Candidate date string.
+ * @returns Parsed Date object.
+ */
 function parseDate(value: string | null): Date {
   return new Date(value ?? Number.NaN);
 }
 
+/**
+ * Formats a distance in miles as a string (e.g. '12 mi' or 'N/A').
+ *
+ * @param distance - Distance number or undefined.
+ * @returns Formatted distance string.
+ */
 function formatMiles(distance: number | undefined): string {
   return distance === undefined ? "N/A" : `${distance} mi`;
 }

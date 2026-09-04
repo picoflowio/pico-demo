@@ -18,7 +18,14 @@ export type HotelLanggraphRoute =
   | "compareAgent"
   | "end";
 
+/**
+ * State channel reducer that replaces the current value with the next incoming value.
+ */
 const replace = <T>(_: T, next: T): T => next;
+
+/**
+ * State channel reducer that appends single messages or message arrays to the conversation history.
+ */
 const appendMessages = (
   current: BaseMessage[],
   update: BaseMessage | BaseMessage[],

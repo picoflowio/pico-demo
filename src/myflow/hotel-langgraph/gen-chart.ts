@@ -1,6 +1,12 @@
 type ChartRow = Record<string, string | number>;
 
 export class GenChart {
+  /**
+   * Generates a Markdown comparison table string from an array of hotel attribute row objects.
+   *
+   * @param hotels - Array of objects mapping feature names to display values.
+   * @returns Formatted Markdown table.
+   */
   static getChart(hotels: ChartRow[]): string {
     if (hotels.length === 0) return "";
     const keys = Object.keys(hotels[0] ?? {});
@@ -15,6 +21,14 @@ export class GenChart {
     return rows.join("\n");
   }
 
+  /**
+   * Formats a numeric price into localized currency text.
+   *
+   * @param amount - Numeric amount to format.
+   * @param locale - Formatting locale string (default 'en-US').
+   * @param currency - ISO currency code (default 'USD').
+   * @returns Formatted currency string.
+   */
   static formatCurrency(
     amount: number,
     locale = "en-US",
@@ -25,6 +39,12 @@ export class GenChart {
     );
   }
 
+  /**
+   * Transforms boolean amenity/room attributes into visual check/cross symbols across all hotels.
+   *
+   * @param hotels - Array of hotel records with boolean or string attributes.
+   * @returns Array of transformed rows suitable for chart rendering.
+   */
   static comparisonRows(
     hotels: Array<Record<string, string | number | boolean>>,
   ): ChartRow[] {
@@ -48,6 +68,12 @@ export class GenChart {
     );
   }
 
+  /**
+   * Converts an array of room types into a boolean dictionary keyed by room type.
+   *
+   * @param roomTypes - Array of available room type names.
+   * @returns Record with room type keys mapped to true.
+   */
   static roomTypes(roomTypes: string[]): Record<string, boolean> {
     return Object.fromEntries(roomTypes.map((roomType) => [roomType, true]));
   }

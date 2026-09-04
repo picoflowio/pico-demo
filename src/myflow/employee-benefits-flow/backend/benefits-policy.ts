@@ -60,6 +60,13 @@ const providerNetworks: Record<string, MedicalPlanOption["id"][]> = {
 export class BenefitsPolicy {
   public static readonly rulesVersion = RULES_VERSION;
 
+  /**
+   * Evaluates employee directory active status, minimum work hours, and open enrollment calendar windows.
+   *
+   * @param request - Enrollment request containing employee ID, event type, and date.
+   * @param currentDate - Effective execution date.
+   * @returns EligibilityDecision indicating eligibility status and any exclusion reason codes.
+   */
   public static evaluateEligibility(request: EnrollmentRequest, currentDate: Date): EligibilityDecision {
     const employee = employees[request.employeeId] ?? null;
     const reasons: string[] = [];
@@ -87,6 +94,13 @@ export class BenefitsPolicy {
     return { eligible: reasons.length === 0, reasonCodes: reasons, enrollmentDeadline: deadline, employee, rulesVersion: RULES_VERSION };
   }
 
+  /**
+   * Validates household structure against tier rules (e.g. spouse count, child age limits, tier consistency).
+   *
+   * @param household - Household composition and dependent relationships.
+   * @param planYear - Active plan year.
+   * @returns Error message string if validation fails, or null if valid.
+   */
   public static validateHousehold(household: Household, planYear: number): string | null {
     const spouses = household.dependents.filter((dependent) => dependent.relationship !== "child");
     const children = household.dependents.filter((dependent) => dependent.relationship === "child");
@@ -106,6 +120,15 @@ export class BenefitsPolicy {
     return null;
   }
 
+  /**
+   * Evaluates medical plan options (EPO, HDHP, PPO) and computes personalized recommendation scores and reasons.
+   *
+   * @param household - Household composition and tier.
+   * @param preferences - Care utilization and network priorities.
+   * @param employee - Employee profile with salary and payroll frequency.
+   * @param planYear - Active plan year.
+   * @returns PlanEvaluation with options and recommendation narrative.
+   */
   public static evaluateMedicalPlans(household: Household, preferences: CarePreferences, employee: EmployeeProfile, planYear: number): PlanEvaluation {
     const options: MedicalPlanOption[] = [
       {
@@ -154,6 +177,13 @@ export class BenefitsPolicy {
     return { planYear, rulesVersion: RULES_VERSION, coverageTier: household.coverageTier, recommendedPlanId, recommendationReasons, options };
   }
 
+  /**
+   * Checks whether a provider name participates in a medical plan's directory.
+   *
+   * @param plan - Medical plan descriptor.
+   * @param providerName - Raw provider name string.
+   * @returns Network status and description message.
+   */
   public static providerNetwork(plan: Pick<MedicalPlanOption, "id" | "name">, providerName: string): { inNetwork: boolean | null; message: string } {
     const normalized = providerName.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
     const knownPlans = providerNetworks[normalized];
@@ -162,6 +192,14 @@ export class BenefitsPolicy {
     return { inNetwork, message: `${providerName} is ${inNetwork ? "in network" : "out of network"} for ${plan.name} in the fictional demo directory. Recheck before receiving care.` };
   }
 
+  /**
+   * Validates employee and employer contributions to HSA or healthcare FSA accounts against statutory limits.
+   *
+   * @param plan - Selected medical plan.
+   * @param tier - Household coverage tier.
+   * @param election - Health account election.
+   * @returns HealthAccountResult with acceptance status and calculated totals.
+   */
   public static evaluateHealthAccount(plan: MedicalPlanOption, tier: Household["coverageTier"], election: HealthAccountElection): HealthAccountResult {
     const annualLimit = election.accountType === "hsa" ? HSA_LIMITS[tier] : election.accountType === "healthcare_fsa" ? 3300 : 0;
     const employerContribution = election.accountType === "hsa" ? plan.employerHsaContribution : 0;
@@ -184,6 +222,14 @@ export class BenefitsPolicy {
     return { accepted, reason, annualLimit, employerContribution, employeeContribution: election.employeeAnnualContribution, combinedContribution };
   }
 
+  /**
+   * Calculates ancillary benefit premiums (dental, vision, supplemental life, disability) per pay period.
+   *
+   * @param election - Selected ancillary benefits.
+   * @param employee - Employee profile with salary.
+   * @param tier - Coverage tier.
+   * @returns AncillaryQuote with calculated premium and any pending underwriting requirements.
+   */
   public static quoteAncillary(election: AncillaryElection, employee: EmployeeProfile, tier: Household["coverageTier"]): AncillaryQuote {
     const familyCoverage = tier !== "employee_only";
     const dental = election.dentalPlan === "basic" ? (familyCoverage ? 28 : 12) : election.dentalPlan === "premium" ? (familyCoverage ? 48 : 21) : 0;
@@ -200,6 +246,14 @@ export class BenefitsPolicy {
     };
   }
 
+  /**
+   * Validates dependent-care FSA eligibility based on presence of children under 13 years old.
+   *
+   * @param household - Covered household.
+   * @param election - Dependent care election.
+   * @param planYear - Active plan year.
+   * @returns DependentCareResult with acceptance status and eligible dependent names.
+   */
   public static evaluateDependentCare(household: Household, election: DependentCareElection, planYear: number): DependentCareResult {
     const planStart = new Date(`${planYear}-01-01T00:00:00.000Z`);
     const eligibleDependentNames = household.dependents
@@ -217,6 +271,13 @@ export class BenefitsPolicy {
     return { accepted, reason, annualLimit: DEPENDENT_CARE_LIMIT, eligibleDependentNames };
   }
 
+  /**
+   * Compiles the final immutable EnrollmentRecord summarizing chosen benefits, payroll deductions, and status.
+   *
+   * @param application - Complete EnrollmentApplication.
+   * @param currentDate - Submission timestamp.
+   * @returns Durable EnrollmentRecord.
+   */
   public static createEnrollment(application: EnrollmentApplication, currentDate: Date): EnrollmentRecord {
     const payload = JSON.stringify(application);
     const suffix = createHash("sha256").update(payload).digest("hex").slice(0, 10).toUpperCase();
@@ -239,6 +300,13 @@ export class BenefitsPolicy {
     };
   }
 
+  /**
+   * Calculates chronological age in completed years as of a specific date.
+   *
+   * @param birthDate - Dependent's date of birth.
+   * @param onDate - Evaluation reference date.
+   * @returns Completed age in whole years.
+   */
   private static ageOn(birthDate: Date, onDate: Date): number {
     let age = onDate.getUTCFullYear() - birthDate.getUTCFullYear();
     const beforeBirthday = onDate.getUTCMonth() < birthDate.getUTCMonth()

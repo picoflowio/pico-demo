@@ -10,8 +10,19 @@ import { PresentQuoteStep } from "./present-quote-step.js";
 import { ReferralStep } from "./referral-step.js";
 
 export class RateQuoteStep extends LogicStep {
+  /**
+   * Initializes the RateQuoteStep instance.
+   *
+   * @param flow - The parent HomeInsuranceQuoteFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Runs non-conversational rating engine calculations, navigating to PresentQuoteStep if eligible
+   * or ReferralStep if ineligible / referred.
+   *
+   * @returns Navigation response to PresentQuoteStep or ReferralStep.
+   */
   public override async runLogic(): Promise<LogicResponseType> {
     const application: QuoteApplication = {
       qualification: this.requireState<Qualification>(QualificationStep, "qualification"),
@@ -25,6 +36,13 @@ export class RateQuoteStep extends LogicStep {
     return go(ReferralStep).withState({ decision: quoteResult.decision, reasonCodes: quoteResult.reasonCodes });
   }
 
+  /**
+   * Helper verifying that required state exists on a prior step, throwing an explicit error if missing.
+   *
+   * @param step - Class constructor of the target step.
+   * @param key - State property key.
+   * @returns Stored state value.
+   */
   private requireState<T>(step: new (flow: Flow) => StepLike, key: string): T {
     const value = this.flow.getStepState<T>(step as never, key);
     if (!value) throw new Error(`RateQuoteStep requires ${step.name}.${key}.`);

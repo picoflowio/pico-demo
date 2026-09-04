@@ -7,6 +7,12 @@ type JsonObject = { [key: string]: string | number };
 type NestedObject = { [key: string]: any };
 
 export class GenChart {
+  /**
+   * Generates an aligned Markdown comparison table from an array of JSON objects.
+   *
+   * @param jsonObjects - Array of key-value objects representing hotels and feature values.
+   * @returns Formatted Markdown table string.
+   */
   public static getChart(jsonObjects: JsonObject[]): string {
     if (jsonObjects.length === 0) return '';
 
@@ -62,6 +68,13 @@ export class GenChart {
     return table;
   }
 
+  /**
+   * Recursively flattens nested object properties into dot-separated paths.
+   *
+   * @param obj - The nested object to flatten.
+   * @param prefix - Accumulated property prefix for recursion.
+   * @returns Flattened single-level key-value object.
+   */
   public static flattenObject(
     obj: NestedObject,
     prefix: string = '',
@@ -90,6 +103,13 @@ export class GenChart {
     return result;
   }
 
+  /**
+   * Maps an array of ISO dates and an array of numeric rates into a date-to-formatted-currency map.
+   *
+   * @param dates - Array of date strings.
+   * @param values - Array of numeric price values matching the dates.
+   * @returns Object mapping each date string to its currency formatted price.
+   */
   public static createJsonObject(
     dates: string[],
     values: number[],
@@ -104,6 +124,14 @@ export class GenChart {
     return result;
   }
 
+  /**
+   * Formats a numeric price into a localized currency string.
+   *
+   * @param amount - Numeric currency amount.
+   * @param locale - Locale tag (defaults to 'en-US').
+   * @param currency - ISO 4217 currency code (defaults to 'USD').
+   * @returns Formatted currency string (e.g. '$120.00').
+   */
   public static formatCurrency(
     amount: number,
     locale: string = 'en-US',
@@ -117,6 +145,13 @@ export class GenChart {
     return formatter.format(amount);
   }
 
+  /**
+   * Normalizes amenity booleans across multiple hotel objects into visual checkmark and cross symbols,
+   * filling missing keys with cross symbols.
+   *
+   * @param hotels - Array of hotel objects containing amenity flags.
+   * @returns Array of transformed hotel objects with uniform emoji representations.
+   */
   public static transAmenities(hotels: object[]) {
     // Step 1: Gather all unique keys from all hotel objects
     const allKeys = new Set<string>();
@@ -147,6 +182,12 @@ export class GenChart {
     });
   }
 
+  /**
+   * Transforms an array of room type names into a boolean flag dictionary.
+   *
+   * @param roomType - Array of available room type strings.
+   * @returns Object keyed by room type with `true` values.
+   */
   public static transRoomType(roomType: string[]) {
     const obj = roomType.reduce((acc, entry) => {
       acc[entry] = true;

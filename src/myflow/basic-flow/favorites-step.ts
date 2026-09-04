@@ -17,9 +17,22 @@ const PROMPT = Prompt.file("prompt/favorites.md");
 const SCHEMA = Prompt.file("prompt/favorites.json");
 
 export class FavoritesStep extends Step {
+  /**
+   * Initializes the FavoritesStep with the parent Flow instance.
+   *
+   * @param flow - The Flow instance orchestrating this step.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
+
+  /**
+   * Generates a conversational entry greeting message when crossing into this step.
+   *
+   * @param _langMessage - The raw message entering the step.
+   * @param _priorStep - Optional identifier of the previous step.
+   * @returns Synthetic human message initiating favorite collection dialog.
+   */
   public override onCrossing(
     _langMessage: MessageTypes,
     _priorStep?: string,
@@ -27,6 +40,11 @@ export class FavoritesStep extends Step {
     return new HumanMessageEx(this, "Hi");
   }
 
+  /**
+   * Loads and renders the favorites questionnaire prompt with embedded JSON schema.
+   *
+   * @returns Formatted prompt text for the LLM.
+   */
   public override getPrompt(): string {
     const prompt = Prompt.replace(PROMPT, {
       QUESTION_SCHEMA: SCHEMA,
@@ -35,6 +53,13 @@ export class FavoritesStep extends Step {
     return prompt;
   }
 
+  /**
+   * Processes the model's response, parsing JSON favorites payload, persisting it to state,
+   * and advancing to `NameStep` once valid favorites are captured.
+   *
+   * @param llmResult - Model response output either as raw text or structured object.
+   * @returns Navigation response to `NameStep` or raw string if parsing is pending.
+   */
   public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {

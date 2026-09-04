@@ -29,7 +29,14 @@ const US_PUBLIC_HOLIDAYS_2025 = [
   new Date('2025-12-25'), // Christmas Day
 ];
 
-// Helper function to get the nth weekday of a month (e.g., 3rd Monday of January)
+/**
+ * Computes the calendar Date for the nth occurrence of a specific weekday in a given month/year.
+ *
+ * @param year - Four-digit year.
+ * @param month - Calendar month (1 = January, 12 = December).
+ * @param nth - Ordinal occurrence of the weekday (e.g. 3 for 3rd Monday).
+ * @returns Date object representing the target weekday.
+ */
 function getNthWeekdayOfMonth(year: number, month: number, nth: number): Date {
   const firstDayOfMonth = new Date(year, month - 1, 1);
   const firstWeekday = firstDayOfMonth.getDay();
@@ -38,6 +45,15 @@ function getNthWeekdayOfMonth(year: number, month: number, nth: number): Date {
 }
 
 export class PricingEngine {
+  /**
+   * Calculates the adjusted nightly room rate for a single date based on seasonal multipliers,
+   * US public holidays, room type adjustments, and weekend premiums.
+   *
+   * @param date - The specific calendar date.
+   * @param basePrice - Base rate per night for the hotel tier.
+   * @param roomType - Room type category ('one bed', 'two beds', 'suite').
+   * @returns Calculated nightly price, or null if the calculated price is non-positive.
+   */
   private static findPriceOneDay(
     date: Date,
     basePrice: number,
@@ -111,6 +127,15 @@ export class PricingEngine {
     return realPrice;
   }
 
+  /**
+   * Computes an array of nightly prices across a date span for a specified base rate and room type.
+   *
+   * @param startDate - Beginning of the stay range.
+   * @param endDate - End of the stay range.
+   * @param basePrice - Base rate per night.
+   * @param roomType - Selected room type.
+   * @returns Array of nightly prices, or null if pricing cannot be determined.
+   */
   public static findPrices(
     startDate: Date,
     endDate: Date,
@@ -138,6 +163,13 @@ export class PricingEngine {
     return validBasePrices;
   }
 
+  /**
+   * Generates a sequential array of daily Date instances between start and end dates inclusive.
+   *
+   * @param startDate - First date.
+   * @param endDate - Last date.
+   * @returns Array of individual calendar dates.
+   */
   private static enumerateDates(startDate: Date, endDate: Date): Date[] {
     // Ensure that startDate is before endDate by swapping if necessary
     if (startDate > endDate) {
@@ -157,6 +189,17 @@ export class PricingEngine {
     return dates;
   }
 
+  /**
+   * Filters hotel candidate entries by minimum and maximum nightly budget constraints over the stay duration.
+   *
+   * @param startDate - Arrival date.
+   * @param endDate - Departure date.
+   * @param roomType - Desired room type.
+   * @param hotels - Candidate hotel price entries.
+   * @param maxBudget - Optional maximum allowable nightly rate.
+   * @param minBudget - Optional minimum allowable nightly rate.
+   * @returns Array of search hotel entries with computed daily prices and total stay cost.
+   */
   public static findHotelByBudget(
     startDate: Date,
     endDate: Date,
@@ -209,6 +252,19 @@ export class PricingEngine {
     return filterHotels;
   }
 
+  /**
+   * Orchestrates catalog searching and price calculation across date ranges and budget parameters.
+   *
+   * @param startDate - Arrival date.
+   * @param endDate - Departure date.
+   * @param amenities - List of required amenity keys.
+   * @param roomType - Array of acceptable room types.
+   * @param maxBudget - Optional max nightly price.
+   * @param minBudget - Optional min nightly price.
+   * @param airport - Optional max airport distance in miles.
+   * @param cityCenter - Optional max city center distance in miles.
+   * @returns Matching hotel search entries with pricing.
+   */
   public static async searchHotel(
     startDate: Date,
     endDate: Date,
@@ -241,6 +297,12 @@ export class PricingEngine {
     return hotelEntries;
   }
 
+  /**
+   * Fetches detailed hotel comparison attributes (amenities, room types, distances) for selected hotel names.
+   *
+   * @param hotelNames - Array of hotel names to look up.
+   * @returns Array of hotel comparison objects.
+   */
   public static async fetchHotels(hotelNames: string[]): Promise<object[]> {
     const hotels = HotelCatalog.fetch(hotelNames).map((hotel) => {
       return {

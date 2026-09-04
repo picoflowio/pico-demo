@@ -22,10 +22,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export class ExtractInvoiceStep extends Step {
   private uploadedFileCleanup?: () => Promise<void>;
 
+  /**
+   * Initializes the ExtractInvoiceStep instance.
+   *
+   * @param flow - The parent Flow orchestrating invoice extraction.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Deletes remote or temporary uploaded files associated with this step run.
+   */
   private async cleanupUploadedFile(): Promise<void> {
     const cleanup = this.uploadedFileCleanup;
     this.uploadedFileCleanup = undefined;
@@ -34,6 +42,11 @@ export class ExtractInvoiceStep extends Step {
     }
   }
 
+  /**
+   * Formats the extraction prompt template with target file metadata from flow config.
+   *
+   * @returns Rendered system prompt text.
+   */
   public override getPrompt(): string {
     const fileName = this.getContext<string>("config.fileName");
     const prompt = Prompt.replace(InvoicePrompt.ExtractInvoicePrompt, {
@@ -44,6 +57,13 @@ export class ExtractInvoiceStep extends Step {
     return prompt;
   }
 
+  /**
+   * Supplies a synthetic human message triggering invoice extraction if entering without prior user input.
+   *
+   * @param langMessage - Inbound message.
+   * @param _priorStep - Prior step identifier.
+   * @returns User message triggering extraction.
+   */
   public override onCrossing(
     langMessage: MessageTypes,
     _priorStep?: string,
@@ -54,6 +74,11 @@ export class ExtractInvoiceStep extends Step {
     return langMessage;
   }
 
+  /**
+   * Declares tool schemas for uploading invoice image files and capturing extracted JSON structures.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -72,6 +97,14 @@ export class ExtractInvoiceStep extends Step {
       },
     ];
   }
+
+  /**
+   * Reads a local invoice file from disk, uploads it to the model provider's file storage,
+   * and attaches the image part to a synthetic message to re-enter this step for multimodal parsing.
+   *
+   * @param args - Tool invocation arguments containing relative `name`.
+   * @returns Re-entrant tool response carrying the file content part.
+   */
   @Tool
   protected async fetch_file(
     args: Record<string, any>,
@@ -108,6 +141,13 @@ export class ExtractInvoiceStep extends Step {
     }
   }
 
+  /**
+   * Persists the model's parsed invoice JSON into state, marks the flow complete,
+   * cleans up remote files, and returns the structured JSON directly to the client.
+   *
+   * @param args - Tool invocation arguments containing extracted `json` payload.
+   * @returns Direct JSON tool response.
+   */
   @Tool
   protected async capture_json(
     args: Record<string, any>,

@@ -17,6 +17,15 @@ const hotels = JSON.parse(
 
 /** Local catalog used by this self-contained demo graph. */
 export class HotelCatalog {
+  /**
+   * Filters the hotel catalog by required amenities, room type options, and proximity thresholds.
+   *
+   * @param amenities - Array of required amenity keys.
+   * @param roomTypes - Array of desired room types.
+   * @param airport - Optional maximum airport distance in miles.
+   * @param cityCenter - Optional maximum city center distance in miles.
+   * @returns Array of matching Hotel objects.
+   */
   static search(
     amenities: string[],
     roomTypes: string[],
@@ -39,6 +48,12 @@ export class HotelCatalog {
     });
   }
 
+  /**
+   * Looks up full hotel records from the catalog for an array of hotel names.
+   *
+   * @param names - Array of hotel names to retrieve.
+   * @returns Array of found Hotel objects.
+   */
   static fetch(names: string[]): Hotel[] {
     const byName = new Map(hotels.map((hotel) => [hotel.name, hotel]));
     return names.flatMap((name) => {

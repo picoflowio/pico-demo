@@ -32,10 +32,21 @@ const ExplorePrompt = `
 const HotelJSON = Prompt.file("prompt/explore.json");
 //........................................................
 export class ExploreStep extends Step {
+  /**
+   * Initializes the ExploreStep instance with the parent Flow reference.
+   *
+   * @param flow - The Flow instance managing execution.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Builds the system prompt for hotel search exploration, injecting current date
+   * and previous search state into the template JSON.
+   *
+   * @returns Rendered system prompt string.
+   */
   public override getPrompt(): string {
     const hotelJson = JSON.parse(HotelJSON);
     // Allow deterministic callers (notably replayable E2E scenarios) to pin
@@ -55,6 +66,11 @@ export class ExploreStep extends Step {
     return prompt;
   }
 
+  /**
+   * Declares tool schemas available during exploration, specifically criteria capture.
+   *
+   * @returns Array of tool specifications.
+   */
   public override defineTool(): ToolType[] {
     return [
       // {
@@ -84,6 +100,14 @@ export class ExploreStep extends Step {
       },
     ];
   }
+
+  /**
+   * Validates criteria and date ranges, executes hotel pricing search via MCP client,
+   * saves state, and routes to `PresentStep` with matched hotels or prompts for revisions.
+   *
+   * @param args - Tool invocation arguments containing search criteria.
+   * @returns `stay` if invalid or no hotels found, or `go(PresentStep)` with found hotels.
+   */
   @Tool
   protected async capture_choices(
     args: Record<string, any>,
@@ -141,6 +165,11 @@ export class ExploreStep extends Step {
     }
   }
 
+  /**
+   * Terminates the conversation upon user exit request.
+   *
+   * @returns Tool response transitioning to `TerminateSessionStep`.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step and completes the session.

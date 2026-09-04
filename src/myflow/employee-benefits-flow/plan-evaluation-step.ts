@@ -8,8 +8,19 @@ import { MedicalPlanStep } from "./medical-plan-step.js";
 import { PreferencesStep } from "./preferences-step.js";
 
 export class PlanEvaluationStep extends LogicStep {
+  /**
+   * Initializes the PlanEvaluationStep instance.
+   *
+   * @param flow - The parent EmployeeBenefitsFlow instance.
+   */
   constructor(flow: Flow) { super(flow); }
 
+  /**
+   * Deterministically evaluates medical plan options against employee preferences, payroll deduction models,
+   * and household composition, advancing to MedicalPlanStep.
+   *
+   * @returns Navigation response to MedicalPlanStep.
+   */
   public override async runLogic(): Promise<LogicResponseType> {
     const request = this.requireState<EnrollmentRequest>(EligibilityStep, "request");
     const eligibility = this.requireState<EligibilityDecision>(EligibilityStep, "decision");
@@ -21,6 +32,13 @@ export class PlanEvaluationStep extends LogicStep {
     return go(MedicalPlanStep).withState({ needsPresentation: true });
   }
 
+  /**
+   * Helper retrieving mandatory step state from preceding steps, throwing if absent.
+   *
+   * @param step - Target step constructor.
+   * @param key - State key string.
+   * @returns Retrieved state value.
+   */
   private requireState<T>(step: new (flow: Flow) => { getPrompt(): string }, key: string): T {
     const value = this.flow.getStepState<T>(step as never, key);
     if (!value) throw new Error(`PlanEvaluationStep requires ${step.name}.${key}.`);

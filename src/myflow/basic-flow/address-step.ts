@@ -13,10 +13,20 @@ import { ValidateAddress } from "./validators/address-validator.js";
 import { DemoPrompt } from "./prompt/demo-prompt.js";
 
 export class AddressStep extends Step {
+  /**
+   * Initializes the AddressStep with the parent Flow instance.
+   *
+   * @param flow - The Flow instance orchestrating this step.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Returns system instructions prompting the user for a full US mailing address.
+   *
+   * @returns Prompt string guiding address collection and tool invocation.
+   */
   public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
@@ -28,6 +38,11 @@ export class AddressStep extends Step {
     `;
   }
 
+  /**
+   * Defines tool schema for validating and recording US mailing address.
+   *
+   * @returns Tool definitions containing the `address` validation tool.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -43,6 +58,13 @@ export class AddressStep extends Step {
     ];
   }
 
+  /**
+   * Parses and validates the submitted US address string using `ValidateAddress`,
+   * persisting valid address components to step state and terminating the session.
+   *
+   * @param args - Tool invocation arguments containing `address`.
+   * @returns `stay` if address validation fails, or `go(TerminateSessionStep)` when valid.
+   */
   @Tool
   protected async address(
     args: Record<string, any>,
@@ -62,6 +84,11 @@ export class AddressStep extends Step {
     }
   }
 
+  /**
+   * Handles user requests to terminate the session immediately.
+   *
+   * @returns Tool response transitioning to `TerminateSessionStep`.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step and completes the session.

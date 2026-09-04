@@ -21,14 +21,27 @@ const { merge } = lodash;
 const ComparePrompt = Prompt.file("prompt/compare.md");
 //........................................................
 export class CompareStep extends Step {
+  /**
+   * Initializes the CompareStep instance with the parent Flow reference.
+   *
+   * @param flow - The Flow instance orchestrating this step.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Clears conversational memory upon entering to maintain a focused context for hotel comparison.
+   */
   protected override async onEnter() {
     this.eraseMemory();
   }
 
+  /**
+   * Renders the comparison prompt with currently selected and available hotel information.
+   *
+   * @returns Formatted prompt text for the comparison step.
+   */
   public override getPrompt(): string {
     const chosen_hotels = (this.getState("chosen_hotels") as []) ?? [];
     const available_hotel = this.getState(`available_hotel`) ?? [];
@@ -50,6 +63,11 @@ export class CompareStep extends Step {
     return prompt;
   }
 
+  /**
+   * Defines tool schemas for generating comparison charts and returning to booking.
+   *
+   * @returns Array of tool definitions.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -69,6 +87,14 @@ export class CompareStep extends Step {
       },
     ];
   }
+
+  /**
+   * Generates a side-by-side comparison table for selected hotels based on a specified feature
+   * (amenities, roomType, distance, or price), returning the rendered Markdown table directly to the user.
+   *
+   * @param args - Tool invocation arguments containing `hotels` and `feature`.
+   * @returns Direct tool response displaying the comparison table without additional LLM call.
+   */
   @Tool
   protected async generate_comparison(
     args: Record<string, any>,
@@ -143,12 +169,22 @@ export class CompareStep extends Step {
     return direct(`${table}\nAnother comparison or ready to book?`);
   }
 
+  /**
+   * Resumes the booking flow by transitioning back to `PresentStep`.
+   *
+   * @returns Tool response navigating to `PresentStep`.
+   */
   @Tool
   protected async resume_booking(): Promise<ToolResponseType> {
     // go(...) returns to the booking-results step.
     return go(PresentStep);
   }
 
+  /**
+   * Handles user exit requests by terminating the session.
+   *
+   * @returns Tool response navigating to `TerminateSessionStep`.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step and completes the session.

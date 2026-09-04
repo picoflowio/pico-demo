@@ -14,10 +14,20 @@ import { FooLogicStep } from "./foo-logic.js";
 import { getCityTemperatures } from "./city-temperature-service.js";
 
 export class WeatherStep extends Step {
+  /**
+   * Initializes the WeatherStep with the enclosing flow.
+   *
+   * @param flow - The Flow instance controlling execution.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Generates prompt instructions for collecting and comparing weather for LA and NYC.
+   *
+   * @returns Step prompt guiding model responses and tool invocation rules.
+   */
   public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
@@ -30,6 +40,11 @@ export class WeatherStep extends Step {
     `;
   }
 
+  /**
+   * Defines the tool schema for looking up weather by city alias.
+   *
+   * @returns Array of tool definitions including `get_weather`.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -44,6 +59,14 @@ export class WeatherStep extends Step {
       },
     ];
   }
+
+  /**
+   * Handles individual city weather lookups, recording temperature in state
+   * and transitioning to `FooLogicStep` once both LA and NYC temperatures are collected.
+   *
+   * @param args - Tool invocation arguments containing `cityName`.
+   * @returns `stay` asking for the remaining city or reporting errors, or `go(FooLogicStep)` when both are present.
+   */
   @Tool
   protected async get_weather(
     args: Record<string, any>,
@@ -86,6 +109,13 @@ export class WeatherStep extends Step {
     }
   }
 
+  /**
+   * Handles batch weather tool calls when the model invokes `get_weather` for multiple cities concurrently.
+   * Verifies both LA and NYC are requested, saves their temperatures, and transitions to `FooLogicStep`.
+   *
+   * @param calls - Array of tool call invocations from the model.
+   * @returns `stay` if validation fails, or `go(FooLogicStep)` when both cities are processed.
+   */
   @Tools(["get_weather"])
   protected async get_weather_batch(
     calls: readonly ToolCall[],
@@ -132,6 +162,12 @@ export class WeatherStep extends Step {
     return go(FooLogicStep);
   }
 
+  /**
+   * Normalizes colloquial or full city name variants into canonical aliases ('LA' or 'NYC').
+   *
+   * @param cityName - Raw city string provided by the user or model.
+   * @returns Canonical city code or the original string if unrecognized.
+   */
   private normalizeCityName(cityName: string): string {
     const normalized = cityName.trim().toLowerCase();
     if (normalized === "nyc" || normalized === "new york city") {
@@ -143,6 +179,11 @@ export class WeatherStep extends Step {
     return cityName;
   }
 
+  /**
+   * Handles user exit requests by redirecting to the terminal step.
+   *
+   * @returns Tool response transitioning to `TerminateSessionStep`.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step with the abrupt-end prompt.

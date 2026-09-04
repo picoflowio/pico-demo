@@ -1,8 +1,20 @@
 import type { EnrollmentApplication, MedicalPlanOption, PlanEvaluation } from "../employee-benefits-types.js";
 
+/**
+ * Formats a numeric amount as USD currency text ($0.00).
+ *
+ * @param value - Dollar amount.
+ * @returns Formatted currency string.
+ */
 const money = (value: number): string => `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export class BenefitsPresenter {
+  /**
+   * Formats medical plan options into a comprehensive Markdown presentation table with recommendations.
+   *
+   * @param evaluation - Evaluated medical plans and fit rationale.
+   * @returns Formatted Markdown string.
+   */
   public static medicalPlans(evaluation: PlanEvaluation): string {
     const lines = [
       `### ${evaluation.planYear} medical plans — ${evaluation.coverageTier.replaceAll("_", " ")}`,
@@ -19,6 +31,12 @@ export class BenefitsPresenter {
     return lines.join("\n");
   }
 
+  /**
+   * Renders a side-by-side comparison table for selected medical plan options.
+   *
+   * @param options - Array of MedicalPlanOption items to compare.
+   * @returns Markdown comparison table.
+   */
   public static compareMedicalPlans(options: MedicalPlanOption[]): string {
     return [
       "### Medical plan comparison",
@@ -31,6 +49,12 @@ export class BenefitsPresenter {
     ].join("\n");
   }
 
+  /**
+   * Compares Basic vs Premium dental coverage terms for the household's coverage tier.
+   *
+   * @param tier - Household coverage tier string.
+   * @returns Markdown dental comparison table.
+   */
   public static dentalComparison(tier: string): string {
     const familyCoverage = tier !== "employee_only";
     return [
@@ -46,6 +70,13 @@ export class BenefitsPresenter {
     ].join("\n");
   }
 
+  /**
+   * Generates a descriptive explanation of supplemental life insurance coverage and deductions.
+   *
+   * @param multiple - Salary multiple (1, 2, or 3).
+   * @param annualSalary - Base salary of employee.
+   * @returns Explanation text string.
+   */
   public static lifeExplanation(multiple: number, annualSalary: number): string {
     const coverage = annualSalary * multiple;
     const perPaycheck = Math.round((coverage / 1000) * 0.04 * 100) / 100;
@@ -56,10 +87,21 @@ export class BenefitsPresenter {
     ].join(" ");
   }
 
+  /**
+   * Explains dependent-care FSA purpose, difference from healthcare FSA, and statutory limits.
+   *
+   * @returns Explanatory text string.
+   */
   public static dependentCareExplanation(): string {
     return "The dependent-care FSA can reimburse eligible work-related childcare expenses under the fictional demo plan. It is separate from a healthcare FSA, has a $5,000 annual demo limit, and tax eligibility should be verified with the official plan materials or a tax adviser. Would you like to elect an annual contribution amount or waive this benefit with $0?";
   }
 
+  /**
+   * Formats the comprehensive benefits election review recap before final submission.
+   *
+   * @param application - Aggregated benefits application.
+   * @returns Formatted Markdown summary.
+   */
   public static review(application: EnrollmentApplication): string {
     const employee = application.eligibility.employee!;
     return [

@@ -14,10 +14,21 @@ import { InContextStep } from "./incontext-step.js";
 import type { JsonObject, JsonValue } from "@picoflow/core";
 
 export class NameStep extends Step {
+  /**
+   * Initializes the NameStep with the enclosing flow.
+   *
+   * @param flow - The Flow instance controlling execution.
+   */
   constructor(flow: Flow) {
     super(flow);
   }
 
+  /**
+   * Generates the prompt instructing the LLM to collect the user's full name
+   * and delegate validation immediately to the `user_name` tool.
+   *
+   * @returns Prompt text for the name collection step.
+   */
   public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
@@ -28,6 +39,11 @@ export class NameStep extends Step {
     `;
   }
 
+  /**
+   * Declares tool definitions available in this step, defining the schema for name capture.
+   *
+   * @returns Array of tool definitions including `user_name`.
+   */
   public override defineTool(): ToolType[] {
     return [
       {
@@ -40,6 +56,13 @@ export class NameStep extends Step {
     ];
   }
 
+  /**
+   * Validates and records the user's name, runs an embedded InContextStep sub-step,
+   * and transitions to the date of birth step (`DOBStep`).
+   *
+   * @param args - Tool invocation arguments containing `name`.
+   * @returns `stay` response if name is invalid (e.g. John Doe), or `go(DOBStep)` on success.
+   */
   @Tool
   protected async user_name(
     args: Record<string, any>,
@@ -66,6 +89,11 @@ export class NameStep extends Step {
     }
   }
 
+  /**
+   * Handles user exit requests by transitioning to the session termination step.
+   *
+   * @returns Tool response navigating to `TerminateSessionStep` with termination prompt.
+   */
   @Tool
   protected async terminate_session(): Promise<ToolResponseType> {
     // go(...) activates the terminal step with the abrupt-end prompt.
