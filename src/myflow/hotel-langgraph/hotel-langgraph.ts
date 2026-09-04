@@ -26,7 +26,6 @@ import {
 } from "./prompt/hotel-prompt.js";
 import {
   HotelLanggraphState,
-  type HotelLanggraphPhase,
   type HotelLanggraphRoute,
   type HotelLanggraphStateType,
   type HotelLanggraphStateUpdate,
@@ -407,11 +406,10 @@ export class HotelLanggraph {
   ): Promise<HotelLanggraphStateUpdate> => {
     const prompt = `${hotelPrompt.role}\n\n${fillPrompt(hotelPrompt.present, {
       HOTEL_FOUND_INFO: JSON.stringify(state.hotelFound),
-    })}\n\nResolve a hotel number to the corresponding hotelName before calling a tool. ${
-      state.inputConsumed
+    })}\n\nResolve a hotel number to the corresponding hotelName before calling a tool. ${state.inputConsumed
         ? "This stage has just been entered. Present the current hotel list even if earlier history contains another request."
         : "Handle the user's current booking, comparison, or search-change request."
-    }\n\n${endChatInstruction}`;
+      }\n\n${endChatInstruction}`;
     return this.callAgent(
       state,
       "present",
@@ -783,7 +781,7 @@ export class LazyHotelLanggraph {
   readonly name = "HotelLanggraph";
   private instancePromise?: Promise<HotelLanggraph>;
 
-  constructor(private readonly create: () => Promise<HotelLanggraph>) {}
+  constructor(private readonly create: () => Promise<HotelLanggraph>) { }
 
   private getInstance(): Promise<HotelLanggraph> {
     this.instancePromise ??= this.create();

@@ -5,7 +5,6 @@
  */
 import { Flow, Parallel } from "@picoflow/core";
 import { Step } from "@picoflow/core";
-import { StepClassType } from "@picoflow/core";
 import { ConcurStep3 } from "./concur-step3.js";
 import type { JsonValue, LastResponseType } from "@picoflow/core";
 

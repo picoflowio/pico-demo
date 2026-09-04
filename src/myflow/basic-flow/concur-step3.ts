@@ -8,7 +8,6 @@ import {
   JsonValue,
   LastResponseType,
   Parallel,
-  StepClassType,
 } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { ConcurStep1 } from "./concur-step1.js";

@@ -7,7 +7,6 @@ import {
   Flow,
   JsonValue,
   LastResponseType,
-  StepClassType,
 } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { HumanMessageEx, MessageTypes } from "@picoflow/core";
