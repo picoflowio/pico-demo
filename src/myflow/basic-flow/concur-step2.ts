@@ -19,14 +19,14 @@ export class ConcurStep2 extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
     You are ConcurStep2.
     Reply with one short sentence confirming ConcurStep2 follow-up task is complete.
     `;
   }
 
-  protected async onEnter() {
+  protected override async onEnter() {
     await super.onEnter();
     const batch = await this.runSteps([
       {

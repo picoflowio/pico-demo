@@ -36,7 +36,7 @@ export class ExploreStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const hotelJson = JSON.parse(HotelJSON);
     // Allow deterministic callers (notably replayable E2E scenarios) to pin
     // the conversation date without changing the production default.
@@ -55,7 +55,7 @@ export class ExploreStep extends Step {
     return prompt;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       // {
       //   name: 'capture_budget',

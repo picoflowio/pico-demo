@@ -23,19 +23,19 @@ export class PresentStep extends Step {
     super(flow);
   }
 
-  protected async onEnter() {
+  protected override async onEnter() {
     //switch from active to inactive, erase memory
     this.eraseMemory();
   }
 
-  public onCrossing(
+  public override onCrossing(
     _userMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
     return new HumanMessageEx(this, "What hotels choice I have");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const hotelFoundInfo = this.getState("hotelFound") as SearchHotelEntry;
     let prompt = `
     ${PresentPrompt}
@@ -49,7 +49,7 @@ export class PresentStep extends Step {
     return prompt;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "chosen_hotel",

@@ -8,15 +8,17 @@ import { TriageStep } from "./triage-step.js";
 
 export class ApprovalStep extends Step {
   constructor(flow: Flow) { super(flow); }
-  getPrompt(): string {
+  override getPrompt(): string {
     const pending = this.getState<PendingRefund>("pending");
     if (!pending) throw new Error("ApprovalStep requires a pending refund.");
     return `${supportRole}\n\n${approvalInstructions.replace("{{PENDING}}", JSON.stringify({ orderId: pending.request.orderId, lineIds: pending.request.lineIds, reason: pending.request.reason, reasons: pending.reasons })).replace("{{BREAKDOWN}}", GenReceipt.quoteTable(pending.quote))}`;
   }
-  defineTool(): ToolType[] { return [
-    { name: "confirm_refund", description: "Commit the exact pending refund after clear customer confirmation.", schema: z.object({ confirmed: z.boolean() }) },
-    { name: "decline_refund", description: "Abandon the pending refund and return to the returns specialist.", schema: z.object({ declined: z.boolean() }) },
-  ]; }
+  override defineTool(): ToolType[] {
+    return [
+      { name: "confirm_refund", description: "Commit the exact pending refund after clear customer confirmation.", schema: z.object({ confirmed: z.boolean() }) },
+      { name: "decline_refund", description: "Abandon the pending refund and return to the returns specialist.", schema: z.object({ declined: z.boolean() }) },
+    ];
+  }
   @Tool
   protected async confirm_refund(args: { confirmed: boolean }): Promise<ToolResponseType> {
     if (!args.confirmed) return stay("Only an explicit confirmation commits this refund.");

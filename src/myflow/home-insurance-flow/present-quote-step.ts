@@ -27,7 +27,7 @@ const DeductibleSchema = z.union([z.literal(1000), z.literal(2500), z.literal(50
 export class PresentQuoteStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
     const quoteId = this.quoteResult().quoteId;
     if (this.getState<string>("presentedQuoteId") !== quoteId) {
@@ -36,18 +36,18 @@ export class PresentQuoteStep extends Step {
     }
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Show the current quote options exactly.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       QUOTE_RESULT: JSON.stringify(this.quoteResult()),
       SELECTED_OPTION: JSON.stringify(this.getState<QuoteOption>("selectedOption") ?? null),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "show_home_quote_options", description: "Render the exact current quote options without model-authored prices.", schema: z.object({}) },
       { name: "compare_home_quote_options", description: "Render an exact comparison of current option IDs.", schema: z.object({ optionIds: z.array(z.string().min(1)).min(1).max(3) }) },

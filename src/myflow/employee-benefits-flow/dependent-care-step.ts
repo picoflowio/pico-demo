@@ -27,22 +27,22 @@ const Instructions = Prompt.file("prompt/dependent-care.md");
 export class DependentCareStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Render the authoritative dependent-care FSA explanation and election question exactly.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const preliminary = BenefitsPolicy.evaluateDependentCare(this.household(), { annualContribution: 0 }, this.request().planYear);
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       DEPENDENT_CARE_POLICY: JSON.stringify(preliminary),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "explain_benefits_dependent_care", description: "Render the exact fictional dependent-care FSA explanation, including its healthcare-FSA distinction and $5,000 annual limit.", schema: z.object({}) },
       { name: "capture_benefits_dependent_care", description: "Validate and save an annual dependent-care FSA election or zero waiver.", schema: DependentCareElectionSchema },

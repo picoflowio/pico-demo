@@ -14,7 +14,7 @@ import { TriageStep } from "./triage-step.js";
 export class EscalateStep extends LogicStep {
   constructor(flow: Flow) { super(flow); }
 
-  async runLogic(): Promise<LogicResponseType> {
+  override async runLogic(): Promise<LogicResponseType> {
     const dispute = this.getState<BillingDispute>("dispute");
     if (!dispute) throw new Error("EscalateStep requires a captured dispute.");
     const order = OrderBook.find(dispute.orderId);

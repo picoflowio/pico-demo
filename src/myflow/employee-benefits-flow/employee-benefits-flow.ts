@@ -23,15 +23,15 @@ export class EmployeeBenefitsFlow extends Flow {
       .enableSummary("benefits-intake");
   }
 
-  protected configModel() {
+  protected override configModel() {
     return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const;
   }
 
-  protected configLlmCallPolicy() {
+  protected override configLlmCallPolicy() {
     return { timeoutMs: 120_000 };
   }
 
-  protected defineSteps(): Step[] {
+  protected override defineSteps(): Step[] {
     return [
       new EligibilityStep(this).useMemory("benefits-intake"),
       new HouseholdStep(this).useMemory("benefits-intake"),

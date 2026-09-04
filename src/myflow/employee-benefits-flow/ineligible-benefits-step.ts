@@ -19,21 +19,21 @@ const Instructions = Prompt.file("prompt/ineligible.md");
 export class IneligibleBenefitsStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Explain the code-owned eligibility result and next step.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       ELIGIBILITY_DECISION: JSON.stringify(this.getState("decision") ?? null),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [{ name: "finish_ineligible_benefits", description: "Finish after explaining the eligibility result.", schema: z.object({ acknowledged: z.boolean() }) }];
   }
 

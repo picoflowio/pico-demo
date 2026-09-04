@@ -17,7 +17,7 @@ export class AddressStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
     Ask the user for one complete US mailing address containing street, city, two-letter state, and ZIP code.
@@ -28,7 +28,7 @@ export class AddressStep extends Step {
     `;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "address",

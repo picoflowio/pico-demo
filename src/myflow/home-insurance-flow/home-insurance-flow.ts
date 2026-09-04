@@ -20,15 +20,15 @@ export class HomeInsuranceQuoteFlow extends Flow {
       .enableSummary("home-quote-intake");
   }
 
-  protected configModel() {
+  protected override configModel() {
     return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const;
   }
 
-  protected configLlmCallPolicy() {
+  protected override configLlmCallPolicy() {
     return { timeoutMs: 120_000 };
   }
 
-  protected defineSteps(): Step[] {
+  protected override defineSteps(): Step[] {
     return [
       new QualificationStep(this).useMemory("home-quote-intake"),
       new PropertyStep(this).useMemory("home-quote-intake"),

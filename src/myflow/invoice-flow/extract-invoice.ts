@@ -34,7 +34,7 @@ export class ExtractInvoiceStep extends Step {
     }
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const fileName = this.getContext<string>("config.fileName");
     const prompt = Prompt.replace(InvoicePrompt.ExtractInvoicePrompt, {
       FileName: fileName,
@@ -44,7 +44,7 @@ export class ExtractInvoiceStep extends Step {
     return prompt;
   }
 
-  public onCrossing(
+  public override onCrossing(
     langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
@@ -54,7 +54,7 @@ export class ExtractInvoiceStep extends Step {
     return langMessage;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "fetch_file",

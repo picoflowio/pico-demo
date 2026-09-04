@@ -20,14 +20,14 @@ export class FavoritesStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
-  public onCrossing(
+  public override onCrossing(
     _langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
     return new HumanMessageEx(this, "Hi");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const prompt = Prompt.replace(PROMPT, {
       QUESTION_SCHEMA: SCHEMA,
     });

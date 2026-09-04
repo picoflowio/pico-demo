@@ -9,15 +9,17 @@ import { BillingStep } from "./billing-step.js";
 
 export class TriageStep extends Step {
   constructor(flow: Flow) { super(flow); }
-  getPrompt(): string {
+  override getPrompt(): string {
     const order = this.getState<VerifiedOrder>("order") ?? null;
     return `${supportRole}\n\n${triageInstructions.replace("{{TODAY}}", new Date().toISOString().slice(0, 10)).replace("{{ORDER}}", JSON.stringify(order)).replace("{{CASE}}", JSON.stringify({ refunds: this.getState<RefundRecord[]>("refunds") ?? [], tickets: this.getState<EscalationTicket[]>("tickets") ?? [] }))}`;
   }
-  defineTool(): ToolType[] { return [
-    { name: "verify_order", description: "Verify an order with its email address or ZIP code.", schema: z.object({ orderId: z.string().min(1), secret: z.string().min(1) }) },
-    { name: "route_request", description: "Route a verified request to a support specialist.", schema: z.object({ department: z.enum(["returns", "billing"]) }) },
-    { name: "close_case", description: "Close a case with committed outcomes.", schema: z.object({ summary: z.string().min(1) }) },
-  ]; }
+  override defineTool(): ToolType[] {
+    return [
+      { name: "verify_order", description: "Verify an order with its email address or ZIP code.", schema: z.object({ orderId: z.string().min(1), secret: z.string().min(1) }) },
+      { name: "route_request", description: "Route a verified request to a support specialist.", schema: z.object({ department: z.enum(["returns", "billing"]) }) },
+      { name: "close_case", description: "Close a case with committed outcomes.", schema: z.object({ summary: z.string().min(1) }) },
+    ];
+  }
   @Tool
   protected async verify_order(args: { orderId: string; secret: string }): Promise<ToolResponseType> {
     const order = OrderBook.verify(args.orderId, args.secret);

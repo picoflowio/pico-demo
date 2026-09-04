@@ -10,7 +10,7 @@ import { ExtractInvoiceStep } from "./extract-invoice.js";
 import { NoToolStep } from "./no-tool-step.js";
 
 export class InvoiceFlow extends Flow {
-  protected configModel() {
+  protected override configModel() {
     return {
       provider: "google",
       name: "gemini-2.5-flash",
@@ -18,7 +18,7 @@ export class InvoiceFlow extends Flow {
     } as const;
   }
 
-  protected defineSteps(): Step[] {
+  protected override defineSteps(): Step[] {
     return [
       new NoToolStep(this),
       new ExtractInvoiceStep(this).useMemory("invoice3").useModel({

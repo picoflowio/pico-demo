@@ -23,22 +23,22 @@ const Instructions = Prompt.file("prompt/contact.md");
 export class ContactStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Explain the non-binding selection and ask for optional agent follow-up consent.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       SELECTED_OPTION: JSON.stringify(this.selectedOption()),
       QUOTE_RESULT: JSON.stringify(this.quoteResult()),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_quote_contact", description: "Save explicit contact consent and allowed optional contact fields.", schema: ContactRequestSchema },
       { name: "end_contact_quote", description: "End without recording agent follow-up contact details.", schema: z.object({}) },

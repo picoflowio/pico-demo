@@ -15,8 +15,8 @@ export class SupportFlow extends Flow {
     super();
     this.getMemory().setSummaryModel({ provider: "openai", name: "gpt-4o", retryAttempts: 3 }).setSummaryConfig({ minMessages: 8, recentMessages: 4 }).enableSummary("support-triage");
   }
-  protected configModel() { return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const; }
-  protected defineSteps(): Step[] {
+  protected override configModel() { return { provider: "openai", name: "gpt-4o", retryAttempts: 3 } as const; }
+  protected override defineSteps(): Step[] {
     return [
       new TriageStep(this).useMemory("support-triage").useModel({ provider: "openai", name: "gpt-4o", params: { temperature: 0.3 } }),
       new ReturnsStep(this).useMemory("support-returns").useModel({ provider: "openai", name: "gpt-5.1", params: { reasoning: { effort: "low" } } }),

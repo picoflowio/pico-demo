@@ -14,7 +14,7 @@ export class FooLogicStep extends LogicStep {
     super(flow);
   }
 
-  public async runLogic(): Promise<LogicResponseType> {
+  public override async runLogic(): Promise<LogicResponseType> {
     return go(GooLogicStep).withState({ fooData: 'fooValue' });
   }
 }

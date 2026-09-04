@@ -22,20 +22,20 @@ const Instructions = Prompt.file("prompt/coverage.md");
 export class CoverageStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Begin collecting coverage preferences. Do not calculate a premium.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       COVERAGE: JSON.stringify(this.getState<CoveragePreferences>("coverage") ?? null),
       CORRECTION_REQUEST: JSON.stringify(this.getState("correctionRequest") ?? null),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_coverage", description: "Validate and save the complete coverage preferences.", schema: CoveragePreferencesSchema },
       { name: "end_coverage_quote", description: "End the home quote during coverage selection.", schema: z.object({}) },

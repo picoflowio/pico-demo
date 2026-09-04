@@ -23,7 +23,7 @@ import { ConcurStep3 } from "./concur-step3.js";
 import { ConcurStep4 } from "./concur-step4.js";
 
 export class BasicFlow extends Flow {
-  protected configModel() {
+  protected override configModel() {
     return {
       provider: "openai",
       name: "gpt-4o-mini",
@@ -33,17 +33,17 @@ export class BasicFlow extends Flow {
   }
 
   // Applies to every model invocation in this Flow unless a Step overrides it.
-  protected configLlmCallPolicy() {
+  protected override configLlmCallPolicy() {
     return { timeoutMs: 60_000 } as const;
   }
 
-  protected initialStep() {
+  protected override initialStep() {
     return this.getContext<boolean>("config.isPresident")
       ? PresidentStep
       : WeatherStep;
   }
 
-  protected defineSteps(): Step[] {
+  protected override defineSteps(): Step[] {
     const isPresident = this.getContext<boolean>("config.isPresident");
     return [
       new WeatherStep(this).useModel({

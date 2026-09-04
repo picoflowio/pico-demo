@@ -12,7 +12,7 @@ import { ReferralStep } from "./referral-step.js";
 export class RateQuoteStep extends LogicStep {
   constructor(flow: Flow) { super(flow); }
 
-  public async runLogic(): Promise<LogicResponseType> {
+  public override async runLogic(): Promise<LogicResponseType> {
     const application: QuoteApplication = {
       qualification: this.requireState<Qualification>(QualificationStep, "qualification"),
       property: this.requireState<PropertyProfile>(PropertyStep, "property"),

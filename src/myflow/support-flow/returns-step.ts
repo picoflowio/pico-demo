@@ -8,16 +8,18 @@ import { TriageStep } from "./triage-step.js";
 
 export class ReturnsStep extends Step {
   constructor(flow: Flow) { super(flow); }
-  getPrompt(): string {
+  override getPrompt(): string {
     const order = requireOrder(this.flow);
     const returned = this.getState<string[]>("returnedLineIds") ?? [];
     const available = { ...order, lineItems: order.lineItems.filter((item) => item.returnable && !returned.includes(item.lineId)) };
     return `${supportRole}\n\n${returnsInstructions.replace("{{ORDER}}", JSON.stringify(available)).replace("{{RETURN_POLICY}}", JSON.stringify({ apparel: PolicyEngine.returnWindowDays("apparel"), footwear: PolicyEngine.returnWindowDays("footwear"), gear: PolicyEngine.returnWindowDays("gear"), electronics: PolicyEngine.returnWindowDays("electronics") })).replace("{{RETURNED}}", JSON.stringify(returned)).replace("{{LAST_DENIAL}}", JSON.stringify(this.getState<string[]>("lastDenial") ?? []))}`;
   }
-  defineTool(): ToolType[] { return [
-    { name: "request_return", description: "Submit selected order line IDs and a return reason for deterministic adjudication.", schema: z.object({ lineIds: z.array(z.string().min(1)).min(1), reason: z.enum(["damaged", "wrong_item", "too_small", "too_large", "not_as_described", "no_longer_needed"]), note: z.string().optional() }) },
-    { name: "end_return_request", description: "Return to the main support agent.", schema: z.object({ done: z.boolean() }) },
-  ]; }
+  override defineTool(): ToolType[] {
+    return [
+      { name: "request_return", description: "Submit selected order line IDs and a return reason for deterministic adjudication.", schema: z.object({ lineIds: z.array(z.string().min(1)).min(1), reason: z.enum(["damaged", "wrong_item", "too_small", "too_large", "not_as_described", "no_longer_needed"]), note: z.string().optional() }) },
+      { name: "end_return_request", description: "Return to the main support agent.", schema: z.object({ done: z.boolean() }) },
+    ];
+  }
   public override async onResponse(llmResult: string | object) {
     const request = this.inferReturnRequest();
     if (request) return this.routeToAdjudication(request);

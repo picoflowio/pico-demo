@@ -25,13 +25,13 @@ const Instructions = Prompt.file("prompt/qualification.md");
 export class QualificationStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Start the preliminary home insurance quote.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       CURRENT_DATE: homeInsuranceCurrentDate().toISOString().slice(0, 10),
       SUPPORTED_STATES: JSON.stringify(quoteConfig.supportedStates),
@@ -40,7 +40,7 @@ export class QualificationStep extends Step {
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "capture_home_qualification",

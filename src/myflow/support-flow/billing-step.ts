@@ -9,14 +9,16 @@ import { TriageStep } from "./triage-step.js";
 
 export class BillingStep extends Step {
   constructor(flow: Flow) { super(flow); }
-  getPrompt(): string {
+  override getPrompt(): string {
     const order = requireOrder(this.flow);
     return `${supportRole}\n\n${billingInstructions.replace("{{ORDER}}", JSON.stringify({ orderId: order.orderId, placedAt: order.placedAt, paymentMethod: order.paymentMethod })).replace("{{CHARGES}}", JSON.stringify(OrderBook.find(order.orderId)?.charges ?? [])).replace("{{DUPLICATES}}", JSON.stringify(OrderBook.duplicateCharges(OrderBook.find(order.orderId)!)))}`;
   }
-  defineTool(): ToolType[] { return [
-    { name: "open_dispute", description: "Record validated disputed charges and open a billing ticket.", schema: z.object({ chargeIds: z.array(z.string().min(1)).min(1), description: z.string().min(1), amountInDispute: z.number() }) },
-    { name: "end_billing_request", description: "Return to the main support agent.", schema: z.object({ done: z.boolean() }) },
-  ]; }
+  override defineTool(): ToolType[] {
+    return [
+      { name: "open_dispute", description: "Record validated disputed charges and open a billing ticket.", schema: z.object({ chargeIds: z.array(z.string().min(1)).min(1), description: z.string().min(1), amountInDispute: z.number() }) },
+      { name: "end_billing_request", description: "Return to the main support agent.", schema: z.object({ done: z.boolean() }) },
+    ];
+  }
   public override async onResponse(llmResult: string | object) {
     const dispute = this.inferDispute();
     if (dispute) return this.routeToEscalation(dispute);

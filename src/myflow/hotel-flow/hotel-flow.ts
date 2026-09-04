@@ -22,18 +22,18 @@ export class HotelFlow extends Flow {
       .enableSummary('hotel-explore');
   }
 
-  protected configModel() {
+  protected override configModel() {
     return { provider: 'openai', name: 'gpt-4o', retryAttempts: 3 } as const;
   }
 
-  protected defineSteps(): Step[] {
+  protected override defineSteps(): Step[] {
     return [
       new ExploreStep(this)
         .useMemory('hotel-explore')
         .useModel({
           provider: 'openai',
           name: 'gpt-5.1',
-          params: { reasoning: { effort: 'low' }},
+          params: { reasoning: { effort: 'low' } },
         }),
       new PresentStep(this).useModel({
         provider: 'openai',
@@ -43,7 +43,7 @@ export class HotelFlow extends Flow {
       new CompareStep(this).useModel({
         provider: 'openai',
         name: 'gpt-5.1',
-        params: { reasoning: { effort: 'low' }},
+        params: { reasoning: { effort: 'low' } },
       }),
       new TerminateSessionStep(this).useMemory('end'),
     ];

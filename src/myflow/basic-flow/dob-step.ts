@@ -18,7 +18,7 @@ export class DOBStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const template = `
     ${DemoPrompt.DemoPrompt}
     Ask the user to provide the date of birth for {{UserName}}.
@@ -34,7 +34,7 @@ export class DOBStep extends Step {
     return prompt;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "dob",

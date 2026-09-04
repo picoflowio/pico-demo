@@ -17,7 +17,7 @@ export class InContextStep extends Step {
     super(flow);
   }
 
-  public onCrossing(
+  public override onCrossing(
     _langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
@@ -25,13 +25,13 @@ export class InContextStep extends Step {
     return new HumanMessageEx(this, "Follow system prompt");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
       "Generate a sci-fi movie idea suitable for teens.";
     `;
   }
 
-  protected async onEnter() {
+  protected override async onEnter() {
     await super.onEnter();
     const msg = this.getTransientState<string>("msg");
     console.log("InContextStep.transient msg=", msg);

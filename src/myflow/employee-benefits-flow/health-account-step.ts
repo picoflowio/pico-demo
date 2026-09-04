@@ -25,15 +25,15 @@ const Instructions = Prompt.file("prompt/health-account.md");
 export class HealthAccountStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Explain the available health account and collect an annual employee contribution.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const plan = this.selectedPlan();
     const household = this.household();
     const zeroElection = { accountType: plan.hsaEligible ? "hsa" : "healthcare_fsa", employeeAnnualContribution: 0 } as const;
@@ -44,7 +44,7 @@ export class HealthAccountStep extends Step {
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_benefits_health_account", description: "Validate and save the HSA, healthcare FSA, or waiver election.", schema: HealthAccountElectionSchema },
       { name: "end_health_account_enrollment", description: "End enrollment without submitting elections.", schema: z.object({}) },

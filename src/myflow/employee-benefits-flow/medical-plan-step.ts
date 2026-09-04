@@ -26,21 +26,21 @@ const Instructions = Prompt.file("prompt/medical-plan.md");
 export class MedicalPlanStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Show the current medical plan options exactly.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       PLAN_EVALUATION: JSON.stringify(this.evaluation()),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "show_benefits_medical_plans", description: "Render exact current medical plan options and the rule-based fit.", schema: z.object({}) },
       { name: "compare_benefits_medical_plans", description: "Compare exact current plan IDs.", schema: z.object({ planIds: z.array(z.string().min(1)).min(2).max(3) }) },

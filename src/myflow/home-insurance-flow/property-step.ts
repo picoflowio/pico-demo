@@ -23,20 +23,20 @@ const Instructions = Prompt.file("prompt/property.md");
 export class PropertyStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Begin collecting the property characteristics.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       PROPERTY: JSON.stringify(this.getState<PropertyProfile>("property") ?? null),
       CORRECTION_REQUEST: JSON.stringify(this.getState("correctionRequest") ?? null),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_property", description: "Validate and save the complete property profile.", schema: PropertyProfileSchema },
       { name: "end_property_quote", description: "End the home quote during property collection.", schema: z.object({}) },

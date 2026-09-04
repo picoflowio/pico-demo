@@ -15,7 +15,7 @@ export class ConcurStep1 extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
     You are ConcurStep1.
     Reply with one short sentence confirming ConcurStep1 follow-up task is complete.

@@ -15,7 +15,7 @@ export class NoToolStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const randomZip = (): string => {
       return Math.random() < 0.5 ? "97006" : "97005";
     };

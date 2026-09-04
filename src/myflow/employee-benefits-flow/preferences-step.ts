@@ -22,15 +22,15 @@ const Instructions = Prompt.file("prompt/preferences.md");
 export class PreferencesStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Ask about broad care-use and plan priorities without requesting diagnoses or medication names.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Instructions}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_benefits_preferences", description: "Save broad plan-selection preferences for deterministic comparison.", schema: CarePreferencesSchema },
       { name: "end_preferences_enrollment", description: "End enrollment during preference collection.", schema: z.object({}) },

@@ -22,11 +22,11 @@ const Instructions = Prompt.file("prompt/beneficiary.md");
 export class BeneficiaryStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Collect life-insurance beneficiary names, relationships, and percentages.");
   }
 
@@ -43,11 +43,11 @@ export class BeneficiaryStep extends Step {
     return super.onResponse(llmResult);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Instructions}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_benefits_beneficiaries", description: "Validate beneficiary names, relationships, and allocations totaling 100 percent.", schema: BeneficiaryElectionSchema },
       { name: "end_beneficiary_enrollment", description: "End enrollment without submitting elections.", schema: z.object({}) },

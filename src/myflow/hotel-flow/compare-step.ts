@@ -25,11 +25,11 @@ export class CompareStep extends Step {
     super(flow);
   }
 
-  protected async onEnter() {
+  protected override async onEnter() {
     this.eraseMemory();
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     const chosen_hotels = (this.getState("chosen_hotels") as []) ?? [];
     const available_hotel = this.getState(`available_hotel`) ?? [];
 
@@ -50,7 +50,7 @@ export class CompareStep extends Step {
     return prompt;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "generate_comparison",

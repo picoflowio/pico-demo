@@ -18,7 +18,7 @@ export class WeatherStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
     This demo supports exactly two city aliases: LA and NYC.
@@ -30,7 +30,7 @@ export class WeatherStep extends Step {
     `;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "get_weather",

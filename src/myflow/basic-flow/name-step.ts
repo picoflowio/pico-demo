@@ -18,7 +18,7 @@ export class NameStep extends Step {
     super(flow);
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
     ${DemoPrompt.DemoPrompt}
     Ask the customer for their full name.
@@ -28,7 +28,7 @@ export class NameStep extends Step {
     `;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       {
         name: "user_name",

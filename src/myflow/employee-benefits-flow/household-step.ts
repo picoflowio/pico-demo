@@ -25,15 +25,15 @@ const Instructions = Prompt.file("prompt/household.md");
 export class HouseholdStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Collect the people who should be covered.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Instructions}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_benefits_household", description: "Validate and save the complete covered household.", schema: HouseholdSchema },
       { name: "end_household_enrollment", description: "End enrollment during household collection.", schema: z.object({}) },

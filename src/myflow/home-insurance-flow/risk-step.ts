@@ -23,20 +23,20 @@ const Instructions = Prompt.file("prompt/risk.md");
 export class RiskStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(userMessage: MessageTypes): MessageTypes {
     return this.getState("correctionMode")
       ? userMessage
       : new HumanMessageEx(this, "Begin the claims, hazards, and protection questions.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       RISK: JSON.stringify(this.getState<RiskProfile>("risk") ?? null),
       CORRECTION_REQUEST: JSON.stringify(this.getState("correctionRequest") ?? null),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "capture_home_risk", description: "Validate and save the complete claims, hazards, and protection profile.", schema: RiskProfileSchema },
       { name: "end_risk_quote", description: "End the home quote during risk collection.", schema: z.object({}) },

@@ -27,21 +27,21 @@ const CorrectionSectionSchema = z.enum(["qualification", "property", "risk", "co
 export class ReviewStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Present the authoritative application summary and ask for confirmation or one correction.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       APPLICATION: JSON.stringify(this.application()),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "confirm_home_application", description: "Confirm the reviewed application and run deterministic rating.", schema: z.object({ confirmed: z.literal(true) }) },
       { name: "correct_home_application", description: "Route one requested correction to the step that owns that information.", schema: z.object({ section: CorrectionSectionSchema, change: z.string().trim().min(1).max(500) }) },

@@ -27,21 +27,21 @@ const Instructions = Prompt.file("prompt/review.md");
 export class EnrollmentReviewStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Show the authoritative benefits enrollment review.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       APPLICATION: JSON.stringify(readEnrollmentApplication(this.flow)),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "show_benefits_enrollment_review", description: "Render the exact current enrollment review.", schema: z.object({}) },
       { name: "change_benefits_health_contribution", description: "Validate and update only the current HSA or healthcare-FSA employee contribution.", schema: z.object({ employeeAnnualContribution: z.number().int().min(0).max(20000) }) },

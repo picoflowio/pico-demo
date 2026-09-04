@@ -17,7 +17,7 @@ export class PresidentStep extends Step {
     super(flow);
   }
 
-  public onCrossing(
+  public override onCrossing(
     _langMessage: MessageTypes,
     _priorStep?: string,
   ): MessageTypes {
@@ -29,7 +29,7 @@ export class PresidentStep extends Step {
     );
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `
       You are a U.S. Presidential historian";
     `;

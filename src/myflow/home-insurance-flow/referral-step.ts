@@ -19,22 +19,22 @@ const Instructions = Prompt.file("prompt/referral.md");
 export class ReferralStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Explain the automated quote referral using only the recorded reason codes.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${HomeInsurancePrompt.Role}\n${Prompt.replace(Instructions, {
       DECISION: JSON.stringify(this.getState("decision") ?? "referral"),
       REASON_CODES: JSON.stringify(this.getState<string[]>("reasonCodes") ?? []),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [{ name: "finish_home_quote_referral", description: "Finish the automated referral after explaining its reason codes.", schema: z.object({ acknowledged: z.boolean() }) }];
   }
 

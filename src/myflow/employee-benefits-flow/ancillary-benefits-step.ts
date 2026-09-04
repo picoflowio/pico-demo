@@ -28,22 +28,22 @@ const Instructions = Prompt.file("prompt/ancillary.md");
 export class AncillaryBenefitsStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  protected async onEnter(): Promise<void> {
+  protected override async onEnter(): Promise<void> {
     this.eraseMemory();
   }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Begin with dental and vision choices, then collect life and disability elections.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       EMPLOYEE: JSON.stringify(this.eligibility().employee),
       COVERAGE_TIER: this.household().coverageTier,
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "compare_benefits_dental_options", description: "Render exact Basic and Premium dental terms.", schema: z.object({}) },
       { name: "explain_benefits_life_option", description: "Calculate and explain one supplemental-life multiple.", schema: z.object({ multiple: z.union([z.literal(1), z.literal(2), z.literal(3)]) }) },

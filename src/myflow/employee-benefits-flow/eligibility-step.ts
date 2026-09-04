@@ -24,17 +24,17 @@ const Instructions = Prompt.file("prompt/eligibility.md");
 export class EligibilityStep extends Step {
   constructor(flow: Flow) { super(flow); }
 
-  public onCrossing(_userMessage: MessageTypes): MessageTypes {
+  public override onCrossing(_userMessage: MessageTypes): MessageTypes {
     return new HumanMessageEx(this, "Start the fictional employee benefits enrollment.");
   }
 
-  public getPrompt(): string {
+  public override getPrompt(): string {
     return `${EmployeeBenefitsPrompt.Role}\n${Prompt.replace(Instructions, {
       CURRENT_DATE: employeeBenefitsCurrentDate().toISOString().slice(0, 10),
     })}`;
   }
 
-  public defineTool(): ToolType[] {
+  public override defineTool(): ToolType[] {
     return [
       { name: "check_benefits_eligibility", description: "Validate the enrollment request and check the fictional employee directory and enrollment rules.", schema: EnrollmentRequestSchema },
       { name: "end_benefits_enrollment", description: "End benefits enrollment without submitting elections.", schema: z.object({}) },
