@@ -39,7 +39,7 @@ export class ConcurStep2 extends Step {
     }
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     this.saveState({ concurStep2: llmResult as JsonValue });

@@ -24,7 +24,7 @@ export class ConcurStep4 extends Step {
     Reply with one short sentence confirming the ConcurStep 4  follow-up task is complete.
     `;
   }
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     this.saveState({ concurStep4: llmResult as JsonValue });

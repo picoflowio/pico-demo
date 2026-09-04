@@ -9,7 +9,7 @@ import { TriageStep } from "./triage-step.js";
 /** Applies policy and refund arithmetic without an LLM turn. */
 export class AdjudicateStep extends LogicStep {
   constructor(flow: Flow) { super(flow); }
-  async runLogic(): Promise<LogicResponseType> {
+  override async runLogic(): Promise<LogicResponseType> {
     const request = this.getState<ReturnRequest>("request");
     if (!request) throw new Error("AdjudicateStep requires a return request.");
     const order = OrderBook.find(request.orderId);

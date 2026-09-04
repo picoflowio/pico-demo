@@ -57,7 +57,7 @@ export class InContextStep extends Step {
     });
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     this.saveState({ who: llmResult as JsonValue });

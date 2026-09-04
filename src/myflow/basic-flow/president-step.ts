@@ -35,7 +35,7 @@ export class PresidentStep extends Step {
     `;
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     this.saveState({ who: llmResult as JsonValue });

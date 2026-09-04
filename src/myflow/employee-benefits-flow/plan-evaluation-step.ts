@@ -10,7 +10,7 @@ import { PreferencesStep } from "./preferences-step.js";
 export class PlanEvaluationStep extends LogicStep {
   constructor(flow: Flow) { super(flow); }
 
-  public async runLogic(): Promise<LogicResponseType> {
+  public override async runLogic(): Promise<LogicResponseType> {
     const request = this.requireState<EnrollmentRequest>(EligibilityStep, "request");
     const eligibility = this.requireState<EligibilityDecision>(EligibilityStep, "decision");
     const household = this.requireState<Household>(HouseholdStep, "household");

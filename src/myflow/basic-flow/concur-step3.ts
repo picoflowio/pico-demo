@@ -26,7 +26,7 @@ export class ConcurStep3 extends Step {
     `;
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     const foo = this.flow.getStepState(ConcurStep1, 'concurStep1');

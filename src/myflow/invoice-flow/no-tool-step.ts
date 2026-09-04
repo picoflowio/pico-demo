@@ -31,7 +31,7 @@ export class NoToolStep extends Step {
     return prompt;
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     const parsedResult = StringUtil.parseJson<JsonValue>(llmResult as string);

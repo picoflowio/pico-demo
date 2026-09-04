@@ -35,7 +35,7 @@ export class FavoritesStep extends Step {
     return prompt;
   }
 
-  public async onResponse(
+  public override async onResponse(
     llmResult: string | object,
   ): Promise<LastResponseType> {
     const json =

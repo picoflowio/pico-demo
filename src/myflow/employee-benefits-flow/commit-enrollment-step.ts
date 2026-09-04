@@ -6,7 +6,7 @@ import { benefitsTerminalPrompt, durableBenefitsJson, employeeBenefitsCurrentDat
 export class CommitEnrollmentStep extends LogicStep {
   constructor(flow: Flow) { super(flow); }
 
-  public async runLogic(): Promise<LogicResponseType> {
+  public override async runLogic(): Promise<LogicResponseType> {
     const record = BenefitsPolicy.createEnrollment(readEnrollmentApplication(this.flow), employeeBenefitsCurrentDate());
     this.saveState({ enrollmentRecord: durableBenefitsJson(record) });
     return go(TerminateSessionStep).withPrompt(benefitsTerminalPrompt([
