@@ -512,9 +512,12 @@ async function expectSessionState(
   assert.deepEqual(stepState(basicFlow, 'ConcurStep1').concurStep1_tool, {
     completed: true,
   });
-  assert.equal(
-    stepState(basicFlow, 'ConcurStep3').concurStep3,
-    'The concurrent follow-up task is complete.',
+  const concurStep3Result = stepState(basicFlow, 'ConcurStep3').concurStep3;
+  assert.equal(typeof concurStep3Result, 'string');
+  assert.match(
+    concurStep3Result,
+    /complete(?:d)?/i,
+    'ConcurStep3 should persist a completion result',
   );
   assert.deepEqual(stepState(basicFlow, 'InContextStep').concurStep1, {
     completed: true,

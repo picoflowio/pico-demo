@@ -29,7 +29,7 @@ export class ConcurStep3 extends Step {
   public override getPrompt(): string {
     return `
     You are ConcurStep3.
-    Reply with one short sentence confirming the ConcurStep 3  follow-up task is complete.
+    Reply with one short sentence confirming the ConcurStep3 follow-up task is complete.
     `;
   }
 
