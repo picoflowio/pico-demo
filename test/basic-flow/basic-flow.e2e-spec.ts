@@ -154,6 +154,59 @@ test(
   },
 );
 
+test(
+  'BasicFlow returns ConcurStep1 directResult data through the parallel join',
+  { concurrency: false },
+  async () => {
+    ScriptedBasicFlowModel.toolCallId = 0;
+    const restoreModel = installScriptedBasicFlowModel();
+    const app = await createApp();
+    const server = app.getHttpAdapter().getInstance();
+    let sessionId: string | undefined;
+
+    try {
+      for (const turn of scenario.turns.slice(0, 6)) {
+        const response = await server.inject({
+          method: 'POST',
+          url: '/ai/run',
+          headers: {
+            'content-type': 'application/json',
+            ...(sessionId ? { CHAT_SESSION_ID: sessionId } : {}),
+          },
+          payload: JSON.stringify({ message: turn.input, flowName: scenario.flowName }),
+        });
+        assert.equal(response.statusCode, 200, response.payload);
+        const body = JSON.parse(response.payload) as RunResponse;
+        sessionId = readSessionHeader(response.headers) ?? body.session;
+        assert.ok(sessionId, 'Expected session id from scripted turn');
+      }
+
+      const sessionDoc = await app
+        .get(FlowEngine)
+        .getFlowSession()
+        .fetchAll(sessionId!);
+      assert.ok(sessionDoc?.flow, 'Expected BasicFlow session document');
+      assert.deepEqual(stepState(sessionDoc.flow, 'ConcurStep1').concurStep1_tool, {
+        completed: true,
+      });
+      assert.equal(
+        stepState(sessionDoc.flow, 'ConcurStep3').concurStep3,
+        'The concurrent follow-up task is complete.',
+      );
+      assert.deepEqual(stepState(sessionDoc.flow, 'InContextStep').concurStep1, {
+        completed: true,
+      });
+    } finally {
+      restoreModel();
+      try {
+        await app.get(FlowEngine).close();
+      } finally {
+        await app.close();
+      }
+    }
+  },
+);
+
 function installScriptedBasicFlowModel(): () => void {
   const modelPrototype = Model.prototype as unknown as {
     createInstance: (...args: unknown[]) => unknown;
@@ -271,6 +324,12 @@ class ScriptedBasicFlowModel {
       return scriptedText(
         'Your address was accepted and your profile collection is complete.',
       );
+    }
+
+    if (systemPrompt.includes('You are ConcurStep1')) {
+      return scriptedToolCalls([
+        { name: 'complete_concurrent_step1', args: {} },
+      ]);
     }
 
     if (systemPrompt.includes('You are ConcurStep')) {
@@ -439,6 +498,12 @@ async function expectSessionState(
     favoriteSeason: 'summer',
   });
   assert.equal(stepState(basicFlow, 'NameStep').name, 'John Wick');
+  assert.deepEqual(stepState(basicFlow, 'ConcurStep1').concurStep1_tool, {
+    completed: true,
+  });
+  assert.deepEqual(stepState(basicFlow, 'InContextStep').concurStep1, {
+    completed: true,
+  });
   assert.equal(stepState(basicFlow, 'DOBStep').year, 2000);
   assert.equal(stepState(basicFlow, 'DOBStep').month, 1);
   assert.equal(stepState(basicFlow, 'DOBStep').day, 1);
