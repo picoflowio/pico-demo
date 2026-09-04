@@ -51,7 +51,7 @@ const scenarioPath = join(
   'basic-flow',
   'basic-flow.scenario.json',
 );
-const useEnvDocumentDb = process.env.BASIC_FLOW_TEST_USE_ENV === '1';
+const useEnvDocumentDb = process.env.USE_ENV === '1';
 if (!useEnvDocumentDb) {
   process.env.SESSION_STORE =
     process.env.BASIC_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
@@ -155,7 +155,7 @@ test(
 );
 
 function installScriptedBasicFlowModel(): () => void {
-  const modelPrototype = Model.prototype as Model & {
+  const modelPrototype = Model.prototype as unknown as {
     createInstance: (...args: unknown[]) => unknown;
   };
   const originalCreateInstance = modelPrototype.createInstance;
@@ -168,7 +168,7 @@ function installScriptedBasicFlowModel(): () => void {
 
 class ScriptedBasicFlowModel {
   private structuredOutput = false;
-  private static toolCallId = 0;
+  public static toolCallId = 0;
 
   public bindTools(): this {
     return this;

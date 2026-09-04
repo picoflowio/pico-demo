@@ -71,7 +71,7 @@ const failureArtifactPath = join(
   'hotel-flow-semantic-failure.json',
 );
 
-const useEnvDocumentDb = process.env.HOTEL_FLOW_TEST_USE_ENV === '1';
+const useEnvDocumentDb = process.env.USE_ENV === '1';
 if (!useEnvDocumentDb) {
   process.env.DOCUMENT_DB = process.env.HOTEL_FLOW_TEST_DOCUMENT_DB ?? 'SQLITE';
   process.env.SESSION_STORE =

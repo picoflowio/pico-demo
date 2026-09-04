@@ -7,11 +7,13 @@ import {
   Flow,
   JsonValue,
   LastResponseType,
+  Parallel,
   StepClassType,
 } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { ConcurStep4 } from "./concur-step4.js";
 
+@Parallel
 export class ConcurStep2 extends Step {
   constructor(flow: Flow) {
     super(flow);
@@ -26,12 +28,15 @@ export class ConcurStep2 extends Step {
 
   protected async onEnter() {
     await super.onEnter();
-    const [_concurStep3] = await this.runSteps([
+    const batch = await this.runSteps([
       {
         step: ConcurStep4,
         userMessage: "Run the ConcurStep3.",
       },
     ]);
+    if (batch.rejected.length > 0) {
+      throw new Error(batch.rejected[0]!.error.message);
+    }
   }
 
   public async onResponse(

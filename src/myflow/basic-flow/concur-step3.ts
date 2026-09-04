@@ -7,10 +7,12 @@ import {
   Flow,
   JsonValue,
   LastResponseType,
+  Parallel,
   StepClassType,
 } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 
+@Parallel
 export class ConcurStep3 extends Step {
   constructor(flow: Flow) {
     super(flow);

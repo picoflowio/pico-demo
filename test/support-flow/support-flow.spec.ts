@@ -1,16 +1,38 @@
 import "dotenv/config";
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
-import { FlowEngine, MemorySessionStore, ModelProvider } from "@picoflow/core";
+import { FlowEngine, ModelProvider } from "@picoflow/core";
 import { OrderBook } from "../../src/myflow/support-flow/backend/order-book.js";
 import { PolicyEngine } from "../../src/myflow/support-flow/backend/policy-engine.js";
 import { GenReceipt } from "../../src/myflow/support-flow/gen-receipt.js";
 import { SupportFlow } from "../../src/myflow/support-flow/support-flow.js";
 
 process.env.SUPPORT_FLOW_CURRENT_DATE ??= "2027-07-15T00:00:00.000Z";
+
+const sqlitePath = join(
+  process.cwd(),
+  "test",
+  ".tmp",
+  "support-flow-session.sqlite",
+);
+const useEnvSessionStore = process.env.USE_ENV === "1";
+if (!useEnvSessionStore) {
+  process.env.SESSION_STORE =
+    process.env.SUPPORT_FLOW_TEST_SESSION_STORE ?? "SQLITE";
+  process.env.SQLITE_PATH =
+    process.env.SUPPORT_FLOW_TEST_SQLITE_PATH ?? sqlitePath;
+  process.env.OPENAI_API_KEY ??= "unused-in-support-flow-test";
+  process.env.MONGODB_NAME ??= "unused-in-support-flow-test";
+  process.env.MONGODB_COLLECTION ??= "unused-in-support-flow-test";
+  process.env.MONGODB_URL ??= "mongodb://unused-in-support-flow-test";
+}
+if ((process.env.SESSION_STORE ?? "SQLITE").toUpperCase() === "SQLITE") {
+  process.env.SQLITE_PATH ??= sqlitePath;
+  mkdirSync(dirname(process.env.SQLITE_PATH), { recursive: true });
+}
 
 describe("SupportFlow deterministic services", () => {
   it("loads the complete PicoFlow definition", () => {
@@ -44,6 +66,9 @@ const missingLiveConfig = ["OPENAI_API_KEY", "PICOFLOW_KEY"].filter(
 );
 const runLive = missingLiveConfig.length === 0;
 const liveSkipReason = `Missing live SupportFlow config: ${missingLiveConfig.join(", ")}`;
+const testTimeoutMs = Number(
+  process.env.SUPPORT_FLOW_TEST_TIMEOUT_MS ?? 900_000,
+);
 
 type Scenario = {
   flowName: string;
@@ -55,11 +80,13 @@ assert.equal(scenario.turns.length, 9);
 
 it(
   "runs the full SupportFlow turn-by-turn scenario",
-  { skip: runLive ? false : liveSkipReason },
+  {
+    timeout: testTimeoutMs,
+    skip: runLive ? false : liveSkipReason,
+  },
   async () => {
     const engine = await FlowEngine.create({
       flows: [SupportFlow],
-      sessionStore: new MemorySessionStore(),
       providers: ModelProvider.createBuiltinAdapters({
         openai: { apiKey: process.env.OPENAI_API_KEY },
       }),

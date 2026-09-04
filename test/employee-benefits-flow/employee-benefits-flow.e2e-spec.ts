@@ -123,10 +123,12 @@ describe("EmployeeBenefitsFlow deterministic policy", () => {
       healthAccount,
       healthAccountResult,
       ancillary,
-      beneficiaries: { beneficiaries: [
-        { name: "Morgan Rivera", relationship: "spouse", percentage: 70 },
-        { name: "Sam Rivera", relationship: "child", percentage: 30 },
-      ] },
+      beneficiaries: {
+        beneficiaries: [
+          { name: "Morgan Rivera", relationship: "spouse", percentage: 70 },
+          { name: "Sam Rivera", relationship: "child", percentage: 30 },
+        ]
+      },
       dependentCare,
       dependentCareResult,
     };
@@ -139,7 +141,7 @@ describe("EmployeeBenefitsFlow deterministic policy", () => {
 });
 
 const sqlitePath = join(process.cwd(), "test", ".tmp", "employee-benefits-flow-session.sqlite");
-const useEnvironmentDocumentStore = process.env.EMPLOYEE_BENEFITS_FLOW_TEST_USE_ENV === "1";
+const useEnvironmentDocumentStore = process.env.USE_ENV === "1";
 if (!useEnvironmentDocumentStore) {
   process.env.DOCUMENT_DB = "SQLITE";
   process.env.SESSION_STORE = "SQLITE";

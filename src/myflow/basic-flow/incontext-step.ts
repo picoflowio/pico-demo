@@ -35,7 +35,7 @@ export class InContextStep extends Step {
     await super.onEnter();
     const msg = this.getTransientState<string>("msg");
     console.log("InContextStep.transient msg=", msg);
-    const [concurStep1, concurStep2] = await this.runSteps([
+    const batch = await this.runSteps([
       {
         step: ConcurStep1,
         userMessage: "Run the 1st concurrent follow-up task.",
@@ -45,9 +45,15 @@ export class InContextStep extends Step {
         userMessage: "Run the 2nd concurrent follow-up task.",
       },
     ]);
+    if (batch.rejected.length > 0) {
+      throw new Error(
+        `Parallel follow-up failed: ${batch.rejected.map(({ key, error }) => `${key}: ${error.message}`).join("; ")}`,
+      );
+    }
+    const [concurStep1, concurStep2] = batch.fulfilled;
     this.saveState({
-      concurStep1: JSON.parse(JSON.stringify(concurStep1)) as JsonValue,
-      concurStep2: JSON.parse(JSON.stringify(concurStep2)) as JsonValue,
+      concurStep1: JSON.parse(JSON.stringify(concurStep1?.output)) as JsonValue,
+      concurStep2: JSON.parse(JSON.stringify(concurStep2?.output)) as JsonValue,
     });
   }
 

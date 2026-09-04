@@ -39,7 +39,7 @@ const missingLiveConfig = ["GEMINI_API_KEY", "PICOFLOW_KEY"].filter(
   (key) => !process.env[key]?.trim(),
 );
 
-const useEnvDocumentDb = process.env.INVOICE_FLOW_TEST_USE_ENV === "1";
+const useEnvDocumentDb = process.env.USE_ENV === "1";
 if (!useEnvDocumentDb) {
   process.env.SESSION_STORE =
     process.env.INVOICE_FLOW_TEST_SESSION_STORE ?? "SQLITE";
@@ -144,7 +144,11 @@ test(
         (step) => step.name === "ExtractInvoiceStep",
       );
       assert.ok(extractionStep, "Expected ExtractInvoiceStep session state");
-      assert.deepEqual(extractionStep.state?.json, invoice);
+      const extractionJson =
+        extractionStep.state && "json" in extractionStep.state
+          ? extractionStep.state.json
+          : undefined;
+      assert.deepEqual(extractionJson, invoice);
     } finally {
       await app.close();
     }

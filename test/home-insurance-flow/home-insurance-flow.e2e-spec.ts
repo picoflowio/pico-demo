@@ -59,7 +59,7 @@ describe("HomeInsuranceQuoteFlow deterministic services", () => {
 });
 
 const sqlitePath = join(process.cwd(), "test", ".tmp", "home-insurance-flow-session.sqlite");
-const useEnvironmentDocumentStore = process.env.HOME_INSURANCE_FLOW_TEST_USE_ENV === "1";
+const useEnvironmentDocumentStore = process.env.USE_ENV === "1";
 if (!useEnvironmentDocumentStore) {
   process.env.DOCUMENT_DB = "SQLITE";
   process.env.SESSION_STORE = "SQLITE";
