@@ -56,6 +56,7 @@ export class InContextStep extends Step {
     await super.onEnter();
     const msg = this.getTransientState<string>("msg");
     console.log("InContextStep.transient msg=", msg);
+
     const batch = await this.runSteps([
       {
         step: ConcurStep1,

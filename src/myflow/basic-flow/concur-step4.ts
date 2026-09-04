@@ -7,11 +7,9 @@ import {
   Flow,
   JsonValue,
   LastResponseType,
-  Parallel,
 } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 
-@Parallel
 export class ConcurStep4 extends Step {
   /**
    * Initializes the ConcurStep4 instance.

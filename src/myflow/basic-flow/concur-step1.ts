@@ -3,12 +3,11 @@
 - This software is proprietary and confidential. Unauthorized copying, distribution
 - or modification of this file, via any medium, is strictly prohibited.
  */
-import { Flow, Parallel } from "@picoflow/core";
+import { Flow } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { ConcurStep3 } from "./concur-step3.js";
 import type { JsonValue, LastResponseType } from "@picoflow/core";
 
-@Parallel
 export class ConcurStep1 extends Step {
   /**
    * Initializes the ConcurStep1 instance.
