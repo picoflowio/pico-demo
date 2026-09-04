@@ -65,6 +65,7 @@ if ((process.env.SESSION_STORE ?? 'SQLITE').toUpperCase() === 'SQLITE') {
 }
 
 const scenario = loadScenario();
+const regressionConfig = { myRunData: { source: 'basic-flow-test' } };
 const testTimeoutMs = Number(process.env.BASIC_FLOW_TEST_TIMEOUT_MS ?? 900_000);
 const requiredConfig = ['OPENAI_API_KEY', 'PICOFLOW_KEY'];
 const missingConfig = requiredConfig.filter(
@@ -91,6 +92,7 @@ test(
         payload: JSON.stringify({
           message,
           flowName: scenario.flowName,
+          ...(sessionId ? {} : { config: regressionConfig }),
         }),
       });
 
@@ -173,7 +175,11 @@ test(
             'content-type': 'application/json',
             ...(sessionId ? { CHAT_SESSION_ID: sessionId } : {}),
           },
-          payload: JSON.stringify({ message: turn.input, flowName: scenario.flowName }),
+          payload: JSON.stringify({
+            message: turn.input,
+            flowName: scenario.flowName,
+            ...(sessionId ? {} : { config: regressionConfig }),
+          }),
         });
         assert.equal(response.statusCode, 200, response.payload);
         const body = JSON.parse(response.payload) as RunResponse;
@@ -186,6 +192,10 @@ test(
         .getFlowSession()
         .fetchAll(sessionId!);
       assert.ok(sessionDoc?.flow, 'Expected BasicFlow session document');
+      assert.equal(
+        stepState(sessionDoc.flow, 'NameStep').source,
+        'basic-flow-test',
+      );
       assert.deepEqual(stepState(sessionDoc.flow, 'ConcurStep1').concurStep1_tool, {
         completed: true,
       });
@@ -498,9 +508,14 @@ async function expectSessionState(
     favoriteSeason: 'summer',
   });
   assert.equal(stepState(basicFlow, 'NameStep').name, 'John Wick');
+  assert.equal(stepState(basicFlow, 'NameStep').source, 'basic-flow-test');
   assert.deepEqual(stepState(basicFlow, 'ConcurStep1').concurStep1_tool, {
     completed: true,
   });
+  assert.equal(
+    stepState(basicFlow, 'ConcurStep3').concurStep3,
+    'The concurrent follow-up task is complete.',
+  );
   assert.deepEqual(stepState(basicFlow, 'InContextStep').concurStep1, {
     completed: true,
   });

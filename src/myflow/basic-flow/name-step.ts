@@ -74,7 +74,7 @@ export class NameStep extends Step {
       return stay("Cannot accept John Doe, please choose a different name.");
     } else {
       this.saveState({ name });
-      const runData = this.flow.getContext<JsonObject>("myRunData");
+      const runData = this.flow.getContext<JsonObject>("config.myRunData");
       this.saveState(runData);
 
       this.flow.saveTransientStepState(InContextStep, {
