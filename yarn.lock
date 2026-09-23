@@ -660,10 +660,10 @@
     "@anthropic-ai/sdk" "^0.115.0"
     zod "^3.25.76 || ^4"
 
-"@langchain/core@1.2.3":
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/@langchain/core/-/core-1.2.3.tgz#27ef4951b3226d7f25a753f28c72ff9d1ab67feb"
-  integrity sha512-F+L5SsciykwDl7eDxacnhDTcWe1IF6jetzfkvI5PPfq6ogWHO7xcjU90SGh/3lqbbS0tgun+qF01KIqxawrCsA==
+"@langchain/core@1.2.12":
+  version "1.2.12"
+  resolved "https://registry.yarnpkg.com/@langchain/core/-/core-1.2.12.tgz#de114babc3e56dfa99c5bb5cd272f14b9597ee9f"
+  integrity sha512-DvNsrN5Gz+bgEy/B/kK1AvxxcrwdrflI8hZJxqo/DtA17FMUeWM5k0o1c6G8ChH8+sIakV2UsDudFmNZJp1ugQ==
   dependencies:
     "@cfworker/json-schema" "^4.0.2"
     "@standard-schema/spec" "^1.1.0"
@@ -752,6 +752,13 @@
   version "0.0.18"
   resolved "https://registry.yarnpkg.com/@langchain/protocol/-/protocol-0.0.18.tgz#6d96155e7263c958fbce6d4b7241b4725b72fbad"
   integrity sha512-XW1egQtPfsGI41w2AMZNFZrUIwFSQHTjVMZs0OaTpCAvht/QLoaPN8FQcsysMVypOhupG28J29yOorrc70otBQ==
+
+"@langchain/typesafe@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@langchain/typesafe/-/typesafe-0.0.1.tgz#a205f14cc32237f2ca075a4a4cba865ddde9653a"
+  integrity sha512-ldhcpKfVZ6F65ps3vi073cbmTchJhYwxcHJyNhXx4ZwIJpeA8HJ9/kOGZHsN1A0Al48Qbxgvy97ZsHlbJ8P+vA==
+  dependencies:
+    zod "^4"
 
 "@lukeed/csprng@^1.0.0":
   version "1.1.0"
@@ -909,31 +916,9 @@
   dependencies:
     tslib "2.8.1"
 
-"@picoflow/core@^1.1.12":
-  version "1.1.12"
-  resolved "https://registry.yarnpkg.com/@picoflow/core/-/core-1.1.12.tgz#cf024b3b41e1333075b686c1fb8590fe360f5d5e"
-  integrity sha512-R0i826EpYSmxl+XDxFkVCkRTt3r+GBfvtW/NpmlRaVAw2LwbLznxbNqcvt9tdySkSFNwh35Art+Qsf/l6ODLVw==
-  dependencies:
-    "@anthropic-ai/sdk" "0.115.0"
-    "@azure/cosmos" "4.10.0"
-    "@google/genai" "2.14.0"
-    "@langchain/anthropic" "1.5.2"
-    "@langchain/core" "1.2.3"
-    "@langchain/deepseek" "^1.1.5"
-    "@langchain/google" "0.2.1"
-    "@langchain/ollama" "1.3.0"
-    "@langchain/openai" "1.5.5"
-    "@langchain/openrouter" "^0.4.5"
-    axios "^1.7.7"
-    better-sqlite3 "^13.0.2"
-    dotenv "17.4.2"
-    lodash "^4.17.21"
-    moment "^2.30.1"
-    mongodb "6.21.0"
-    openai "7.1.0"
-    tweetnacl "^1.0.3"
-    uuid "^11.0.3"
-    zod "4.4.3"
+"@picoflow/core@link:../picoflow/npmlib/staging/lib":
+  version "0.0.0"
+  uid ""
 
 "@pinojs/redact@^0.4.0":
   version "0.4.0"
@@ -3529,3 +3514,8 @@ zod@4.4.3, zod@^4.2.0:
   version "3.25.76"
   resolved "https://registry.npmjs.org/zod/-/zod-3.25.76.tgz"
   integrity sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==
+
+zod@^4:
+  version "4.6.5"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-4.6.5.tgz#e3af3edbdc260239c52f73caad05dbbffe6e82cd"
+  integrity sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==

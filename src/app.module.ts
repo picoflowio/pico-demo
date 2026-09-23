@@ -1,3 +1,4 @@
+import { DecisionSupportFlow } from './myflow/decision-support-flow/decision-support-flow.js';
 /*
 - Copyright (c) 2026 picoflow.io
 - This software is proprietary and confidential. Unauthorized copying, distribution
@@ -5,7 +6,7 @@
  */
 import { Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { ModelProvider, FlowEngine } from "@picoflow/core";
+import { DecisionProvider, ModelProvider, FlowEngine } from "@picoflow/core";
 import { HealthController } from "./controllers/health-controller.js";
 import { TutorialController } from "./controllers/tutorial-controller.js";
 import { AiController } from "./controllers/ai-controller.js";
@@ -32,9 +33,13 @@ import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js"
             HotelFlow,
             InvoiceFlow,
             SupportFlow,
+            DecisionSupportFlow,
             HomeInsuranceQuoteFlow,
             EmployeeBenefitsFlow,
           ],
+          decisionProviders: DecisionProvider.create({
+            typesafe: { apiKey: config.get<string>("TYPESAFE_API_KEY") },
+          }),
           //register pre-build providers, only specify what you use.
           providers: [
             ...ModelProvider.createBuiltinAdapters({
