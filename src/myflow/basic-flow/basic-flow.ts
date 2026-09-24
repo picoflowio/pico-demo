@@ -137,7 +137,7 @@ export class BasicFlow extends Flow {
 
     const msg = `Finished concurrent flow: ${this.id}`;
     new SessionLogger(this.getSessionDoc()).log(msg);
-    step.sessionCompleted();
+    this.markCompleted();
     return msg;
   }
 

@@ -65,7 +65,7 @@ fetch_file(config.fileName)
   -> attach provider file to a new human message
   -> analyze the attachment
   -> capture_json({ ...invoice fields... })
-  -> direct JSON response
+  -> finished JSON response
 ```
 
 Both tools have Zod schemas. Tool handlers, rather than the prompt, must enforce
@@ -151,16 +151,16 @@ block/session finalizer when documents are sensitive or storage is billed.
 ## 3. Capture and return JSON
 
 `capture_json` saves the tool argument to `ExtractInvoiceStep.state.json` and
-returns a direct JSON response:
+returns a finished JSON response:
 
 ```ts
-return direct(args?.json).withContentType(HttpContentType.Json);
+return finish(args?.json).withContentType(HttpContentType.Json);
 ```
 
 The general HTTP controller sees the non-plain content type and sends
 `result.message` directly as JSON rather than returning the normal PicoFlow
 envelope. The `CHAT_SESSION_ID` header is still set, and the stored session
-remains active on `ExtractInvoiceStep` for a later request.
+is completed while its durable cursor remains on `ExtractInvoiceStep`.
 
 The current tool schema uses `z.object({})`, which accepts an object but does
 not enforce the invoice example's fields. For production extraction, define a

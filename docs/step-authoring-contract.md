@@ -171,7 +171,7 @@ These methods are the practical `Step` subclass extension points.
 | `checkResponse(result)` | After a nonempty model result and before accepting it | Returns `false` | A bad response should be rejected and retried; return `true` to request retry |
 | `onResponse(result)` | The model returns without a tool call | Stringifies objects and otherwise returns the result unchanged | Free-form or structured output must be validated, saved, rewritten, or routed by returning another `Step` class |
 | `structOutputSchema()` | Before the model call | Returns `null` | The provider should use structured output constrained by a schema |
-| `isEnd()` | `Flow.run()` builds its `completed` flag | Checks whether the session status is `completed` | A specialized terminal step needs different completion reporting; most flows should use `TerminateSessionStep` or `sessionCompleted()` |
+| `isEnd()` | `Flow.run()` builds its `completed` flag | Checks whether the session status is `completed` | A specialized terminal step needs different completion reporting; most response handlers should return `finish(...)` or route to `TerminateSessionStep` |
 
 ### Hooks for specialized base classes
 
@@ -257,7 +257,7 @@ in the `ToolCall[]` passed to the handler.
 A matching group handler shadows the individual `@Tool` handler in every case,
 including a single call. If no group handler matches, individual handlers run
 sequentially. A group handler must return a valid routing result such as
-`go(...)`, `stay(...)`, or `direct(...)`; `null`, `undefined`, and unknown
+`go(...)`, `stay(...)`, `direct(...)`, or `finish(...)`; `null`, `undefined`, and unknown
 results are errors and never trigger individual fallback. See the
 [multi-tool handler guide](./multi-tool-handlers.md) for the complete contract
 and the WeatherStep example.
@@ -371,7 +371,7 @@ configuration error and choose a compatible model or remove the parameter.
 | --- | --- |
 | `runStep(StepClass, userMessage?)` | Execute one registered child inside an in-memory execution frame and return its model content |
 | `runSteps([{ step, userMessage }, ...])` | Execute independent registered children concurrently and preserve result order |
-| `sessionCompleted()` | Mark the current session document completed immediately |
+| `flow.markCompleted()` | Imperatively mark the current session document completed from top-level lifecycle or coordinator code |
 | `isEnd()` | Report completion from session status; terminal steps may specialize it |
 
 Only put independent operations in `runSteps()`. It rejects duplicate step
@@ -381,9 +381,10 @@ alone chooses the next durable cursor. Children sharing a memory namespace can
 interleave history writes, so isolated namespaces are safer unless that is
 intentional.
 
-For normal user-facing completion, transition to `TerminateSessionStep`. Use
-`sessionCompleted()` for specialized workers or coordinators that intentionally
-finish without the terminal conversation step.
+For an exact user-facing close, return `finish(content)`; transition to
+`TerminateSessionStep` when the model should author the final turn. Use
+`flow.markCompleted()` only for specialized top-level lifecycle or coordinator
+paths that cannot return a response builder.
 
 ## Methods that are runtime plumbing
 
@@ -487,7 +488,7 @@ export class CustomStep extends Step {
 7. Does an overridden `run()` call `super.run()` unless replacing the entire
    model lifecycle is intentional?
 8. Are shared memory namespaces deliberate, especially for parallel children?
-9. Is completion explicit through `TerminateSessionStep` or
-   `sessionCompleted()`?
+9. Is completion explicit through `finish(...)`, `TerminateSessionStep`, or a
+   justified lifecycle call to `flow.markCompleted()`?
 10. Do tests cover invalid input, retries, transitions, restore, nested work,
     direct responses, content type, and persisted state?

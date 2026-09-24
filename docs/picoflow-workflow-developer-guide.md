@@ -345,10 +345,9 @@ Use this shape when one request contains all required configuration or data:
   `initialStep()`;
 - use `onCrossing()` when the model needs a synthetic starting message;
 - expose tightly validated tools for server-owned resources;
-- use direct messages when another model turn is unnecessary;
+- return `finish(...)` when the exact payload is final and another model turn is unnecessary;
 - set `HttpContentType.Json` for raw structured responses; and
-- use a terminal step only when the session should be completed; direct output
-  itself short-circuits the current model turn.
+- use `direct(...)` only when the current step should remain active for another request.
 
 `InvoiceFlow` is normally a one-shot document flow even though its internal
 model/tool loop may make several provider calls.
@@ -377,7 +376,7 @@ protected async spawnSteps(): Promise<string> {
     },
   });
 
-  coordinator.sessionCompleted();
+  this.markCompleted();
   return `Processed ${this.workItems.length} documents.`;
 }
 ```
@@ -738,15 +737,16 @@ Unhandled flow errors produce `success: false`, mark an available session
 aborted, and attempt to persist the error. Session conflicts, flow mismatch,
 and invariant errors are returned without rewriting the conflicted document.
 
-For conversational and one-shot flows, complete through
-`TerminateSessionStep`. A custom worker or batch coordinator may call
-`sessionCompleted()` on its current step. Returning a string from `spawnSteps()`
-alone does not complete the session.
+For a deterministic closing response, return `finish(content)`. Use
+`TerminateSessionStep` when the model should author a final conversational turn.
+A custom lifecycle hook or batch coordinator that cannot return a response
+builder may call `markCompleted()` on its Flow. Returning a string from
+`spawnSteps()` alone does not complete the session.
 
 Use `deleteSession()` only when the stored record itself should be permanently
 removed.
 
-Use direct JSON responses only when the HTTP adapter understands the selected
+Use raw JSON responses only when the HTTP adapter understands the selected
 `HttpContentType`; the demo controller sends non-plain `result.message`
 directly with that content type.
 

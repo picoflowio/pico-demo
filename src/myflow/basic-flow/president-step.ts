@@ -34,7 +34,7 @@ export class PresidentStep extends Step {
     _priorStep?: string,
   ): MessageTypes {
     const nth = this.getContext<string>("config.nth");
-    this.sessionCompleted();
+    this.flow.markCompleted();
     return new HumanMessageEx(
       this,
       `Who is the ${nth} President of United State`,

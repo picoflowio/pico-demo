@@ -4,7 +4,7 @@
 - or modification of this file, via any medium, is strictly prohibited.
  */
 import { HumanMessage } from "@langchain/core/messages";
-import { direct, Flow, Tool, go } from "@picoflow/core";
+import { finish, Flow, Tool, go } from "@picoflow/core";
 import { ToolResponseType, ToolType } from "@picoflow/core";
 import { Step } from "@picoflow/core";
 import { z } from "zod";
@@ -154,11 +154,7 @@ export class ExtractInvoiceStep extends Step {
   ): Promise<ToolResponseType> {
     try {
       this.saveState({ json: args?.json });
-      // this.sessionCompleted();
-
-      // direct(...) returns JSON immediately, without another model call, and keeps this step active.
-      this.flow.markCompleted();
-      return direct(args?.json).withContentType(HttpContentType.Json);
+      return finish(args?.json).withContentType(HttpContentType.Json);
     } finally {
       await this.cleanupUploadedFile();
     }
