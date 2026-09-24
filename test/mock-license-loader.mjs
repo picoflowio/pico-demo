@@ -7,5 +7,6 @@ export async function load(url, context, nextLoad) {
       source: 'export function verifyLicense() { return {}; }',
     };
   }
+
   return nextLoad(url, context);
 }

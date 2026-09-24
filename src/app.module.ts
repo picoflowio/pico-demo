@@ -1,4 +1,3 @@
-import { DecisionSupportFlow } from './myflow/decision-support-flow/decision-support-flow.js';
 import { DecisionHotelFlow } from './myflow/decision-hotel-flow/decision-hotel-flow.js';
 /*
 - Copyright (c) 2026 picoflow.io
@@ -34,7 +33,6 @@ import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js"
             HotelFlow,
             InvoiceFlow,
             SupportFlow,
-            DecisionSupportFlow,
             DecisionHotelFlow,
             HomeInsuranceQuoteFlow,
             EmployeeBenefitsFlow,

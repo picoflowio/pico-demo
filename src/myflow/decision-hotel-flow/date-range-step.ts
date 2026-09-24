@@ -65,12 +65,12 @@ export class DateRangeStep extends Step {
       start: toIsoDate(start),
       end: toIsoDate(end),
     });
-    return go('RouterStep').withState({ mode: 'advance' });
+    return go('RouterStep');
   }
 
   @Tool
   protected async reroute_request(): Promise<ToolResponseType> {
-    return go('RouterStep').withState({ mode: 'request' });
+    return go('RouterStep');
   }
 }
 

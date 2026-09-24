@@ -32,11 +32,11 @@ export class RoomTypeStep extends Step {
     roomType: (typeof CriteriaHelper.ROOM_TYPES)[number];
   }): Promise<ToolResponseType> {
     this.saveState({ answered: true, roomType: args.roomType });
-    return go('RouterStep').withState({ mode: 'advance' });
+    return go('RouterStep');
   }
 
   @Tool
   protected async reroute_request(): Promise<ToolResponseType> {
-    return go('RouterStep').withState({ mode: 'request' });
+    return go('RouterStep');
   }
 }

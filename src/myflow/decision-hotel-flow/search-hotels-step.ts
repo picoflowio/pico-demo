@@ -18,7 +18,6 @@ export class SearchHotelsStep extends LogicStep {
       hotels = await searchHotelsViaMcp(CriteriaHelper.toSearchRequest(criteria));
     } catch {
       return go(RouterStep).withState({
-        mode: 'notice',
         notice:
           'Hotel pricing is temporarily unavailable. Your criteria are saved; say “search” to try again.',
       });
@@ -26,7 +25,6 @@ export class SearchHotelsStep extends LogicStep {
 
     if (hotels.length === 0) {
       return go(RouterStep).withState({
-        mode: 'notice',
         notice:
           'No hotels matched all current criteria. Tell me whether to revise budget, room type, amenities, or distance.',
       });

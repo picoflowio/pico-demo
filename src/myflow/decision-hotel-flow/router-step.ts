@@ -12,7 +12,7 @@ import {
   type DecisionResponse,
 } from '@picoflow/core';
 import { CriteriaReadinessJudgeStep } from './criteria-readiness-judge-step.js';
-import { CriteriaHelper, type CriteriaField } from './criteria-helper.js';
+import { CriteriaHelper } from './criteria-helper.js';
 
 const Instructions = Prompt.file('prompt/router.md');
 
@@ -32,8 +32,16 @@ const ROUTING = {
       exit: 'End the hotel conversation without booking',
       unclear: 'The request is ambiguous or outside this hotel flow',
     },
-    instructions:
-      'Choose exactly one destination from the supplied criteria. Classify only the latest request and use it for explicit revisions. The exact request "search" is always "search", never "review". When mode is "advance", choose the first unresolved criterion in this order: "dates", "budget", "room type", "amenities", "distance". When every criterion is answered, choose "review" rather than searching automatically.',
+  },
+  request_delivery: {
+    type: 'choice',
+    criteria: {
+      apply_request:
+        'The selected criterion step must receive the latest request because it contains an unapplied value or revision for that criterion',
+      prompt_next:
+        'The selected criterion is the next unresolved field, so it should prompt without receiving the already handled latest request',
+      none: 'The destination is not a criterion collection step',
+    },
   },
 } as const satisfies DecisionQuestionMap;
 
@@ -43,15 +51,29 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
   }
 
   public override getPrompt(): string {
-    return Instructions;
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
+    return Prompt.replace(Instructions, {
+      COLLECTED_CRITERIA: JSON.stringify(criteria, null, 2),
+      UNRESOLVED_CRITERIA:
+        issues.length === 0
+          ? 'None. Every criterion has a valid saved answer.'
+          : issues
+              .map(
+                (issue, index) =>
+                  `${index + 1}. ${issue.field}: ${issue.message}`,
+              )
+              .join('\n'),
+    });
   }
 
   protected override getDecisionData() {
     const criteria = CriteriaHelper.readCriteria(this);
     return {
-      mode: this.getState<string>('mode') ?? 'request',
       criteria,
-      unresolved: CriteriaHelper.validateCriteria(criteria).map((issue) => issue.field),
+      unresolved: CriteriaHelper.validateCriteria(criteria).map(
+        (issue) => issue.field,
+      ),
       notice: this.getState<string | null>('notice') ?? null,
     };
   }
@@ -59,18 +81,16 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
   public override async onDecisionError(
     _context: DecisionErrorContext,
   ): Promise<DecisionResponse> {
-    if (this.getState<string>('mode') === 'notice') {
-      const notice =
-        this.getState<string | null>('notice') ??
-        'The hotel request could not be completed. Your criteria are still saved.';
-      this.saveState({ mode: 'request', notice: null });
+    const notice = this.getState<string | null>('notice');
+    if (notice) {
+      this.saveState({ notice: null });
       return directTo(RouterStep, notice);
     }
 
     const criteria = CriteriaHelper.readCriteria(this);
     const issues = CriteriaHelper.validateCriteria(criteria);
 
-    //do the routing based on the issues and the mode
+    // Keep a deterministic fallback only for an unavailable decision provider.
     if (issues.length > 0) {
       return go(CriteriaHelper.nextStep(issues));
     } else {
@@ -88,61 +108,44 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
   ): Promise<DecisionResponse> {
     const criteria = CriteriaHelper.readCriteria(this);
     const issues = CriteriaHelper.validateCriteria(criteria);
-    const mode = this.getState<string>('mode') ?? 'request';
     const route = answers.destination.choice;
 
-    if (mode === 'notice') {
-      const notice =
-        this.getState<string | null>('notice') ??
-        'The request could not be completed. Your hotel criteria are still saved.';
-      this.saveState({ mode: 'request', notice: null });
+    const notice = this.getState<string | null>('notice');
+    if (notice) {
+      this.saveState({ notice: null });
       return directTo(RouterStep, notice);
     }
 
     this.saveState({
-      mode: 'request',
       lastRoute: route,
       lastDecision: answers,
     });
 
-    if (mode === 'advance') {
-      if (issues.length > 0) {
-        return go(CriteriaHelper.nextStep(issues));
+    switch (route) {
+      case 'unclear':
+        return directTo(
+          RouterStep,
+          'I can update dates, nightly budget, room type, amenities, or distance. You can also ask to review or search the current criteria.',
+        );
+      case 'exit':
+        return finish('Thanks for considering Hilton hotels in Portland.');
+      case 'review':
+        return directTo(
+          RouterStep,
+          `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nTell me what to revise, or say “search” when ready.`,
+        );
+      case 'search':
+        return issues.length > 0
+          ? go(CriteriaHelper.nextStep(issues))
+          : go(CriteriaReadinessJudgeStep);
+      default: {
+        const next = go(CriteriaHelper.nextStep(route));
+        return answers.request_delivery.choice === 'apply_request'
+          ? next.withMessage(
+              new HumanMessageEx(this, context.request, { origin: 'user' }),
+            )
+          : next;
       }
-      return directTo(
-        RouterStep,
-        `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nSay “search” to find hotels, or tell me which criterion to revise.`,
-      );
     }
-
-    if (route === 'unclear') {
-      if (issues.length === 5) {
-        return go(CriteriaHelper.stepForField('dates'));
-      }
-      return directTo(
-        RouterStep,
-        'I can update dates, nightly budget, room type, amenities, or distance. You can also ask to review or search the current criteria.',
-      );
-    }
-
-    if (route === 'exit') {
-      return finish('Thanks for considering Hilton hotels in Portland.');
-    }
-    if (route === 'review') {
-      return directTo(
-        RouterStep,
-        `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nTell me what to revise, or say “search” when ready.`,
-      );
-    }
-    if (route === 'search') {
-      if (issues.length > 0) {
-        return go(CriteriaHelper.nextStep(issues));
-      }
-      return go(CriteriaReadinessJudgeStep);
-    }
-
-    return go(CriteriaHelper.stepForField(route as CriteriaField)).withMessage(
-      new HumanMessageEx(this, context.request, { origin: 'user' }),
-    );
   }
 }

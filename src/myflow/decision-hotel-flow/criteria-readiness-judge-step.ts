@@ -8,7 +8,7 @@ import {
   type DecisionQuestionMap,
   type DecisionResponse,
 } from '@picoflow/core';
-import { CriteriaHelper, type CriteriaField } from './criteria-helper.js';
+import { CriteriaHelper } from './criteria-helper.js';
 import { RouterStep } from './router-step.js';
 import { SearchHotelsStep } from './search-hotels-step.js';
 
@@ -26,13 +26,13 @@ const REVIEW = {
       distance: 'Distance limits are missing, ambiguous, or contradict the latest correction',
       unclear: 'More than one criterion is unresolved or the conversation is ambiguous',
     },
-    instructions:
-      'Review the normalized criteria against the latest and prior user requests. Do not invent a preference.',
   },
   faithful: {
     type: 'noul',
-    instructions:
-      'Do the normalized criteria faithfully reflect the user’s latest corrections and explicit no-preference choices?',
+    criteria: {
+      true: 'The normalized criteria faithfully reflect the latest corrections and explicit no-preference choices',
+      false: 'One or more normalized criteria miss or contradict the latest user request',
+    },
   },
 } as const satisfies DecisionQuestionMap;
 
@@ -42,9 +42,23 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
   }
 
   public override getPrompt(): string {
-    return Instructions;
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
+    return Prompt.replace(Instructions, {
+      NORMALIZED_CRITERIA: JSON.stringify(criteria, null, 2),
+      DETERMINISTIC_ISSUES:
+        issues.length === 0
+          ? 'None. Application validation accepts every saved criterion.'
+          : issues
+            .map(
+              (issue, index) =>
+                `${index + 1}. ${issue.field}: ${issue.message}`,
+            )
+            .join('\n'),
+    });
   }
 
+  /** Supplies the structured subject Jev evaluates; getPrompt() supplies guidance. */
   protected override getDecisionData() {
     const criteria = CriteriaHelper.readCriteria(this);
     return {
@@ -83,11 +97,12 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
       return go(SearchHotelsStep);
     }
     if (outcome !== 'ready' && outcome !== 'unclear') {
-      return go(CriteriaHelper.stepForField(outcome as CriteriaField));
+      return go(CriteriaHelper.nextStep(outcome));
     }
     return directTo(
       RouterStep,
-      `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nI could not verify one clear correction. Tell me which single criterion to update.`,
+      `${CriteriaHelper.renderCriteriaSummary(criteria)}
+      I could not verify one clear correction. Tell me which single criterion to update.`,
     );
   }
 }

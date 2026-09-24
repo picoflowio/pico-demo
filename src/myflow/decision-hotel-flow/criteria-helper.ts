@@ -93,8 +93,23 @@ export class CriteriaHelper {
     };
   }
 
-  /** Returns the Step that owns and can revise one named criterion. */
-  public static stepForField(field: CriteriaField): StepClassType {
+  /** Returns the owning Step for a field or the first validation issue. */
+  public static nextStep(field: CriteriaField): StepClassType;
+  public static nextStep(issues: readonly CriteriaIssue[]): StepClassType;
+  public static nextStep(
+    fieldOrIssues: CriteriaField | readonly CriteriaIssue[],
+  ): StepClassType {
+    const field =
+      typeof fieldOrIssues === 'string'
+        ? fieldOrIssues
+        : fieldOrIssues[0]?.field;
+
+    if (!field) {
+      throw new Error(
+        'CriteriaHelper.nextStep() requires a criterion field or a non-empty issue list.',
+      );
+    }
+
     switch (field) {
       case 'dates':
         return DateRangeStep;
@@ -107,14 +122,6 @@ export class CriteriaHelper {
       case 'distance':
         return DistanceStep;
     }
-  }
-
-  /**
-   * Returns the owning Step for the first validation issue. Callers must pass
-   * a non-empty issue list after checking `issues.length > 0`.
-   */
-  public static nextStep(issues: readonly CriteriaIssue[]): StepClassType {
-    return CriteriaHelper.stepForField(issues[0]!.field);
   }
 
   /**
@@ -225,14 +232,22 @@ export class CriteriaHelper {
 
   /** Renders the saved criteria for review or correction. */
   public static renderCriteriaSummary(criteria: HotelCriteriaSnapshot): string {
-    const budget =
-      criteria.budget.min === null && criteria.budget.max === null
+    const dates = criteria.dates.answered
+      ? `${criteria.dates.start ?? 'not set'} to ${criteria.dates.end ?? 'not set'}`
+      : 'not set';
+    const budget = criteria.budget.answered
+      ? criteria.budget.min === null && criteria.budget.max === null
         ? 'no preference'
-        : `${criteria.budget.min === null ? 'no minimum' : `$${criteria.budget.min}`} to ${criteria.budget.max === null ? 'no maximum' : `$${criteria.budget.max}`}`;
-    const amenities =
-      criteria.amenities.amenities.length === 0
+        : `${criteria.budget.min === null ? 'no minimum' : `$${criteria.budget.min}`} to ${criteria.budget.max === null ? 'no maximum' : `$${criteria.budget.max}`}`
+      : 'not set';
+    const roomType = criteria.roomType.answered
+      ? (criteria.roomType.roomType ?? 'not set')
+      : 'not set';
+    const amenities = criteria.amenities.answered
+      ? criteria.amenities.amenities.length === 0
         ? 'no preference'
-        : criteria.amenities.amenities.join(', ');
+        : criteria.amenities.amenities.join(', ')
+      : 'not set';
     const distances = [
       criteria.distance.airport === null
         ? null
@@ -241,14 +256,19 @@ export class CriteriaHelper {
         ? null
         : `city center within ${criteria.distance.cityCenter} miles`,
     ].filter((value): value is string => value !== null);
+    const distance = criteria.distance.answered
+      ? distances.length === 0
+        ? 'no preference'
+        : distances.join('; ')
+      : 'not set';
 
     return [
       'Current Portland hotel criteria:',
-      `- Dates: ${criteria.dates.start ?? 'not set'} to ${criteria.dates.end ?? 'not set'}`,
+      `- Dates: ${dates}`,
       `- Nightly budget: ${budget}`,
-      `- Room type: ${criteria.roomType.roomType ?? 'not set'}`,
+      `- Room type: ${roomType}`,
       `- Amenities: ${amenities}`,
-      `- Distance: ${distances.length === 0 ? 'no preference' : distances.join('; ')}`,
+      `- Distance: ${distance}`,
     ].join('\n');
   }
 

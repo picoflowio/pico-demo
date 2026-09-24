@@ -93,10 +93,8 @@ export class PresentStep extends Step {
   protected async revise_search(): Promise<ToolResponseType> {
     const message = this.getLastMessage();
     return message
-      ? go('RouterStep')
-          .withState({ mode: 'request' })
-          .withMessage(message)
-      : go('RouterStep').withState({ mode: 'request' });
+      ? go('RouterStep').withMessage(message)
+      : go('RouterStep');
   }
 
   @Tool
