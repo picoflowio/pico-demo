@@ -1,22 +1,21 @@
 import { LogicStep, go, type LogicResponseType } from '@picoflow/core';
 import { searchHotelsViaMcp } from '../../tools/hotel-pricing-mcp-client.js';
 import { CriteriaReadinessJudgeStep } from './criteria-readiness-judge-step.js';
-import { readCriteria, stepForField } from './criteria-state.js';
-import { toSearchRequest, validateCriteria } from './hotel-criteria.js';
+import { CriteriaHelper } from './criteria-helper.js';
 import { PresentStep } from './present-step.js';
 import { RouterStep } from './router-step.js';
 
 export class SearchHotelsStep extends LogicStep {
   public async runLogic(): Promise<LogicResponseType> {
-    const criteria = readCriteria(this);
-    const issues = validateCriteria(criteria);
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
     if (issues.length > 0) {
-      return go(stepForField(issues[0]!.field));
+      return go(CriteriaHelper.nextStep(issues));
     }
 
     let hotels;
     try {
-      hotels = await searchHotelsViaMcp(toSearchRequest(criteria));
+      hotels = await searchHotelsViaMcp(CriteriaHelper.toSearchRequest(criteria));
     } catch {
       return go(RouterStep).withState({
         mode: 'notice',

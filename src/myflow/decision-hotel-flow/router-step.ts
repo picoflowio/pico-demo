@@ -12,12 +12,7 @@ import {
   type DecisionResponse,
 } from '@picoflow/core';
 import { CriteriaReadinessJudgeStep } from './criteria-readiness-judge-step.js';
-import { readCriteria, stepForField } from './criteria-state.js';
-import {
-  renderCriteriaSummary,
-  validateCriteria,
-  type CriteriaField,
-} from './hotel-criteria.js';
+import { CriteriaHelper, type CriteriaField } from './criteria-helper.js';
 
 const Instructions = Prompt.file('prompt/router.md');
 
@@ -38,7 +33,7 @@ const ROUTING = {
       unclear: 'The request is ambiguous or outside this hotel flow',
     },
     instructions:
-      'Classify only the latest request. The exact request “search” is always search, never review. When mode is advance, use answered fields to select the next missing criterion or review.',
+      'Choose exactly one destination from the supplied criteria. Classify only the latest request and use it for explicit revisions. The exact request "search" is always "search", never "review". When mode is "advance", choose the first unresolved criterion in this order: "dates", "budget", "room type", "amenities", "distance". When every criterion is answered, choose "review" rather than searching automatically.',
   },
 } as const satisfies DecisionQuestionMap;
 
@@ -52,11 +47,11 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
   }
 
   protected override getDecisionData() {
-    const criteria = readCriteria(this);
+    const criteria = CriteriaHelper.readCriteria(this);
     return {
       mode: this.getState<string>('mode') ?? 'request',
       criteria,
-      unresolved: validateCriteria(criteria).map((issue) => issue.field),
+      unresolved: CriteriaHelper.validateCriteria(criteria).map((issue) => issue.field),
       notice: this.getState<string | null>('notice') ?? null,
     };
   }
@@ -72,22 +67,27 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
       return directTo(RouterStep, notice);
     }
 
-    const criteria = readCriteria(this);
-    const issues = validateCriteria(criteria);
-    return issues.length > 0
-      ? go(stepForField(issues[0]!.field))
-      : directTo(
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
+
+    //do the routing based on the issues and the mode
+    if (issues.length > 0) {
+      return go(CriteriaHelper.nextStep(issues));
+    } else {
+      return directTo(
         RouterStep,
-        `${renderCriteriaSummary(criteria)}\n\nSay “search” to find hotels, or tell me which criterion to revise.`,
+        `${CriteriaHelper.renderCriteriaSummary(criteria)}
+        Say “search” to find hotels, or tell me which criterion to revise.`,
       );
+    }
   }
 
   public async onDecision(
     answers: DecisionAnswers<typeof ROUTING>,
     context: DecisionContext,
   ): Promise<DecisionResponse> {
-    const criteria = readCriteria(this);
-    const issues = validateCriteria(criteria);
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
     const mode = this.getState<string>('mode') ?? 'request';
     const route = answers.destination.choice;
 
@@ -107,17 +107,17 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
 
     if (mode === 'advance') {
       if (issues.length > 0) {
-        return go(stepForField(issues[0]!.field));
+        return go(CriteriaHelper.nextStep(issues));
       }
       return directTo(
         RouterStep,
-        `${renderCriteriaSummary(criteria)}\n\nSay “search” to find hotels, or tell me which criterion to revise.`,
+        `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nSay “search” to find hotels, or tell me which criterion to revise.`,
       );
     }
 
     if (route === 'unclear') {
       if (issues.length === 5) {
-        return go(stepForField('dates'));
+        return go(CriteriaHelper.stepForField('dates'));
       }
       return directTo(
         RouterStep,
@@ -131,17 +131,17 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
     if (route === 'review') {
       return directTo(
         RouterStep,
-        `${renderCriteriaSummary(criteria)}\n\nTell me what to revise, or say “search” when ready.`,
+        `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nTell me what to revise, or say “search” when ready.`,
       );
     }
     if (route === 'search') {
       if (issues.length > 0) {
-        return go(stepForField(issues[0]!.field));
+        return go(CriteriaHelper.nextStep(issues));
       }
       return go(CriteriaReadinessJudgeStep);
     }
 
-    return go(stepForField(route as CriteriaField)).withMessage(
+    return go(CriteriaHelper.stepForField(route as CriteriaField)).withMessage(
       new HumanMessageEx(this, context.request, { origin: 'user' }),
     );
   }

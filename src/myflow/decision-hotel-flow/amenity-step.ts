@@ -1,19 +1,20 @@
 import {
   Prompt,
+  Step,
   Tool,
   directTo,
+  go,
   type Flow,
   type LastResponseType,
   type ToolResponseType,
   type ToolType,
 } from '@picoflow/core';
 import { z } from 'zod';
-import { CriteriaStep } from './criteria-step.js';
-import { AMENITIES } from './hotel-criteria.js';
+import { CriteriaHelper } from './criteria-helper.js';
 
 const Instructions = Prompt.file('prompt/amenities.md');
 
-export class AmenityStep extends CriteriaStep {
+export class AmenityStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
@@ -22,12 +23,16 @@ export class AmenityStep extends CriteriaStep {
     return Instructions;
   }
 
+  public override useTool(): string[] {
+    return ['reroute_request'];
+  }
+
   public override defineTool(): ToolType[] {
     return [
       {
         name: 'capture_amenities',
         description: 'Save required hotel amenities. Use an empty array for no preference.',
-        schema: z.object({ amenities: z.array(z.enum(AMENITIES)) }),
+        schema: z.object({ amenities: z.array(z.enum(CriteriaHelper.AMENITIES)) }),
       },
     ];
   }
@@ -43,12 +48,17 @@ export class AmenityStep extends CriteriaStep {
 
   @Tool
   protected async capture_amenities(args: {
-    amenities: (typeof AMENITIES)[number][];
+    amenities: (typeof CriteriaHelper.AMENITIES)[number][];
   }): Promise<ToolResponseType> {
     this.saveState({
       answered: true,
       amenities: [...new Set(args.amenities)],
     });
-    return this.advance();
+    return go('RouterStep').withState({ mode: 'advance' });
+  }
+
+  @Tool
+  protected async reroute_request(): Promise<ToolResponseType> {
+    return go('RouterStep').withState({ mode: 'request' });
   }
 }

@@ -1,11 +1,10 @@
-import { Prompt, Tool, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
+import { Prompt, Step, Tool, go, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
 import { z } from 'zod';
-import { CriteriaStep } from './criteria-step.js';
-import { ROOM_TYPES } from './hotel-criteria.js';
+import { CriteriaHelper } from './criteria-helper.js';
 
 const Instructions = Prompt.file('prompt/room-type.md');
 
-export class RoomTypeStep extends CriteriaStep {
+export class RoomTypeStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
@@ -14,21 +13,30 @@ export class RoomTypeStep extends CriteriaStep {
     return Instructions;
   }
 
+  public override useTool(): string[] {
+    return ['reroute_request'];
+  }
+
   public override defineTool(): ToolType[] {
     return [
       {
         name: 'capture_room_type',
         description: 'Save one supported room type.',
-        schema: z.object({ roomType: z.enum(ROOM_TYPES) }),
+        schema: z.object({ roomType: z.enum(CriteriaHelper.ROOM_TYPES) }),
       },
     ];
   }
 
   @Tool
   protected async capture_room_type(args: {
-    roomType: (typeof ROOM_TYPES)[number];
+    roomType: (typeof CriteriaHelper.ROOM_TYPES)[number];
   }): Promise<ToolResponseType> {
     this.saveState({ answered: true, roomType: args.roomType });
-    return this.advance();
+    return go('RouterStep').withState({ mode: 'advance' });
+  }
+
+  @Tool
+  protected async reroute_request(): Promise<ToolResponseType> {
+    return go('RouterStep').withState({ mode: 'request' });
   }
 }

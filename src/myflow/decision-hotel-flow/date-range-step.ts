@@ -1,10 +1,9 @@
-import { Prompt, Tool, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
+import { Prompt, Step, Tool, go, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
 import { z } from 'zod';
-import { CriteriaStep } from './criteria-step.js';
 
 const Instructions = Prompt.file('prompt/date-range.md');
 
-export class DateRangeStep extends CriteriaStep {
+export class DateRangeStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
@@ -16,6 +15,10 @@ export class DateRangeStep extends CriteriaStep {
     });
   }
 
+  public override useTool(): string[] {
+    return ['reroute_request'];
+  }
+
   public override defineTool(): ToolType[] {
     return [
       {
@@ -25,6 +28,12 @@ export class DateRangeStep extends CriteriaStep {
           start: z.string().describe('Check-in date in YYYY-MM-DD format.'),
           end: z.string().describe('Checkout date in YYYY-MM-DD format.'),
         }),
+      },
+      {
+        name: 'reroute_request',
+        description:
+          'Return a request that belongs to another hotel criterion to RouterStep.',
+        schema: z.object({}),
       },
     ];
   }
@@ -56,7 +65,12 @@ export class DateRangeStep extends CriteriaStep {
       start: toIsoDate(start),
       end: toIsoDate(end),
     });
-    return this.advance();
+    return go('RouterStep').withState({ mode: 'advance' });
+  }
+
+  @Tool
+  protected async reroute_request(): Promise<ToolResponseType> {
+    return go('RouterStep').withState({ mode: 'request' });
   }
 }
 

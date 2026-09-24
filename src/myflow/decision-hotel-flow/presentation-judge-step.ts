@@ -8,7 +8,7 @@ import {
   type DecisionResponse,
 } from '@picoflow/core';
 import type { SearchHotelEntry } from '../hotel-flow/backend/pricing-engine.js';
-import { renderHotelResults } from './hotel-criteria.js';
+import { CriteriaHelper } from './criteria-helper.js';
 import { PresentStep } from './present-step.js';
 
 const Instructions = Prompt.file('prompt/presentation-judge.md');
@@ -56,7 +56,7 @@ export class PresentationJudgeStep extends DecisionStep<typeof REVIEW> {
   ): Promise<DecisionResponse> {
     const hotels =
       this.getStepState<SearchHotelEntry[]>(PresentStep, 'hotelFound') ?? [];
-    return directTo(PresentStep, renderHotelResults(hotels));
+    return directTo(PresentStep, CriteriaHelper.renderHotelResults(hotels));
   }
 
   public async onDecision(
@@ -75,7 +75,7 @@ export class PresentationJudgeStep extends DecisionStep<typeof REVIEW> {
     this.saveState({ review: answers, accepted });
     return directTo(
       PresentStep,
-      accepted ? draft : renderHotelResults(hotels),
+      accepted ? draft : CriteriaHelper.renderHotelResults(hotels),
     );
   }
 }

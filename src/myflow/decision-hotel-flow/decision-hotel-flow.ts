@@ -1,10 +1,8 @@
 import {
   Flow,
   TerminateSessionStep,
-  ToolType,
   type Step,
 } from '@picoflow/core';
-import { z } from 'zod';
 import { AmenityStep } from './amenity-step.js';
 import { BudgetStep } from './budget-step.js';
 import { CriteriaReadinessJudgeStep } from './criteria-readiness-judge-step.js';
@@ -16,8 +14,6 @@ import { RoomTypeStep } from './room-type-step.js';
 import { RouterStep } from './router-step.js';
 import { SearchHotelsStep } from './search-hotels-step.js';
 
-export const DECISION_HOTEL_INTAKE_MEMORY = 'decision-hotel-intake';
-export const DECISION_HOTEL_PRESENT_MEMORY = 'decision-hotel-present';
 
 export class DecisionHotelFlow extends Flow {
   protected override configModel() {
@@ -41,34 +37,23 @@ export class DecisionHotelFlow extends Flow {
     };
   }
 
-  public override defineTool(): ToolType[] {
-    return [
-      {
-        name: 'reroute_request',
-        description:
-          'Return a request that belongs to another hotel criterion to RouterStep.',
-        schema: z.object({}),
-      },
-    ];
-  }
-
   protected override defineSteps(): Step[] {
     return [
-      new RouterStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
-      new DateRangeStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
-      new BudgetStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
-      new RoomTypeStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
-      new AmenityStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
-      new DistanceStep(this).useMemory(DECISION_HOTEL_INTAKE_MEMORY),
+      new RouterStep(this).useMemory('intake'),
+      new DateRangeStep(this).useMemory('intake'),
+      new BudgetStep(this).useMemory('intake'),
+      new RoomTypeStep(this).useMemory('intake'),
+      new AmenityStep(this).useMemory('intake'),
+      new DistanceStep(this).useMemory('intake'),
       new CriteriaReadinessJudgeStep(this).useMemory(
-        DECISION_HOTEL_INTAKE_MEMORY,
+        'intake',
       ),
       new SearchHotelsStep(this),
-      new PresentStep(this).useMemory(DECISION_HOTEL_PRESENT_MEMORY),
+      new PresentStep(this).useMemory('present'),
       new PresentationJudgeStep(this).useMemory(
-        DECISION_HOTEL_PRESENT_MEMORY,
+        'present',
       ),
-      new TerminateSessionStep(this).useMemory('decision-hotel-end'),
+      new TerminateSessionStep(this).useMemory('end'),
     ];
   }
 }

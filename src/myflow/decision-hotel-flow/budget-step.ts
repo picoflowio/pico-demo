@@ -1,16 +1,19 @@
-import { Prompt, Tool, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
+import { Prompt, Step, Tool, go, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
 import { z } from 'zod';
-import { CriteriaStep } from './criteria-step.js';
 
 const Instructions = Prompt.file('prompt/budget.md');
 
-export class BudgetStep extends CriteriaStep {
+export class BudgetStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
 
   public override getPrompt(): string {
     return Instructions;
+  }
+
+  public override useTool(): string[] {
+    return ['reroute_request'];
   }
 
   public override defineTool(): ToolType[] {
@@ -42,6 +45,11 @@ export class BudgetStep extends CriteriaStep {
     }
 
     this.saveState({ answered: true, min: args.min, max: args.max });
-    return this.advance();
+    return go('RouterStep').withState({ mode: 'advance' });
+  }
+
+  @Tool
+  protected async reroute_request(): Promise<ToolResponseType> {
+    return go('RouterStep').withState({ mode: 'request' });
   }
 }

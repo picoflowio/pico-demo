@@ -8,12 +8,7 @@ import {
   type DecisionQuestionMap,
   type DecisionResponse,
 } from '@picoflow/core';
-import { readCriteria, stepForField } from './criteria-state.js';
-import {
-  renderCriteriaSummary,
-  validateCriteria,
-  type CriteriaField,
-} from './hotel-criteria.js';
+import { CriteriaHelper, type CriteriaField } from './criteria-helper.js';
 import { RouterStep } from './router-step.js';
 import { SearchHotelsStep } from './search-hotels-step.js';
 
@@ -51,28 +46,28 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
   }
 
   protected override getDecisionData() {
-    const criteria = readCriteria(this);
+    const criteria = CriteriaHelper.readCriteria(this);
     return {
       criteria,
-      deterministicIssues: validateCriteria(criteria),
+      deterministicIssues: CriteriaHelper.validateCriteria(criteria),
     };
   }
 
   public override async onDecisionError(
     _context: DecisionErrorContext,
   ): Promise<DecisionResponse> {
-    const criteria = readCriteria(this);
-    const issues = validateCriteria(criteria);
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
     return issues.length > 0
-      ? go(stepForField(issues[0]!.field))
+      ? go(CriteriaHelper.nextStep(issues))
       : go(SearchHotelsStep);
   }
 
   public async onDecision(
     answers: DecisionAnswers<typeof REVIEW>,
   ): Promise<DecisionResponse> {
-    const criteria = readCriteria(this);
-    const issues = validateCriteria(criteria);
+    const criteria = CriteriaHelper.readCriteria(this);
+    const issues = CriteriaHelper.validateCriteria(criteria);
     const outcome = answers.outcome.choice;
     const accepted =
       issues.length === 0 &&
@@ -82,17 +77,17 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
     this.saveState({ review: answers, accepted });
 
     if (issues.length > 0) {
-      return go(stepForField(issues[0]!.field));
+      return go(CriteriaHelper.nextStep(issues));
     }
     if (accepted) {
       return go(SearchHotelsStep);
     }
     if (outcome !== 'ready' && outcome !== 'unclear') {
-      return go(stepForField(outcome as CriteriaField));
+      return go(CriteriaHelper.stepForField(outcome as CriteriaField));
     }
     return directTo(
       RouterStep,
-      `${renderCriteriaSummary(criteria)}\n\nI could not verify one clear correction. Tell me which single criterion to update.`,
+      `${CriteriaHelper.renderCriteriaSummary(criteria)}\n\nI could not verify one clear correction. Tell me which single criterion to update.`,
     );
   }
 }

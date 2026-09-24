@@ -1,16 +1,19 @@
-import { Prompt, Tool, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
+import { Prompt, Step, Tool, go, stay, type Flow, type ToolResponseType, type ToolType } from '@picoflow/core';
 import { z } from 'zod';
-import { CriteriaStep } from './criteria-step.js';
 
 const Instructions = Prompt.file('prompt/distance.md');
 
-export class DistanceStep extends CriteriaStep {
+export class DistanceStep extends Step {
   constructor(flow: Flow) {
     super(flow);
   }
 
   public override getPrompt(): string {
     return Instructions;
+  }
+
+  public override useTool(): string[] {
+    return ['reroute_request'];
   }
 
   public override defineTool(): ToolType[] {
@@ -43,6 +46,11 @@ export class DistanceStep extends CriteriaStep {
       airport: args.airport,
       cityCenter: args.cityCenter,
     });
-    return this.advance();
+    return go('RouterStep').withState({ mode: 'advance' });
+  }
+
+  @Tool
+  protected async reroute_request(): Promise<ToolResponseType> {
+    return go('RouterStep').withState({ mode: 'request' });
   }
 }
