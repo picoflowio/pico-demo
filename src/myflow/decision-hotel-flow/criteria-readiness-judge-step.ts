@@ -59,7 +59,7 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
   }
 
   /** Supplies the structured subject Jev evaluates; getPrompt() supplies guidance. */
-  protected override getDecisionData() {
+  protected override getDecisionFacts() {
     const criteria = CriteriaHelper.readCriteria(this);
     return {
       criteria,

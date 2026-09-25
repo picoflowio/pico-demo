@@ -67,7 +67,7 @@ export class RouterStep extends DecisionStep<typeof ROUTING> {
     });
   }
 
-  protected override getDecisionData() {
+  protected override getDecisionFacts() {
     const criteria = CriteriaHelper.readCriteria(this);
     return {
       criteria,

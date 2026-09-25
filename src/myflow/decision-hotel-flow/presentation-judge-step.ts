@@ -42,7 +42,7 @@ export class PresentationJudgeStep extends DecisionStep<typeof REVIEW> {
     return Instructions;
   }
 
-  protected override getDecisionData() {
+  protected override getDecisionFacts() {
     return {
       draft: this.getStepState<string>(PresentStep, 'draft') ?? '',
       hotelFound:
