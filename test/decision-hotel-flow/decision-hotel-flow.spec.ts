@@ -172,16 +172,38 @@ test(
               const deliveryInstructions =
                 request.questions.request_delivery?.instructions;
               assert.ok(Array.isArray(instructions));
-              assert.equal(instructions.length, 1);
+              assert.ok(Array.isArray(deliveryInstructions));
+              assert.equal(instructions.length, 2);
+              assert.equal(deliveryInstructions.length, 2);
               assert.equal(typeof instructions[0], 'string');
-              assert.deepEqual(deliveryInstructions, instructions);
+              assert.equal(typeof instructions[1], 'string');
+              assert.equal(typeof deliveryInstructions[0], 'string');
+              assert.equal(typeof deliveryInstructions[1], 'string');
+              assert.equal(deliveryInstructions[0], instructions[0]);
+              assert.notEqual(deliveryInstructions[1], instructions[1]);
               assert.doesNotMatch(instructions[0] as string, /{{[A-Z_]+}}/);
               assert.match(
                 instructions[0] as string,
-                /criteria collected so far/i,
+                /structured decision state as the source of truth/i,
+              );
+              const unresolvedSummary =
+                unresolved.length === 0 ? 'none' : unresolved.join(', ');
+              assert.ok(
+                (instructions[1] as string).includes(
+                  `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
+                ),
+              );
+              assert.ok(
+                (deliveryInstructions[1] as string).includes(
+                  `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
+                ),
+              );
+              assert.match(
+                deliveryInstructions[1] as string,
+                /classify the latest request independently/i,
               );
               assert.equal('mode' in state, false);
-              routerInstructions.push(instructions[0] as string);
+              routerInstructions.push(instructions[1] as string);
 
               if (state.notice) {
                 throw new Error('simulated router decision outage during notice');
@@ -523,12 +545,15 @@ test(
       assert.match(String(present.confirmationNumber), /^\d{6}$/);
       assert.ok(doc.decisionUsage.calls >= 12);
       assert.ok(routerInstructions.length >= 12);
-      assert.match(routerInstructions[0]!, /"answered": false/);
+      assert.match(
+        routerInstructions[0]!,
+        /dates, budget, room_type, amenities, distance/,
+      );
       assert.ok(
         routerInstructions.some(
-          (instruction) =>
-            instruction.includes('"start": "2027-08-03"') &&
-            instruction.includes('"max": 760'),
+          (instruction) => instruction.includes(
+            'Current unresolved criteria in collection order: none.',
+          ),
         ),
       );
       assert.equal(criteriaJudgeInstructions.length, 5);

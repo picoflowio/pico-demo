@@ -50,6 +50,8 @@ flowchart TD
 
 Each criterion step owns its normalized state. If a user changes another criterion while one specialist is active, the shared `reroute_request` tool returns the original request to `RouterStep`, which sends it to the correct specialist in the same turn. The router can also review the current criteria, start a search, or finish an explicit exit request.
 
+`RouterStep.defineQuestions()` builds its typed question map for every decision invocation. The router does not require dynamic definitions for correctness, but it demonstrates the capability by adding a question-specific instruction with the current unresolved criterion names; PicoFlow then prepends the shared `getPrompt()` guidance to both questions.
+
 The readiness judge checks that the normalized snapshot still matches the conversation before the MCP-backed hotel search. Deterministic validation remains authoritative. The presentation judge releases a model draft only when its names, prices, and actions are grounded in the actual search results; otherwise the flow renders those results deterministically. Each `DecisionStep` also owns its provider-failure fallback: the router uses saved criteria, the readiness judge uses deterministic validation, and the presentation judge renders the saved hotel results. There is no `CompareStep`.
 
 The flow uses the application’s existing `typesafe` decision provider, OpenAI model provider, session backend, and local hotel-pricing MCP client. Booking uses `finish(...)` to return the exact confirmation and complete the session without another model call. Start the demo normally and select `DecisionHotelFlow` through the existing flow endpoint.
