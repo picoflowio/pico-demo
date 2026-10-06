@@ -85,7 +85,7 @@
     {
       "label": "booking confirmation",
       "input": "8",
-      "expectedResponse": "The assistant should book hotel number 8 from the presented list, provide a confirmation number, and thank the user for choosing Hilton.",
+      "expectedResponse": "The assistant should confirm that Hampton Inn Sherwood Portland (hotel number 8 from the presented list) is booked, provide a confirmation number, and thank the user for choosing Hilton. Naming the booked property is sufficient; the reply does not need to repeat the list number. Fail if it confirms a different property.",
       "completed": true
     }
   ]

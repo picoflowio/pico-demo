@@ -3,6 +3,7 @@
 - This software is proprietary and confidential. Unauthorized copying, distribution
 - or modification of this file, via any medium, is strictly prohibited.
  */
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
@@ -12,6 +13,16 @@ import {
 } from '@nestjs/platform-fastify';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { Agent, setGlobalDispatcher } from 'undici';
+
+// Long LLM calls can exceed fetch's 300s default.
+const llmHttpTimeoutMs = Number(process.env.LLM_HTTP_TIMEOUT_MS ?? 1_200_000);
+setGlobalDispatcher(
+  new Agent({
+    headersTimeout: llmHttpTimeoutMs,
+    bodyTimeout: llmHttpTimeoutMs,
+  }),
+);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -20,6 +31,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+  app.enableShutdownHooks();
 
   app.enableCors({
     origin: '*',

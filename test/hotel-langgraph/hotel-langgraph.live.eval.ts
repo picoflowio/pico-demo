@@ -10,7 +10,7 @@ import {
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { AppModule } from "../../src/app.module.js";
-import { HotelLanggraph } from "../../src/myflow/hotel-langgraph/hotel-langgraph.js";
+import { HotelLanggraph, type LazyHotelLanggraph } from "../../src/myflow/hotel-langgraph/hotel-langgraph.js";
 
 type Scenario = {
   judgeModel?: string;
@@ -67,13 +67,9 @@ test(
 
     const app = await createApp();
     const server = app.getHttpAdapter().getInstance();
-    const graph = app.get(HotelLanggraph);
+    const graph = app.get<HotelLanggraph | LazyHotelLanggraph>(HotelLanggraph);
     const keepSession = process.env.HOTEL_LANGGRAPH_KEEP_SESSIONS === "1";
     let sessionId: string | undefined;
-
-    console.log(
-      `[HotelLanggraph Live] session store: ${graph.sessionStoreKind}`,
-    );
 
     try {
       for (const [index, turn] of scenario.turns.entries()) {
@@ -115,6 +111,9 @@ test(
         } else {
           sessionId = responseSession ?? body.session;
           assert.ok(sessionId, "first response did not return a session");
+          console.log(
+            `[HotelLanggraph Live] session store: ${graph.sessionStoreKind}`,
+          );
         }
 
         console.log(
@@ -152,6 +151,7 @@ test(
         "freeParking",
       ]);
       assert.equal(state.bookedHotel, "Hampton Inn Sherwood Portland");
+      assert.equal(state.hotelFound[7]?.hotelName, state.bookedHotel, "booked property must match hotel number 8");
       assert.equal(state.confirmationNumber?.toString().length, 6);
       console.log("[HotelLanggraph Live] final session state: ok");
     } finally {
@@ -210,6 +210,7 @@ async function judge(
             "Accept structured comparison tables when they contain the requested hotels and feature.",
             "In comparison tables, generic Hotel 1, Hotel 2, and Hotel 3 column labels are not hotel selections; judge the hotelName row.",
             "For the amenities reuse turn, fail if the assistant asks the user to choose hotels again.",
+            "For booking confirmation, accept the selected hotel's exact name without requiring the response to repeat its list number. Reject confirmation of a different property or omission of the confirmation number or Hilton acknowledgement.",
             "Return only JSON with pass boolean, score number 0 to 1, reason string, missing string array, and contradictions string array.",
           ].join(" "),
         },

@@ -9,18 +9,18 @@ tests and developer guides.
 ## Prerequisites
 
 - Node.js 22.5 or newer
-- npm
+- npm and Yarn Classic (for the local library link)
 - API credentials for the live scenarios you want to run
 
-The application uses the published `@picoflow/core` dependency declared in
-[`package.json`](./package.json). If you are developing the sibling `picoflow`
-library as well, build its local library from `../picoflow` with
-`npm run build:picoflow` before rebuilding this application.
+The application links the sibling `@picoflow/core` package declared in
+[`package.json`](./package.json). Build it with `npm run build:picoflow` before
+installing dependencies or rebuilding the application.
 
 ## Install and run
 
 ```sh
-npm install
+npm run build:picoflow
+yarn install
 npm run start:dev
 ```
 
@@ -37,11 +37,29 @@ PicoFlow adapters, plus the application-owned NVIDIA OpenAI-compatible adapter.
 The relevant variables are `OPENAI_API_KEY`, `GEMINI_API_KEY`,
 `ANTHROPIC_API_KEY`, `NVIDIA_API_KEY`, and `PICOFLOW_KEY`.
 
-SQLite is the default session store for the flow tests. The direct hotel
-LangGraph implementation supports memory, SQLite, and MongoDB session stores;
-MongoDB requires `MONGODB_URL`, `MONGODB_NAME`, and `MONGODB_COLLECTION`.
+The flow test files use SQLite when run directly; `test:basic-flow` sets
+`USE_ENV=1` so the configured Cosmos session store is exercised. The direct
+hotel LangGraph implementation supports memory, SQLite, and MongoDB session
+stores; MongoDB requires `MONGODB_URL`, `MONGODB_NAME`, and `MONGODB_COLLECTION`.
 
 ## API examples
+
+Database clients are configured inline in `src/app.module.ts` through
+`FlowEngine.create({ configManager: config, sessionClients: { mongodb, cosmos } })`.
+Only the selected store's callback runs. The callbacks receive no arguments
+and explicitly read their URL/endpoint and credentials from `ConfigService`;
+PicoFlow handles connection setup, session persistence, and cleanup.
+No separate persistence file is required.
+
+MongoDB uses `MONGODB_URL`, `MONGODB_NAME`, and `MONGODB_COLLECTION`.
+Customize its SDK callback for DocumentDB authentication or connection settings;
+`MONGODB_TLS_CA_FILE` is optional. Cosmos uses `COSMODB_URL`, `COSMODB_ID`, and
+`COSMODB_SESSION_ID`; its callback chooses `COSMODB_KEY`, explicit
+`AZURE_TENANT_ID` / `COSMO_DB_CLIENT_ID` / `COSMO_DB_CLIENT_SECRET`, or
+`DefaultAzureCredential`. Set `COSMOS_CREATE_IF_NOT_EXISTS=false` for existing
+resources. For shared clients, put `ownsClients: false` inside `sessionClients`
+and close the client in its owning provider. The demo closes dedicated clients
+through `FlowEngine.close()` during application shutdown.
 
 Run a PicoFlow flow and retain the `CHAT_SESSION_ID` response header for later
 turns:
@@ -68,6 +86,9 @@ npm run test:invoice-flow
 npm run test:support-flow
 npm run test:home-insurance-flow
 npm run test:employee-benefits-flow
+
+# The BasicFlow script already exercises the session store selected by .env
+USE_ENV=1 npm run test:basic-flow
 
 # Run the direct LangGraph live evaluation (requires OPENAI_API_KEY)
 npm run test:hotel-langgraph

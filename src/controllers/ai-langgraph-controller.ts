@@ -16,7 +16,7 @@ import {
   ApiRunBodyDto,
   ApiRunResponseDto,
 } from "./api-types.js";
-import { HotelLanggraph } from "../myflow/hotel-langgraph/hotel-langgraph.js";
+import { HotelLanggraph, type LazyHotelLanggraph } from "../myflow/hotel-langgraph/hotel-langgraph.js";
 
 const SESSION_ID = "SESSION_ID";
 
@@ -26,7 +26,7 @@ const SESSION_ID = "SESSION_ID";
 export class AiLanggraphController {
   constructor(
     @Inject(HotelLanggraph)
-    private readonly hotelLanggraph: HotelLanggraph,
+    private readonly hotelLanggraph: HotelLanggraph | LazyHotelLanggraph,
   ) {}
 
   @Post("run")

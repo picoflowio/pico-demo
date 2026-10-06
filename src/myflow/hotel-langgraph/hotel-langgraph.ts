@@ -859,9 +859,18 @@ export class HotelLanggraph {
   };
 }
 
-export class LazyHotelLanggraph {
+export class LazyHotelLanggraph implements Pick<
+  HotelLanggraph,
+  "name" | "run" | "hasSession" | "getSessionState" | "deleteSession" | "close"
+> {
   readonly name = "HotelLanggraph";
   private instancePromise?: Promise<HotelLanggraph>;
+  private instance?: HotelLanggraph;
+
+  /** Available after the first operation initializes the graph. */
+  get sessionStoreKind(): HotelSessionStore["kind"] | undefined {
+    return this.instance?.sessionStoreKind;
+  }
 
   /**
    * Initializes the LazyHotelLanggraph with an async factory function.
@@ -876,7 +885,10 @@ export class LazyHotelLanggraph {
    * @returns Promise resolving to the singleton HotelLanggraph instance.
    */
   private getInstance(): Promise<HotelLanggraph> {
-    this.instancePromise ??= this.create();
+    this.instancePromise ??= this.create().then((instance) => {
+      this.instance = instance;
+      return instance;
+    });
     return this.instancePromise;
   }
 
@@ -888,6 +900,16 @@ export class LazyHotelLanggraph {
    */
   async run(input: HotelLanggraphRunInput): Promise<HotelLanggraphRunResult> {
     return (await this.getInstance()).run(input);
+  }
+
+  async hasSession(sessionId: string): Promise<boolean> {
+    return (await this.getInstance()).hasSession(sessionId);
+  }
+
+  async getSessionState(
+    sessionId: string,
+  ): Promise<HotelLanggraphStateType | undefined> {
+    return (await this.getInstance()).getSessionState(sessionId);
   }
 
   /**
