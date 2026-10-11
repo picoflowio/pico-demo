@@ -80,7 +80,12 @@ LangGraph comparison uses `POST /ai-langgraph/run` and the `SESSION_ID` header.
 npm test
 
 # Run individual scenarios
+# BasicFlow with its original hosted-model declarations
 npm run test:basic-flow
+
+# BasicFlow with Qwen selected only inside the test script
+npm run test:basic-flow-ollama
+
 npm run test:hotel-flow
 npm run test:invoice-flow
 npm run test:support-flow
@@ -93,6 +98,26 @@ USE_ENV=1 npm run test:basic-flow
 # Run the direct LangGraph live evaluation (requires OPENAI_API_KEY)
 npm run test:hotel-langgraph
 ```
+
+`test:basic-flow` runs only the eight-turn live conversation and produces one
+session document. The scripted parallel-join test is retained separately at
+`test/regression/basic-flow-parallel.spec.ts`, outside the flow package commands.
+
+`test:basic-flow-ollama` reuses BasicFlow's eight-turn scenario and changes model
+selection only through scoped `node:test` mocks. It retains BasicFlow's prompts,
+tools, memory spaces, structured movie generation, and nested parallel workers;
+the original flow and tests keep their hosted-model declarations. The replay uses
+`qwen3.5:9b` for every model-driven step, including WeatherStep and DOBStep.
+The test's Ollama adapter selects native tool-based structured output, retaining
+BasicFlow's original Zod schema and its 0–10 movie-rating validation.
+
+Start Ollama and install the model with `ollama pull qwen3.5:9b`. Set
+`OLLAMA_BASE_URL` if the server is not at `http://localhost:11434`. This test
+requires `PICOFLOW_KEY` and the credentials for the configured session store.
+It uses deterministic response/state assertions and no separate LLM grader.
+The package command sets `USE_ENV=1 KEEP_SESSION=1`, preserving configured
+persistence and the resulting session. The transcript and session snapshot are
+saved under `test/.tmp/basic-flow-ollama/replay.latest.json` on success or failure.
 
 The BasicFlow, HotelFlow, InvoiceFlow, SupportFlow, HomeInsuranceQuoteFlow, and
 EmployeeBenefitsFlow

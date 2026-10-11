@@ -31,7 +31,8 @@
     "test:home-insurance-flow": "USE_ENV=1 node --import tsx --test test/home-insurance-flow/home-insurance-flow.e2e-spec.ts",
     "test:employee-benefits-flow": "USE_ENV=1 node --import tsx --test test/employee-benefits-flow/employee-benefits-flow.e2e-spec.ts",
     "test:decision-hotel-flow": "USE_ENV=1 node --import tsx --test test/decision-hotel-flow/decision-hotel-flow.e2e-spec.ts",
-    "test:decision-hotel-flow:contract": "node --import tsx --test test/decision-hotel-flow/decision-hotel-flow.spec.ts"
+    "test:decision-hotel-flow:contract": "node --import tsx --test test/decision-hotel-flow/decision-hotel-flow.spec.ts",
+    "test:basic-flow-ollama": "USE_ENV=1 KEEP_SESSION=1 node --import tsx --test test/basic-flow-ollama/*.eval.ts"
   },
   "dependencies": {
     "@azure/cosmos": "4.10.0",
@@ -47,7 +48,7 @@
     "@nestjs/core": "11.1.28",
     "@nestjs/platform-fastify": "11.1.28",
     "@nestjs/swagger": "11.4.6",
-    "@picoflow/core": "^1.1.14",
+    "@picoflow/core": "^1.1.15",
     "dotenv": "17.4.2",
     "fastify": "5.10.0",
     "lodash": "^4.17.21",
