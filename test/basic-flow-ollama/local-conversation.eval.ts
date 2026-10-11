@@ -91,12 +91,13 @@ test('replays BasicFlow with local Qwen, its own recovery rules, structured outp
   let app: NestFastifyApplication | undefined;
   let sessionId: string | undefined;
   let structuredCalls = 0;
+  const structuredAttempts: Record<string, unknown>[] = [];
   const transcript: RecordedTurn[] = [];
   const report: Record<string, unknown> = {
     model: modelId, ollamaBaseUrl: baseUrl, structuredOutputMethod: 'functionCalling',
     sessionStore: process.env.SESSION_STORE || 'MEMORY',
     sessionId: null, keepSession, startedAt: new Date().toISOString(),
-    passed: false, transcript,
+    passed: false, transcript, structuredAttempts,
   };
 
   try {
@@ -131,7 +132,25 @@ test('replays BasicFlow with local Qwen, its own recovery rules, structured outp
                 // to the model and still uses the original Zod output validator.
                 return (schema: unknown, options?: Record<string, unknown>) => {
                   structuredCalls++;
-                  return value.call(target, schema, { ...options, method: 'functionCalling' });
+                  const runnable = value.call(target, schema, {
+                    ...options, method: 'functionCalling', includeRaw: true,
+                  });
+                  return {
+                    async invoke(input: unknown, callOptions?: Record<string, unknown>) {
+                      const output = await runnable.invoke(input, callOptions);
+                      // Keep the raw answer so a missing output tool can be
+                      // distinguished from invalid tool arguments after a run.
+                      structuredAttempts.push({
+                        content: output.raw?.content,
+                        toolCalls: output.raw?.tool_calls ?? [],
+                        parsed: output.parsed ?? null,
+                      });
+                      if (output.parsed === null) {
+                        throw new Error('Ollama structured output failed schema validation; see the replay artifact for the raw answer.');
+                      }
+                      return output.parsed;
+                    },
+                  };
                 };
               },
             });

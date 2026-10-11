@@ -118,6 +118,7 @@ It uses deterministic response/state assertions and no separate LLM grader.
 The package command sets `USE_ENV=1 KEEP_SESSION=1`, preserving configured
 persistence and the resulting session. The transcript and session snapshot are
 saved under `test/.tmp/basic-flow-ollama/replay.latest.json` on success or failure.
+The artifact also records raw structured-output answers and tool calls for diagnosis.
 
 The BasicFlow, HotelFlow, InvoiceFlow, SupportFlow, HomeInsuranceQuoteFlow, and
 EmployeeBenefitsFlow
