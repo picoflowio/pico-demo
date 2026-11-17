@@ -147,11 +147,11 @@ export class RouterStep extends DecisionStep<
       destination: {
         type: "choice",
         criteria: {
-          dates: "Set or revise check-in and checkout dates",
-          budget: "Set or revise minimum or maximum nightly budget",
-          room_type: "Set or revise one bed, two beds, or suite",
-          amenities: "Set or revise hotel amenity preferences",
-          distance: "Set or revise airport or city-center distance limits",
+          dates: `${unresolved[0] === "dates" ? "NEXT COLLECTOR: collect stay dates when no new correction needs applying." : "NOT THE NEXT COLLECTOR: choose only for a NEW date pair DIFFERENT from saved dates."} Saved start=${criteria.dates.start ?? "unset"}, end=${criteria.dates.end ?? "unset"}. If the requested pair equals this pair, do not choose dates; that request is already handled.`,
+          budget: `${unresolved[0] === "budget" ? "NEXT COLLECTOR: collect nightly budget when no new correction needs applying." : "NOT THE NEXT COLLECTOR: choose only for a NEW budget value DIFFERENT from saved budget."} Saved answered=${criteria.budget.answered}, min=${criteria.budget.min ?? "no limit"}, max=${criteria.budget.max ?? "no limit"}. Matching values on an answered budget are already handled.`,
+          room_type: `${unresolved[0] === "room_type" ? "NEXT COLLECTOR: collect room type when no new correction needs applying." : "NOT THE NEXT COLLECTOR: choose only for a NEW room type DIFFERENT from the saved room type."} Saved room type=${criteria.roomType.roomType ?? "unset"}. A matching room type is already handled.`,
+          amenities: `${unresolved[0] === "amenities" ? "NEXT COLLECTOR: ask for amenities when the latest request is already handled or contains no new correction." : "NOT THE NEXT COLLECTOR: choose only for a NEW amenity answer DIFFERENT from saved preferences, or an explicit amenity answer when unanswered."} Saved answered=${criteria.amenities.answered}, amenities=${JSON.stringify(criteria.amenities.amenities)}. Matching answered amenities, including an explicit no-preference empty list, are already handled.`,
+          distance: `${unresolved[0] === "distance" ? "NEXT COLLECTOR: ask for distance preferences when the latest request is already handled or contains no new correction." : "NOT THE NEXT COLLECTOR: choose only for a NEW distance value DIFFERENT from saved limits, or an explicit distance answer when unanswered."} Saved answered=${criteria.distance.answered}, airport=${criteria.distance.airport ?? "no limit"}, city center=${criteria.distance.cityCenter ?? "no limit"}. Matching answered limits are already handled.`,
           review:
             "Display the currently saved criteria only, without running a hotel search",
           search:
@@ -159,15 +159,15 @@ export class RouterStep extends DecisionStep<
           exit: "End the hotel conversation without booking",
           unclear: "The request is ambiguous or outside this hotel flow",
         },
-        instructions: `Choose exactly one destination using the saved criteria and latest request. 
-        Current unresolved criteria in collection order: ${unresolvedSummary}. 
-        The exact request "search" routes to "search", never "review". 
-        An explicit request to review saved criteria routes to "review". 
-        An explicit exit routes to "exit". If the latest request sets or revises a criterion whose value is not reflected in the saved criteria, route to that criterion. 
-        If its value is already reflected, do not route back to it; route to the first unresolved criterion. 
-        If the request does not identify a criterion and unresolved criteria remain, route to the first unresolved criterion. 
-        When every criterion is resolved and the latest criterion request is already reflected, route to "review"; never start a search automatically. 
-        Use "unclear" only for an ambiguous or out-of-scope request.`,
+        instructions: `Choose the next destination for the latest request by comparing its requested values with the saved criteria.
+        First unresolved criterion: ${unresolved[0] ?? "none"}. Current unresolved criteria in collection order: ${unresolvedSummary}.
+        Current saved dates: ${criteria.dates.start ?? "unset"} through ${criteria.dates.end ?? "unset"}.
+        Current saved budget: minimum ${criteria.budget.min ?? "no limit"}, maximum ${criteria.budget.max ?? "no limit"}; answered: ${criteria.budget.answered}.
+        An explicit search request selects search. An explicit criteria review selects review. An explicit exit selects exit.
+        A new or changed criterion value selects its owning collector, even if that criterion was answered before or is absent from unresolved. Compare actual values, not just answered flags.
+        If the latest requested value already matches the saved value, the request is handled. In that case select exactly ${unresolved[0] ?? "review"}; do not select another collector or apply that value again.
+        If the request is a greeting or supplies no criterion value, select exactly ${unresolved[0] ?? "review"}.
+        Use unclear for an ambiguous or out-of-scope request. Never start a search without an explicit search request.`,
       },
       request_delivery: {
         type: "choice",
@@ -176,13 +176,16 @@ export class RouterStep extends DecisionStep<
             "The latest request contains a criterion value or revision that is not yet reflected in the saved criteria",
           prompt_next:
             "The latest request contains no unapplied criterion value and unresolved criteria remain, so the next collector should prompt",
-          none: "The latest request is for review, search, exit, or an unclear or out-of-scope action, so no collector should receive it",
+          none: "The latest request is for review, search, exit, an unclear or out-of-scope action, or is already handled with no unresolved criteria, so no collector should receive it",
         },
-        instructions: `Classify the latest request independently by comparing it with the saved criteria; do not depend on the destination answer. 
-        Current unresolved criteria in collection order: ${unresolvedSummary}. 
-        Choose "apply_request" when the latest request contains a criterion value or revision that is not yet reflected in the saved criteria. 
-        Choose "prompt_next" when it contains no unapplied criterion value and unresolved criteria remain. 
-        Choose "none" for review, search, exit, and unclear or out-of-scope requests.`,
+        instructions: `Classify the latest request independently by comparing its requested values with the saved criteria. Decide whether a supplied value still needs saving, without using the destination answer or treating priorRequests as pending work.
+        Current saved dates: ${criteria.dates.start ?? "unset"} through ${criteria.dates.end ?? "unset"}.
+        Current saved budget: minimum ${criteria.budget.min ?? "no limit"}, maximum ${criteria.budget.max ?? "no limit"}; answered: ${criteria.budget.answered}.
+        Current unresolved criteria in collection order: ${unresolvedSummary}.
+        Choose apply_request only for a supplied value that differs from the saved value, or an answer to a still-unanswered criterion. A date correction requires apply_request until BOTH saved dates match the requested dates.
+        A collector returns to the router after saving; the same latest request is then already handled. If its requested values match the saved values, choose ${unresolved.length > 0 ? "prompt_next" : "none"}. Do not apply it again. Normalize natural dates and compare actual values.
+        Choose prompt_next for a greeting or a request with no new criterion value when unresolved criteria remain.
+        Choose none for an explicit review, search, exit, or out-of-scope request.`,
       },
     } as const satisfies DecisionQuestionMap;
   }
