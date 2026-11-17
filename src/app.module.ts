@@ -70,6 +70,7 @@ import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js"
             EmployeeBenefitsFlow,
           ],
           decisionProviders: DecisionProvider.create({
+            openai: { apiKey: config.get<string>("OPENAI_API_KEY") },
             typesafe: { apiKey: config.get<string>("TYPESAFE_API_KEY") },
             google: { apiKey: config.get<string>("GEMINI_API_KEY") },
           }),

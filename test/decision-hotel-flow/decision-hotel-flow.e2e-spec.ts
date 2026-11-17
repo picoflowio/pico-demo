@@ -78,7 +78,6 @@ const testTimeoutMs = Number(
   process.env.DECISION_HOTEL_FLOW_TEST_TIMEOUT_MS ?? 900_000,
 );
 const missingLiveConfig = [
-  'GEMINI_API_KEY',
   'OPENAI_API_KEY',
   'PICOFLOW_KEY',
 ].filter((key) => !process.env[key]?.trim());

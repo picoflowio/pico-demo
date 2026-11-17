@@ -54,7 +54,7 @@ Each criterion step owns its normalized state. If a user changes another criteri
 
 The readiness judge checks that the normalized snapshot still matches the conversation before the MCP-backed hotel search. Deterministic validation remains authoritative. The presentation judge releases a model draft only when its names, prices, and actions are grounded in the actual search results; otherwise the flow renders those results deterministically. Each `DecisionStep` also owns its provider-failure fallback: the router uses saved criteria, the readiness judge uses deterministic validation, and the presentation judge renders the saved hotel results. There is no `CompareStep`.
 
-The flow uses `google` / `gemini-decision-1` for decisions and the OpenAI chat provider for conversation and drafting. Set `GEMINI_API_KEY` for Gemini Decisions. Booking uses `finish(...)` to return the exact confirmation and complete the session without another model call. Start the demo normally and select `DecisionHotelFlow` through the existing flow endpoint.
+The flow uses `openai` / `gpt-6-luna` for decisions and `gpt-4o` for conversation and drafting. Both use `OPENAI_API_KEY`. Booking uses `finish(...)` to return the exact confirmation and complete the session without another model call. Start the demo normally and select `DecisionHotelFlow` through the existing flow endpoint.
 
 ## Live-test conversation
 

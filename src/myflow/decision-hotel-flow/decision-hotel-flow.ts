@@ -27,8 +27,10 @@ export class DecisionHotelFlow extends Flow {
     return {
       // provider: "typesafe",
       // model: "jev-latest",
-      provider: "google",
-      model: "gemini-decision-1",
+      // provider: "google",
+      // model: "gemini-decision-1",
+      provider: "openai",
+      model: "gpt-6-luna",
       timeoutMs: 15_000,
       maxRetries: 2,
     };
