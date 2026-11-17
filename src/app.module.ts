@@ -71,6 +71,7 @@ import { closeHotelPricingMcpClient } from "./tools/hotel-pricing-mcp-client.js"
           ],
           decisionProviders: DecisionProvider.create({
             typesafe: { apiKey: config.get<string>("TYPESAFE_API_KEY") },
+            google: { apiKey: config.get<string>("GEMINI_API_KEY") },
           }),
           //register pre-build providers, only specify what you use.
           providers: [

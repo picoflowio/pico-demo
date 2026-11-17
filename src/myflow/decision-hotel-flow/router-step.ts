@@ -25,7 +25,7 @@ const SharedInstructions = Prompt.file("prompt/router.md");
  * factory, avoiding a duplicate question-map type. `defineQuestions()` calls
  * the factory on every decision invocation, so each question can use current
  * Flow state. PicoFlow then prepends the shared `getPrompt()` text to each
- * question's generated `instructions` before sending the schema to Jev.
+ * question's generated `instructions` before sending the request to the decision provider.
  */
 export class RouterStep extends DecisionStep<
   ReturnType<typeof RouterStep.buildRoutingQuestions>
@@ -128,7 +128,7 @@ export class RouterStep extends DecisionStep<
    * Builds a fresh question schema from the current criteria on every call.
    * The returned `instructions` are question-specific and may include dynamic
    * state such as `unresolvedSummary`. DecisionRunner preserves them and
-   * constructs the effective Jev instructions as:
+   * constructs the effective instructions as:
    *
    *   [this.getPrompt(), question.instructions]
    *

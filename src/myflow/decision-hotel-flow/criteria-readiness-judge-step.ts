@@ -17,6 +17,7 @@ const Instructions = Prompt.file('prompt/criteria-judge.md');
 const REVIEW = {
   outcome: {
     type: 'choice',
+    instructions: 'Which saved criterion needs correction, or are the criteria ready for search?',
     criteria: {
       ready: 'The saved criteria reflect the latest requests and are ready to search',
       dates: 'Dates are missing, ambiguous, or contradict the latest correction',
@@ -29,6 +30,7 @@ const REVIEW = {
   },
   faithful: {
     type: 'noul',
+    instructions: 'Do the saved criteria faithfully reflect the latest user requests?',
     criteria: {
       true: 'The normalized criteria faithfully reflect the latest corrections and explicit no-preference choices',
       false: 'One or more normalized criteria miss or contradict the latest user request',
@@ -58,7 +60,7 @@ export class CriteriaReadinessJudgeStep extends DecisionStep<typeof REVIEW> {
     });
   }
 
-  /** Supplies the structured subject Jev evaluates; getPrompt() supplies guidance. */
+  /** Supplies the structured subject the decision model evaluates; getPrompt() supplies guidance. */
   protected override getDecisionFacts() {
     const criteria = CriteriaHelper.readCriteria(this);
     return {

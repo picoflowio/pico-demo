@@ -54,11 +54,11 @@ Each criterion step owns its normalized state. If a user changes another criteri
 
 The readiness judge checks that the normalized snapshot still matches the conversation before the MCP-backed hotel search. Deterministic validation remains authoritative. The presentation judge releases a model draft only when its names, prices, and actions are grounded in the actual search results; otherwise the flow renders those results deterministically. Each `DecisionStep` also owns its provider-failure fallback: the router uses saved criteria, the readiness judge uses deterministic validation, and the presentation judge renders the saved hotel results. There is no `CompareStep`.
 
-The flow uses the application’s existing `typesafe` decision provider, OpenAI model provider, session backend, and local hotel-pricing MCP client. Booking uses `finish(...)` to return the exact confirmation and complete the session without another model call. Start the demo normally and select `DecisionHotelFlow` through the existing flow endpoint.
+The flow uses `google` / `gemini-decision-1` for decisions and the OpenAI chat provider for conversation and drafting. Set `GEMINI_API_KEY` for Gemini Decisions. Booking uses `finish(...)` to return the exact confirmation and complete the session without another model call. Start the demo normally and select `DecisionHotelFlow` through the existing flow endpoint.
 
 ## Live-test conversation
 
-The following conversation was captured from a complete successful run of `npm run test:decision-hotel-flow` using the live OpenAI and Jev providers. Model wording and the generated confirmation number can vary between runs.
+The following historical replay was captured before the Gemini migration using live OpenAI chat and TypeSafe Jev. Model wording and the generated confirmation number can vary between runs.
 
 **User:** Hi
 
@@ -170,4 +170,4 @@ You may book a hotel by its name or number. Alternatively, you can revise your s
 
 **Bot:** Hampton Inn & Suites Portland Tigard is booked with confirmation #766201. Thank you for choosing Hilton.
 
-Run `npm run test:decision-hotel-flow:contract` for the deterministic twenty-two-turn adapter test covering invalid inputs, a cross-step correction, readiness rejection, presentation rejection, empty results, simulated provider outages in all three DecisionSteps, criteria revision, grounded presentation, and booking. The contract test does not establish live provider reliability.
+Run `npm run test:decision-hotel-flow:contract` for the deterministic Gemini transport test covering invalid inputs, a cross-step correction, readiness rejection, presentation rejection, empty results, simulated provider outages in all three DecisionSteps, criteria revision, grounded presentation, and booking. The contract test does not establish live provider reliability.

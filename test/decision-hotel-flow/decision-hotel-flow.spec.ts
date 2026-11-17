@@ -7,19 +7,30 @@ register('../mock-license-loader.mjs', import.meta.url);
 
 const {
   ConfigManager,
+  DecisionProvider,
   FlowEngine,
   MemorySessionStore,
 } = await import('@picoflow/core');
-const { DecisionHotelFlow } = await import(
+const { DecisionHotelFlow: BaseDecisionHotelFlow } = await import(
   '../../src/myflow/decision-hotel-flow/decision-hotel-flow.js'
 );
+// Keep the simulated Google transport independent of the live provider choice.
+const DecisionHotelFlow = class DecisionHotelFlow extends BaseDecisionHotelFlow {
+  protected override configDecision() {
+    return {
+      provider: 'google',
+      model: 'gemini-decision-1',
+      timeoutMs: 15_000,
+      maxRetries: 2,
+    };
+  }
+};
 const { CriteriaHelper } = await import(
   '../../src/myflow/decision-hotel-flow/criteria-helper.js'
 );
 const { closeHotelPricingMcpClient } = await import(
   '../../src/tools/hotel-pricing-mcp-client.js'
 );
-import type { DecisionRequest, DecisionResult } from '@picoflow/core';
 
 type ScenarioTurn = {
   label: string;
@@ -146,6 +157,8 @@ test(
   async () => {
     process.env.HOTEL_FLOW_CURRENT_DATE = '2026-01-15T00:00:00.000Z';
     let currentInput = '';
+    const simulatedOutages = new Set<string>();
+    const fixtureErrors: unknown[] = [];
     let criteriaReviews = 0;
     let presentationReviews = 0;
     let toolCallId = 0;
@@ -160,78 +173,82 @@ test(
         environment: {},
         values: { SESSION_STORE: 'MEMORY' },
       }),
-      decisionProviders: [
-        {
-          id: 'typesafe',
-          async decide(request: DecisionRequest): Promise<DecisionResult> {
-            const state = request.state as Record<string, any>;
-            if ('destination' in request.questions) {
-              const unresolved = state.unresolved as string[];
-              const criteria = state.criteria as Record<string, any>;
-              const instructions = request.questions.destination.instructions;
-              const deliveryInstructions =
-                request.questions.request_delivery?.instructions;
-              assert.ok(Array.isArray(instructions));
-              assert.ok(Array.isArray(deliveryInstructions));
-              assert.equal(instructions.length, 2);
-              assert.equal(deliveryInstructions.length, 2);
-              assert.equal(typeof instructions[0], 'string');
-              assert.equal(typeof instructions[1], 'string');
-              assert.equal(typeof deliveryInstructions[0], 'string');
-              assert.equal(typeof deliveryInstructions[1], 'string');
-              assert.equal(deliveryInstructions[0], instructions[0]);
-              assert.notEqual(deliveryInstructions[1], instructions[1]);
-              assert.doesNotMatch(instructions[0] as string, /{{[A-Z_]+}}/);
-              assert.match(
-                instructions[0] as string,
-                /structured decision state as the source of truth/i,
-              );
-              const unresolvedSummary =
-                unresolved.length === 0 ? 'none' : unresolved.join(', ');
-              assert.ok(
-                (instructions[1] as string).includes(
-                  `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
-                ),
-              );
-              assert.ok(
-                (deliveryInstructions[1] as string).includes(
-                  `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
-                ),
-              );
-              assert.match(
-                deliveryInstructions[1] as string,
-                /classify the latest request independently/i,
-              );
-              assert.equal('mode' in state, false);
-              routerInstructions.push(instructions[1] as string);
+      decisionProviders: DecisionProvider.create({
+        google: {
+          apiKey: 'test-only',
+          async fetch(url, options) {
+            const body = String(options?.body);
+            const outage = () => {
+              simulatedOutages.add(body);
+              return new Response(null, { status: 503 });
+            };
+            if (simulatedOutages.has(body)) return outage();
+            try {
+              assert.equal(String(url), 'https://generativelanguage.googleapis.com/v1beta/decisions');
+              assert.ok(options?.signal instanceof AbortSignal);
+              const request = JSON.parse(body) as {
+                model: string;
+                input: string;
+                questions: Record<string, { instructions: string; criteria?: unknown }>;
+              };
+              assert.equal(request.model, 'gemini-decision-1');
+              const state = JSON.parse(request.input) as Record<string, any>;
+              if ('destination' in request.questions) {
+                const unresolved = state.unresolved as string[];
+                const criteria = state.criteria as Record<string, any>;
+                const instructions = splitInstructions(request.questions.destination!.instructions);
+                const deliveryInstructions = splitInstructions(request.questions.request_delivery!.instructions);
+                assert.equal(deliveryInstructions[0], instructions[0]);
+                assert.notEqual(deliveryInstructions[1], instructions[1]);
+                assert.doesNotMatch(instructions[0], /{{[A-Z_]+}}/);
+                assert.match(
+                  instructions[0],
+                  /structured decision state as the source of truth/i,
+                );
+                const unresolvedSummary =
+                  unresolved.length === 0 ? 'none' : unresolved.join(', ');
+                assert.ok(
+                  (instructions[1]).includes(
+                    `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
+                  ),
+                );
+                assert.ok(
+                  (deliveryInstructions[1]).includes(
+                    `Current unresolved criteria in collection order: ${unresolvedSummary}.`,
+                  ),
+                );
+                assert.match(
+                  deliveryInstructions[1],
+                  /classify the latest request independently/i,
+                );
+                assert.equal('mode' in state, false);
+                routerInstructions.push(instructions[1]);
 
-              if (state.notice) {
-                throw new Error('simulated router decision outage during notice');
-              }
+                if (state.notice) {
+                  return outage();
+                }
 
-              let route: string;
-              let delivery = 'none';
-              if (/weather/i.test(currentInput)) {
-                route = 'unclear';
-              } else if (/show.*criteria|review/i.test(currentInput)) {
-                route = 'review';
-              } else if (/^search$/i.test(currentInput)) {
-                route = 'search';
-              } else if (/\b(exit|quit|stop)\b/i.test(currentInput)) {
-                route = 'exit';
-              } else {
-                const requested = requestedCriterion(currentInput);
-                const needsApplication =
-                  requested !== undefined &&
-                  !criterionIsReflected(requested, currentInput, criteria);
-                route = needsApplication
-                  ? requested
-                  : (unresolved[0] ?? 'review');
-                delivery = needsApplication ? 'apply_request' : 'prompt_next';
-              }
-              return {
-                model: 'jev-fixture',
-                answers: {
+                let route: string;
+                let delivery = 'none';
+                if (/weather/i.test(currentInput)) {
+                  route = 'unclear';
+                } else if (/show.*criteria|review/i.test(currentInput)) {
+                  route = 'review';
+                } else if (/^search$/i.test(currentInput)) {
+                  route = 'search';
+                } else if (/\b(exit|quit|stop)\b/i.test(currentInput)) {
+                  route = 'exit';
+                } else {
+                  const requested = requestedCriterion(currentInput);
+                  const needsApplication =
+                    requested !== undefined &&
+                    !criterionIsReflected(requested, currentInput, criteria);
+                  route = needsApplication
+                    ? requested
+                    : (unresolved[0] ?? 'review');
+                  delivery = needsApplication ? 'apply_request' : 'prompt_next';
+                }
+                return geminiResponse({
                   destination: choiceAnswer(
                     route,
                     [
@@ -251,40 +268,35 @@ test(
                     'prompt_next',
                     'none',
                   ]),
-                },
-                usage: { inputTokens: 20, outputTokens: 0 },
-              };
-            }
-
-            if ('outcome' in request.questions) {
-              assert.equal(typeof state.criteria, 'object');
-              assert.ok(Array.isArray(state.deterministicIssues));
-              assert.equal(typeof state.request, 'string');
-              assert.ok(Array.isArray(state.priorRequests));
-
-              const outcomeInstructions = request.questions.outcome.instructions;
-              const faithfulInstructions = request.questions.faithful?.instructions;
-              assert.ok(Array.isArray(outcomeInstructions));
-              assert.equal(outcomeInstructions.length, 1);
-              assert.deepEqual(faithfulInstructions, outcomeInstructions);
-              assert.doesNotMatch(
-                outcomeInstructions[0] as string,
-                /{{[A-Z_]+}}/,
-              );
-              assert.match(
-                outcomeInstructions[0] as string,
-                /normalized criteria being reviewed/i,
-              );
-              criteriaJudgeInstructions.push(outcomeInstructions[0] as string);
-
-              criteriaReviews += 1;
-              if (criteriaReviews === 2) {
-                throw new Error('simulated criteria judge decision outage');
+                }, 20);
               }
-              const outcome = criteriaReviews === 1 ? 'budget' : 'ready';
-              return {
-                model: 'jev-fixture',
-                answers: {
+
+              if ('outcome' in request.questions) {
+                assert.equal(typeof state.criteria, 'object');
+                assert.ok(Array.isArray(state.deterministicIssues));
+                assert.equal(typeof state.request, 'string');
+                assert.ok(Array.isArray(state.priorRequests));
+
+                const outcomeInstructions = request.questions.outcome!.instructions;
+                const faithfulInstructions = request.questions.faithful!.instructions;
+                assert.match(faithfulInstructions, /faithfully reflect the latest user requests/);
+                assert.match(outcomeInstructions, /which saved criterion needs correction/i);
+                assert.doesNotMatch(
+                  outcomeInstructions,
+                  /{{[A-Z_]+}}/,
+                );
+                assert.match(
+                  outcomeInstructions,
+                  /normalized criteria being reviewed/i,
+                );
+                criteriaJudgeInstructions.push(outcomeInstructions);
+
+                criteriaReviews += 1;
+                if (criteriaReviews === 2) {
+                  return outage();
+                }
+                const outcome = criteriaReviews === 1 ? 'budget' : 'ready';
+                return geminiResponse({
                   outcome: choiceAnswer(outcome, [
                     'ready',
                     'dates',
@@ -294,29 +306,27 @@ test(
                     'distance',
                     'unclear',
                   ]),
-                  faithful: { type: 'noul', noul: 0.99 },
-                },
-                usage: { inputTokens: 30, outputTokens: 0 },
-              };
-            }
+                  faithful: { type: 'noul', noul: 0.99, confidence: 0.99 },
+                }, 30);
+              }
 
-            presentationReviews += 1;
-            if (presentationReviews === 2) {
-              throw new Error('simulated presentation judge decision outage');
+              presentationReviews += 1;
+              if (presentationReviews === 2) {
+                return outage();
+              }
+              const accepted = presentationReviews > 1;
+              return geminiResponse({
+                grounded: { type: 'noul', noul: accepted ? 0.99 : 0.1, confidence: accepted ? 0.99 : 0.9 },
+                completeness: score(2, request.questions.completeness!.criteria),
+                clarity: score(2, request.questions.clarity!.criteria),
+              }, 30);
+            } catch (error) {
+              fixtureErrors.push(error);
+              throw error;
             }
-            const accepted = presentationReviews > 1;
-            return {
-              model: 'jev-fixture',
-              answers: {
-                grounded: { type: 'noul', noul: accepted ? 0.99 : 0.1 },
-                completeness: score(2),
-                clarity: score(2),
-              },
-              usage: { inputTokens: 30, outputTokens: 0 },
-            };
           },
         },
-      ],
+      }),
       providers: [
         {
           provider: 'openai',
@@ -487,6 +497,7 @@ test(
     try {
       for (const turn of turns) {
         currentInput = turn.input;
+        simulatedOutages.clear();
         console.log(`[DecisionHotelFlow] ${turn.label}: ${turn.input}`);
         const response = await engine.run({
           flowName: DecisionHotelFlow.id,
@@ -543,7 +554,10 @@ test(
         ),
       );
       assert.match(String(present.confirmationNumber), /^\d{6}$/);
+      assert.deepEqual(fixtureErrors, []);
       assert.ok(doc.decisionUsage.calls >= 12);
+      assert.ok(doc.debug.some(entry => entry.kind === 'decision' &&
+        entry.provider === 'google' && entry.model === 'gemini-decision-1'));
       assert.ok(routerInstructions.length >= 12);
       assert.match(
         routerInstructions[0]!,
@@ -609,12 +623,27 @@ function choiceAnswer(choice: string, labels: string[]) {
   };
 }
 
-function score(value: number) {
+function splitInstructions(instructions: string): [string, string] {
+  const separator = instructions.lastIndexOf('\n\n');
+  assert.ok(separator >= 0);
+  return [instructions.slice(0, separator), instructions.slice(separator + 2)];
+}
+
+function geminiResponse(answers: object, inputTokens: number) {
+  return Response.json({
+    answers,
+    usage: { total_input_tokens: inputTokens, total_output_tokens: 0 },
+  });
+}
+
+function score(value: number, criteria: unknown) {
+  assert.ok(Array.isArray(criteria));
+  assert.ok(criteria.every(level => typeof level === 'string'));
   return {
     type: 'score' as const,
     score: value,
     confidence: 0.99,
-    legend: { 0: 'low', 1: 'medium', 2: 'high' },
+    legend: Object.fromEntries(criteria.map((description, index) => [index, description])),
     probabilities: { 0: value === 0 ? 1 : 0, 1: value === 1 ? 1 : 0, 2: value === 2 ? 1 : 0 },
   };
 }

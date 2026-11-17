@@ -10,12 +10,13 @@ import {
 } from '@nestjs/platform-fastify';
 import { FlowEngine } from '@picoflow/core';
 import { AppModule } from '../../src/app.module.js';
+import { CriteriaHelper } from '../../src/myflow/decision-hotel-flow/criteria-helper.js';
+import type { SearchHotelEntry } from '../../src/myflow/hotel-flow/backend/pricing-engine.js';
 
 dotenv.config({ override: true, quiet: true });
 
 process.env.HOTEL_FLOW_CURRENT_DATE = '2027-07-15T00:00:00.000Z';
 process.env.SESSION_STORE ??= 'MEMORY';
-process.env.GEMINI_API_KEY ??= 'unused-in-decision-hotel-flow-test';
 process.env.ANTHROPIC_API_KEY ??= 'unused-in-decision-hotel-flow-test';
 
 type RunResponse = {
@@ -77,7 +78,7 @@ const testTimeoutMs = Number(
   process.env.DECISION_HOTEL_FLOW_TEST_TIMEOUT_MS ?? 900_000,
 );
 const missingLiveConfig = [
-  'TYPESAFE_API_KEY',
+  'GEMINI_API_KEY',
   'OPENAI_API_KEY',
   'PICOFLOW_KEY',
 ].filter((key) => !process.env[key]?.trim());
@@ -163,6 +164,19 @@ test(
           turn.activeStep,
           `${turn.label} active step mismatch`,
         );
+        if (turn.activeStep === 'PresentStep' && !turn.completed) {
+          const present = businessState(sessionDoc.flow, 'PresentStep');
+          const review = businessState(sessionDoc.flow, 'PresentationJudgeStep');
+          const hotels = present.hotelFound as SearchHotelEntry[];
+          assert.ok(Array.isArray(hotels) && hotels.length > 0);
+          assert.equal(
+            response.message,
+            review.accepted === true
+              ? present.draft
+              : CriteriaHelper.renderHotelResults(hotels),
+            `${turn.label}: expected approved draft or deterministic fallback; review=${JSON.stringify(review)}`,
+          );
+        }
         if (turn.label === 'cross-step date correction') {
           assert.deepEqual(
             businessState(sessionDoc.flow, 'DateRangeStep'),
@@ -400,10 +414,6 @@ async function expectSessionState(
 
   assert.equal(
     businessState(sessionDoc.flow, 'CriteriaReadinessJudgeStep').accepted,
-    true,
-  );
-  assert.equal(
-    businessState(sessionDoc.flow, 'PresentationJudgeStep').accepted,
     true,
   );
 

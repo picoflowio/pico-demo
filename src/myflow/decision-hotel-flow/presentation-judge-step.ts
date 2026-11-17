@@ -21,6 +21,7 @@ const REVIEW = {
   },
   completeness: {
     type: 'score',
+    instructions: 'How completely does the draft present the results and explain the available next actions?',
     criteria: [
       'Missing the result list',
       'Lists hotels but omits an important action',
@@ -29,6 +30,7 @@ const REVIEW = {
   },
   clarity: {
     type: 'score',
+    instructions: 'How clearly does the draft organize the hotel choices for the user?',
     criteria: ['Confusing', 'Understandable', 'Clear numbered choices'],
   },
 } as const satisfies DecisionQuestionMap;

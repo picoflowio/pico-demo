@@ -971,32 +971,9 @@
   dependencies:
     tslib "2.8.1"
 
-"@picoflow/core@^1.1.15":
-  version "1.1.15"
-  resolved "https://registry.yarnpkg.com/@picoflow/core/-/core-1.1.15.tgz#21194151642db14197daea2d1f80d4f8276108bc"
-  integrity sha512-a7v+g28NqJz7x81paZ8hN3ySUyJOjye17COeELauI8kWkeBjvScVUIfekInwo/OwtTKeMWD3SsO/z88aw9yjhg==
-  dependencies:
-    "@anthropic-ai/sdk" "0.115.0"
-    "@azure/cosmos" "4.10.0"
-    "@google/genai" "2.14.0"
-    "@langchain/anthropic" "1.5.2"
-    "@langchain/core" "1.2.12"
-    "@langchain/deepseek" "^1.1.5"
-    "@langchain/google" "0.2.1"
-    "@langchain/ollama" "1.3.0"
-    "@langchain/openai" "1.5.5"
-    "@langchain/openrouter" "^0.4.5"
-    "@langchain/typesafe" "0.0.1"
-    axios "^1.7.7"
-    better-sqlite3 "^13.0.2"
-    dotenv "17.4.2"
-    lodash "^4.17.21"
-    moment "^2.30.1"
-    mongodb "6.21.0"
-    openai "7.1.0"
-    tweetnacl "^1.0.3"
-    uuid "^11.0.3"
-    zod "4.4.3"
+"@picoflow/core@link:../picoflow/npmlib/staging/lib":
+  version "0.0.0"
+  uid ""
 
 "@pinojs/redact@^0.4.0":
   version "0.4.0"
