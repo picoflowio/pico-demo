@@ -15,6 +15,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from '../../src/app.module.js';
+import { BasicFlow } from '../../src/myflow/basic-flow/basic-flow.js';
 import { FlowEngine } from '@picoflow/core';
 
 type RunResponse = {
@@ -144,7 +145,9 @@ test(
       assert.ok(sessionId, 'Expected a session id after conversation');
       logProgress('checking final session state');
       await expectSessionState(app, sessionId);
-      logProgress('final session state ok');
+      logProgress('checking BasicFlow checkpoints');
+      await expectCheckpointHistory(server, app, sessionId);
+      logProgress('final session state & checkpoints ok');
     } finally {
       try {
         await app.get(FlowEngine).close();
@@ -306,6 +309,48 @@ async function expectSessionState(
   assert.equal(stepState(basicFlow, 'AddressStep').address.zip, '97006');
   assert.equal(stepState(basicFlow, 'AddressStep').address.city, 'Portland');
   assert.equal(stepState(basicFlow, 'AddressStep').address.state, 'OR');
+}
+
+async function expectCheckpointHistory(
+  server: ReturnType<NestFastifyApplication['getHttpAdapter']>['getInstance'] extends () => infer T ? T : never,
+  app: NestFastifyApplication,
+  sessionId: string,
+): Promise<void> {
+  const engine = app.get(FlowEngine);
+  const history = [];
+  for await (const tuple of engine.getCheckpointHistory(sessionId)) {
+    history.push(tuple);
+  }
+  if (new BasicFlow().getCheckpointingOptions().enabled === false) {
+    assert.equal(history.length, 0, 'Expected no checkpoints with checkpointing disabled');
+  } else {
+    assert.ok(history.length >= 4, `Expected checkpoints to be persisted, got ${history.length}`);
+    assert.ok(
+      history.some((t) => t.metadata.source === 'step-crossing'),
+      'Expected at least one step-crossing checkpoint in BasicFlow history',
+    );
+    assert.ok(
+      history.some(
+        (t) =>
+          t.metadata.source === 'root-join' &&
+          t.metadata.stepId === 'InContextStep',
+      ),
+      'Expected root-join checkpoint for InContextStep parallel batch',
+    );
+  }
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/ai/checkpoints',
+    headers: { CHAT_SESSION_ID: sessionId },
+  });
+  assert.equal(response.statusCode, 200, `GET /ai/checkpoints failed: ${response.payload}`);
+  const payload = JSON.parse(response.payload) as {
+    success?: boolean;
+    checkpoints?: Array<{ checkpoint: { id: string } }>;
+  };
+  assert.equal(payload.success, true);
+  assert.equal(payload.checkpoints?.length, history.length);
 }
 
 function stepState(

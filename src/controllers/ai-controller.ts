@@ -11,19 +11,29 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Param,
   Post,
+  Query,
   Res,
 } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
 import { ApiResponse, ApiBody, ApiTags, ApiHeader } from "@nestjs/swagger";
-import { K } from "@picoflow/core";
-import { FlowEngine, HttpContentType } from "@picoflow/core";
+import {
+  K,
+  FlowEngine,
+  HttpContentType,
+  type CheckpointSource,
+  type CheckpointTuple,
+  type JsonObject,
+} from "@picoflow/core";
 import {
   ApiDeleteSessionResponseDto,
   ApiRunResponse400Dto,
   ApiRunResponseDto,
   ApiDeleteSessionResponse400Dto,
   ApiRunBodyDto,
+  ApiForkCheckpointBodyDto,
+  ApiUpdateCheckpointStateBodyDto,
 } from "./api-types.js";
 
 @ApiTags("ai")
@@ -55,6 +65,7 @@ export class AiController {
     @Body(K.message) userMessage: string,
     @Body(K.flowName) flowName: string,
     @Body("config") config: object,
+    @Body("checkpointId") checkpointId?: string,
     @Headers(K.ChatSessionID) sessionId?: string,
   ) {
     const result = await this.flowEngine.run({
@@ -62,6 +73,7 @@ export class AiController {
       userMessage,
       sessionId,
       config,
+      ...(checkpointId ? { checkpointId } : {}),
     });
     if (result.session) {
       res.header(K.ChatSessionID, result.session);
@@ -73,6 +85,173 @@ export class AiController {
       return res.type(result.contentType).send(result.message);
     }
     return res.send(result);
+  }
+  //.................................................................
+  @Get("checkpoints")
+  @ApiHeader({
+    name: "CHAT_SESSION_ID",
+    description: "Chat session identifier",
+    required: true,
+  })
+  async listCheckpoints(
+    @Res() res: FastifyReply,
+    @Headers(K.ChatSessionID) sessionId?: string,
+    @Query("limit") limit?: string,
+    @Query("before") beforeCheckpointId?: string,
+    @Query("source") source?: CheckpointSource,
+    @Query("stepId") stepId?: string,
+  ) {
+    if (!sessionId) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send({ success: false, message: "CHAT_SESSION_ID header is required." });
+    }
+    try {
+      const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+      const filter: { source?: CheckpointSource; stepId?: string } = {};
+      if (source) filter.source = source;
+      if (stepId) filter.stepId = stepId;
+      const checkpoints: CheckpointTuple[] = [];
+      for await (const tuple of this.flowEngine.getCheckpointHistory(sessionId, {
+        ...(parsedLimit && Number.isInteger(parsedLimit) && parsedLimit > 0
+          ? { limit: parsedLimit }
+          : {}),
+        ...(beforeCheckpointId ? { beforeCheckpointId } : {}),
+        ...(Object.keys(filter).length > 0 ? { filter } : {}),
+      })) {
+        checkpoints.push(tuple);
+      }
+      return res.send({ success: true, session: sessionId, checkpoints });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        success: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  //.................................................................
+  @Get("checkpoints/:checkpointId")
+  @ApiHeader({
+    name: "CHAT_SESSION_ID",
+    description: "Chat session identifier",
+    required: true,
+  })
+  async getCheckpoint(
+    @Res() res: FastifyReply,
+    @Param("checkpointId") checkpointId: string,
+    @Headers(K.ChatSessionID) sessionId?: string,
+  ) {
+    if (!sessionId) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send({ success: false, message: "CHAT_SESSION_ID header is required." });
+    }
+    try {
+      const tuple = await this.flowEngine.getCheckpoint(
+        sessionId,
+        checkpointId === "latest" ? undefined : checkpointId,
+      );
+      if (!tuple) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .send({ success: false, message: "Checkpoint not found." });
+      }
+      return res.send({ success: true, session: sessionId, checkpoint: tuple });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        success: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  //.................................................................
+  @Post("checkpoints/:checkpointId/fork")
+  @HttpCode(HttpStatus.OK)
+  @ApiHeader({
+    name: "CHAT_SESSION_ID",
+    description: "Chat session identifier",
+    required: true,
+  })
+  @ApiBody({ type: ApiForkCheckpointBodyDto, required: false })
+  async forkCheckpoint(
+    @Res() res: FastifyReply,
+    @Param("checkpointId") checkpointId: string,
+    @Body() body?: ApiForkCheckpointBodyDto,
+    @Headers(K.ChatSessionID) sessionId?: string,
+  ) {
+    if (!sessionId) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send({ success: false, message: "CHAT_SESSION_ID header is required." });
+    }
+    try {
+      const forked = await this.flowEngine.forkFromCheckpoint(
+        sessionId,
+        checkpointId,
+        { ...(body?.newSession !== undefined ? { newSession: body.newSession } : {}) },
+      );
+      res.header(K.ChatSessionID, forked.sessionId);
+      return res.send({
+        success: true,
+        session: forked.sessionId,
+        checkpoint: forked.checkpoint,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        success: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  //.................................................................
+  @Post("checkpoints/state")
+  @HttpCode(HttpStatus.OK)
+  @ApiHeader({
+    name: "CHAT_SESSION_ID",
+    description: "Chat session identifier",
+    required: true,
+  })
+  @ApiBody({ type: ApiUpdateCheckpointStateBodyDto })
+  async updateCheckpointState(
+    @Res() res: FastifyReply,
+    @Body() body: ApiUpdateCheckpointStateBodyDto,
+    @Headers(K.ChatSessionID) sessionId?: string,
+  ) {
+    if (!sessionId) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send({ success: false, message: "CHAT_SESSION_ID header is required." });
+    }
+    try {
+      const updated = await this.flowEngine.updateSessionState(
+        sessionId,
+        {
+          ...(body?.currentStep !== undefined
+            ? { currentStep: body.currentStep }
+            : {}),
+          ...(body?.context !== undefined
+            ? { context: body.context as JsonObject }
+            : {}),
+          ...(body?.stepState !== undefined
+            ? { stepState: body.stepState as Record<string, JsonObject> }
+            : {}),
+        },
+        {
+          ...(body?.checkpointId ? { checkpointId: body.checkpointId } : {}),
+          ...(body?.asStep ? { asStep: body.asStep } : {}),
+        },
+      );
+      return res.send({
+        success: true,
+        session: sessionId,
+        checkpoint: updated,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        success: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
   //.................................................................
   @Get("flows")

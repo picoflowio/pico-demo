@@ -44,6 +44,18 @@ export class BasicFlow extends Flow {
   }
 
   /**
+   * Enables synchronous checkpoints and saves live state after root parallel joins.
+   */
+  protected override configCheckpointing() {
+    return {
+      enabled: false,
+      // enabled: true,
+      durability: "sync" as const,
+      saveSessionOnRootJoin: true,
+    };
+  }
+
+  /**
    * Determines the initial step of the conversation based on flow context configuration.
    *
    * @returns PresidentStep if `config.isPresident` is enabled; otherwise WeatherStep.
@@ -140,5 +152,4 @@ export class BasicFlow extends Flow {
     this.markCompleted();
     return msg;
   }
-
 }

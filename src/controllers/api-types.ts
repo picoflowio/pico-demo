@@ -47,6 +47,38 @@ export class ApiRunBodyDto {
     required: false,
   })
   config?: ApiConfigDto | Record<string, unknown>;
+
+  @ApiProperty({
+    description: 'Optional checkpoint ID to resume or time-travel/fork from',
+    required: false,
+  })
+  checkpointId?: string;
+}
+
+export class ApiForkCheckpointBodyDto {
+  @ApiProperty({
+    description: 'When true, creates a new isolated session from the checkpoint',
+    required: false,
+    example: true,
+  })
+  newSession?: boolean;
+}
+
+export class ApiUpdateCheckpointStateBodyDto {
+  @ApiProperty({ required: false, description: 'Optional historical checkpoint ID to branch from' })
+  checkpointId?: string;
+
+  @ApiProperty({ required: false, description: 'Optional step attribution recorded in metadata' })
+  asStep?: string;
+
+  @ApiProperty({ required: false, nullable: true, description: 'Optional durable cursor step override' })
+  currentStep?: string | null;
+
+  @ApiProperty({ required: false, description: 'Persistent flow context fields to merge' })
+  context?: Record<string, unknown>;
+
+  @ApiProperty({ required: false, description: 'Persistent step state patches keyed by step ID' })
+  stepState?: Record<string, Record<string, unknown>>;
 }
 
 export class ApiEndResponseDto {
