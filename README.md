@@ -8,7 +8,7 @@ tests and developer guides.
 
 ## Prerequisites
 
-- Node.js 22.5 or newer
+- Node.js 24 LTS (`nvm use` if you use nvm)
 - npm and Yarn Classic (for the local library link)
 - API credentials for the live scenarios you want to run
 
@@ -41,6 +41,14 @@ The flow test files use SQLite when run directly; `test:basic-flow` sets
 `USE_ENV=1` so the configured Cosmos session store is exercised. The direct
 hotel LangGraph implementation supports memory, SQLite, and MongoDB session
 stores; MongoDB requires `MONGODB_URL`, `MONGODB_NAME`, and `MONGODB_COLLECTION`.
+
+## Container build
+
+From the directory containing both the `picoflow` and `pico-demo` checkouts, run:
+
+```sh
+docker build -f pico-demo/Dockerfile -t pico-demo:local .
+```
 
 ## API examples
 

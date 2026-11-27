@@ -1,28 +1,30 @@
-# Build from the common parent directory so Docker can access the local picoflow
-# debug package:
-# docker build -f picoflow-demo/Dockerfile -t picoflow-demo:local .
-FROM node:22-alpine AS build
+# From the directory containing both the pico-demo and picoflow checkouts:
+# docker build -f pico-demo/Dockerfile -t pico-demo:local .
+FROM node:24-alpine AS build
 
-WORKDIR /workspace/picoflow-ws/picoflow
-COPY picoflow-ws/picoflow/package.json ./
-COPY picoflow-ws/picoflow/tsconfig.json ./
-COPY picoflow-ws/picoflow/src ./src
-COPY picoflow-ws/picoflow/npmlib ./npmlib
-COPY picoflow-ws/picoflow/scripts ./scripts
-RUN npm install && npm run build:locallib
+RUN apk add --no-cache python3 make g++
+ENV npm_package_config_node_gyp_nodedir=/usr/local
 
-WORKDIR /workspace/picoflow-demo
-COPY picoflow-demo/package*.json ./
-RUN npm install
-COPY picoflow-demo/tsconfig.json ./
-COPY picoflow-demo/tsconfig.build.json ./
-COPY picoflow-demo/tsconfig.contract.json ./
-COPY picoflow-demo/nest-cli.json ./
-COPY picoflow-demo/src ./src
+WORKDIR /workspace/picoflow
+COPY picoflow/package.json picoflow/yarn.lock picoflow/.yarnrc ./
+RUN yarn install --frozen-lockfile --non-interactive
+COPY picoflow/README.md picoflow/tsconfig.json ./
+COPY picoflow/docs/supported-models.md ./docs/
+COPY picoflow/src ./src
+COPY picoflow/npmlib/package.json ./npmlib/
+COPY picoflow/npmlib/src ./npmlib/src
+COPY picoflow/scripts ./scripts
+RUN npm run build:locallib
+
+WORKDIR /workspace/pico-demo
+COPY pico-demo/package.json pico-demo/yarn.lock ./
+RUN yarn install --frozen-lockfile --non-interactive
+COPY pico-demo/tsconfig*.json pico-demo/nest-cli.json ./
+COPY pico-demo/src ./src
 RUN npm run build
 
-FROM node:22-alpine AS runtime
-WORKDIR /workspace/picoflow-demo
+FROM node:24-alpine AS runtime
+WORKDIR /workspace/pico-demo
 COPY --from=build /workspace /workspace
 
 EXPOSE 8000
